@@ -7,9 +7,9 @@ import logging
 import os
 
 def create_log(movie_name,num_review,num_nan,elapsed):
-    path = "D:\\Documents\\Atom\\Labs 2019\\Movie recommender\\web scraping\\logs"
+    path = "C:\\Documents\\Atom\\Labs 2019\\Movie recommender\\web scraping\\logs"
     os.chdir(path)
-    
+
     # remove punctuation from the movie name
     movie_name = re.sub(r'[^\w\s]','',movie_name)
 
@@ -19,20 +19,22 @@ def create_log(movie_name,num_review,num_nan,elapsed):
         file.write(f"Out of {num_review} reviews there were {num_nan} with NaN ratings\n")
         file.write(f"Finished Screaping {movie_name} in {round(elapsed,2)} seconds\n")
 
-    
+
 
 def imdb_scraper(id_list):
-  t = time.perf_counter()  
+  t = time.perf_counter()
   # DataFrame Columns (not in order)
+  movie_id = []
   rating = []
   reviews = []
   titles = []
   username = []
-  found_useful = []
+  found_useful_num = []
+  found_useful_den = []
   date = []
-  total_ratings = 0
-  movie_index = 0
-  
+  # total_ratings = 0
+  # movie_index = 0
+
 
   for id in id_list:
     t1 = time.perf_counter()
@@ -40,39 +42,44 @@ def imdb_scraper(id_list):
     review_count = 0
     movie_title = ''
     movie_index += 1
-    
+
 
     url_short = f'http://www.imdb.com/title/{id}/'
     url_reviews = url_short + 'reviews?ref_=tt_urv'
-    url_ratings = url_short + 'ratings?ref_=tturv_ql_4'
+    # url_ratings = url_short + 'ratings?ref_=tturv_ql_4'
 
+
+
+    # Ratings page
+    # page = requests.get(url_ratings)
+    # content = BeautifulSoup(page.content, 'html.parser')
+    #
+    # total_ratings = list(content.find(class_ = "allText"))
+    # total_ratings = total_ratings[0]
+    # total_ratings = re.findall(r'[0-9]+', total_ratings)
+    # total_ratings = ''.join(total_ratings)
 
     while True:
       response = requests.get(url_reviews)
       soup = BeautifulSoup(response.text, 'html.parser')
       items = soup.find_all(class_='lister-item-content')
 
-      # Ratings page
-      page = requests.get(url_ratings)
-      content = BeautifulSoup(page.content, 'html.parser')
-
-      total_ratings = list(content.find(class_ = "allText"))
-      total_ratings = total_ratings[0]
-      total_ratings = re.findall(r'[0-9]+', total_ratings)
-      total_ratings = ''.join(total_ratings)
 
       movie_title = (content.find(class_ = "subnav_heading").get_text())
-      
-      
-      
+
+
+
       # populate lists
       for item in items:
-          review_count += 1
           reviews.append(item.find(class_ = "text show-more__control").get_text())
           titles.append(item.find(class_ = "title").get_text())
           username.append(item.find(class_ = "display-name-link").get_text())
-          found_useful.append(item.find(class_ = "actions text-muted").get_text())
           date.append(item.find(class_ = "review-date").get_text())
+          movie_id.append(int(id.replace("tt", "")))
+          found_useful = item.find(class_ = "actions text-muted").get_text()
+          usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
+          found_useful_num.append(usefuls[0])
+          found_useful_den.append(usefuls[1])
           try:
               rating.append(item.find(class_="rating-other-user-rating").find('span').text)
           except:
@@ -97,16 +104,19 @@ def imdb_scraper(id_list):
   # create DataFrame
   df = pd.DataFrame(
         {
+            # 'index'
+            'movie_id':movie_id,
             'review':reviews,
             'rating':rating,
             'title':titles,
             'username':username,
-            'found_useful':found_useful,
-            'date':date,
-            'no. of ratings':total_ratings
+            'helpful_num':found_useful_num,
+            'helpful_denom':found_useful_den,
+            'date':date
+            # 'no. of ratings':total_ratings
         })
 
-  # convert date column into datetime object  
+  # convert date column into datetime object
   df['date'] = pd.to_datetime(df['date'])
 
   # total time it took to scrape each review
@@ -117,7 +127,6 @@ def imdb_scraper(id_list):
   return df
 
 
-id_list = ["tt0000502","tt0000574","tt0000679","tt0001756","tt0002101","tt0002315","tt0002423","tt0002445","tt0002452","tt0002625","tt0002646","tt0002685","tt0002885"]
-df = imdb_scraper(id_list)
-print(df.head())
-
+# id_list = ["tt0000502","tt0000574","tt0000679","tt0001756","tt0002101","tt0002315","tt0002423","tt0002445","tt0002452","tt0002625","tt0002646","tt0002685","tt0002885"]
+# df = imdb_scraper(id_list)
+# print(df.head())
