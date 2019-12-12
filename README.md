@@ -4,7 +4,7 @@
 
 🚫 Each student has a required minimum number of meaningful PRs each week per the rubric.  Contributing to docs does NOT count as a PR to meet your weekly requirements.
 
-# Movie Recommender
+# 1️⃣ Title of project goes here
 
 You can find the project at [🚫URL NAME GOES HERE](🚫copy and paste URL here).
 
@@ -81,7 +81,7 @@ Based on the user's movie ratings and reviews, provide recommendations for movie
 🚫  Add to or delete souce links as needed for your project
 
 
--   [Source 1] (🚫add link to python notebook here)
+-   [IMDb data files] (https://datasets.imdbws.com/)
 -   [Source 2] (🚫add link to python notebook here)
 -   [Source 3] (🚫add link to python notebook here)
 -   [Source 4] (🚫add link to python notebook here)
