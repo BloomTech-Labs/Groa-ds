@@ -1,0 +1,4 @@
+Movie Title: Passion
+This movie has 11 reviews
+Out of 11 reviews there were 0 with NaN ratings
+Finished Screaping Passion in 1.12 seconds

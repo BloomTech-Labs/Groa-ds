@@ -1,0 +1,4 @@
+Movie Title: The Story of the Kelly Gang
+This movie has 7 reviews
+Out of 7 reviews there were 2 with NaN ratings
+Finished Screaping The Story of the Kelly Gang in 0.65 seconds
