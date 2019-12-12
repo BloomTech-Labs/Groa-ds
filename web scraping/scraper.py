@@ -89,7 +89,7 @@ def imdb_scraper(id_list):
           try:
               rating.append(item.find(class_="rating-other-user-rating").find('span').text)
           except:
-              rating.append('NaN')
+              rating.append(11)
               Nan_count += 1
 
       # loading more data
