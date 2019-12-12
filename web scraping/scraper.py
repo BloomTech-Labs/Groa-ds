@@ -14,11 +14,14 @@ def create_log(movie_name,num_review,num_nan,elapsed):
     # remove punctuation from the movie name
     movie_name = re.sub(r'[^\w\s]','',movie_name)
 
-    with open(movie_name + '.txt','w') as file:
+    with open('Logfile.txt','a+') as file:
+        file.write("---------------------------------------------------------------------\n")
         file.write(f"Movie Title: {movie_name}\n")
         file.write(f"This movie has {num_review} reviews\n")
         file.write(f"Out of {num_review} reviews there were {num_nan} with NaN ratings\n")
-        file.write(f"Finished Screaping {movie_name} in {round(elapsed,2)} seconds\n")
+        file.write(f"Finished Scraping {movie_name} in {round(elapsed,2)} seconds\n")
+        file.write("----------------------------------------------------------------------")
+        file.write("\n")
 
 
 
@@ -43,6 +46,7 @@ def imdb_scraper(id_list):
     Nan_count = 0
     review_count = 0
     movie_title = ''
+    review_count = 0 
 
 
     url_short = f'http://www.imdb.com/title/{id}/'
@@ -70,6 +74,7 @@ def imdb_scraper(id_list):
 
       # populate lists
       for item in items:
+          review_count += 1
           reviews.append(item.find(class_ = "text show-more__control").get_text())
           titles.append(item.find(class_ = "title").get_text())
           username.append(item.find(class_ = "display-name-link").get_text())
@@ -145,7 +150,7 @@ def imdb_scraper(id_list):
                                 helpful_num,
                                 helpful_denom)
             VALUES """ + row_insertions + ";"
-  print(query)
+  #print(query)
 
   # total time it took to scrape each review
   t3 = time.perf_counter()
@@ -157,4 +162,4 @@ def imdb_scraper(id_list):
 
 id_list = ["tt0000502","tt0000574","tt0000679","tt0001756","tt0002101","tt0002315","tt0002423","tt0002445","tt0002452","tt0002625","tt0002646","tt0002685","tt0002885"]
 df = imdb_scraper(id_list)
-print(df.head())
+#print(df.head())
