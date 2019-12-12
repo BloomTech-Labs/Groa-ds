@@ -36,11 +36,13 @@ You can find the project at [🚫URL NAME GOES HERE](🚫copy and paste URL here
 
 1️⃣ [Product Canvas](https://www.notion.so/b593b3d6c6ca41b5a32871e10e4ac3b7?v=bfe15a25eab44b15bfdc04fd1763cc2e)
 
-🚫 Replace lorem ipsum with a description of your project
+### Project Description
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+The companies which have the resources to create an elegant Movie Recommendation Engine have a profit motive aligned with recommending high cost proprietary content rather than films their customers would genuinely enjoy.
 
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Existing web sites geared towards providing a recommendation rely entirely on basic rating models which are weighted heavily towards popular films and generally do a poor job identifying unique outliers. 
+
+Movie Recommendation Engine will use NLP to create unique recommendations based upon the way in which users talk about movies rather than the reductive 1-5 or 1-10 rating system. 
 
 🚫  delete if front end is not applicable to your project
 
