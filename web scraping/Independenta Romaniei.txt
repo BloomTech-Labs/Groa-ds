@@ -1,0 +1,4 @@
+Movie Title: Independenta Romaniei
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Screaping Independenta Romaniei in 0.52 seconds

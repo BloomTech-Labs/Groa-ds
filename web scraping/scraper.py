@@ -7,7 +7,8 @@ import logging
 import os
 
 def create_log(movie_name,num_review,num_nan,elapsed):
-    path = "C:\\Documents\\Atom\\Labs 2019\\Movie recommender\\web scraping\\logs"
+    # path = "C:\\Documents\\Atom\\Labs 2019\\Movie recommender\\web scraping\\logs"
+    path = os.getcwd()
     os.chdir(path)
 
     # remove punctuation from the movie name
@@ -63,7 +64,7 @@ def imdb_scraper(id_list):
       response = requests.get(url_reviews)
       soup = BeautifulSoup(response.text, 'html.parser')
       items = soup.find_all(class_='lister-item-content')
-      movie_title = (content.find(class_ = "subnav_heading").get_text())
+      movie_title = (soup.find(class_ = "subnav_heading").get_text())
 
 
 
@@ -116,14 +117,22 @@ def imdb_scraper(id_list):
             # 'no. of ratings':total_ratings
         })
 
-  # convert date column into datetime object
+  # convert date column into date object
   df['date'] = pd.to_datetime(df['date'])
+  df['date'] = df['date'].dt.date
 
   # convert rows into tuples
   row_insertions = ""
-  row_tuples = list(df.itertuples(index=False))
-  for i in row_tuples:
-      row_insertions.append(i)
+  for i in list(df.itertuples(index=False)):
+      row_insertions += str((i.index,
+                                    i.username,
+                                    i.movie_id,
+                                    i.date,
+                                    str(i.review.replace("'", "").replace('"', '')),
+                                    str(i.title.replace("'", "").replace('"', '')),
+                                    i.rating,
+                                    i.helpful_num,
+                                    i.helpful_denom)) + ", "
 
   # create SQL INSERT query
   query = """INSERT INTO reviews(review_id,
@@ -135,9 +144,9 @@ def imdb_scraper(id_list):
                                 user_rating,
                                 helpful_num,
                                 helpful_denom)
-            VALUES""" + row_insertions + ";"
+            VALUES """ + row_insertions + ";"
   print(query)
-  
+
   # total time it took to scrape each review
   t3 = time.perf_counter()
   total = t3 - t
@@ -146,6 +155,6 @@ def imdb_scraper(id_list):
   return df
 
 
-# id_list = ["tt0000502","tt0000574","tt0000679","tt0001756","tt0002101","tt0002315","tt0002423","tt0002445","tt0002452","tt0002625","tt0002646","tt0002685","tt0002885"]
-# df = imdb_scraper(id_list)
-# print(df.head())
+id_list = ["tt0000502","tt0000574","tt0000679","tt0001756","tt0002101","tt0002315","tt0002423","tt0002445","tt0002452","tt0002625","tt0002646","tt0002685","tt0002885"]
+df = imdb_scraper(id_list)
+print(df.head())
