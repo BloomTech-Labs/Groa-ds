@@ -1,4 +1,0 @@
-Movie Title: Cleopatra
-This movie has 0 reviews
-Out of 0 reviews there were 6 with NaN ratings
-Finished Screaping Cleopatra in 0.93 seconds
