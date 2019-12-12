@@ -81,11 +81,11 @@ Based on the user's movie ratings and reviews, provide recommendations for movie
 🚫  Add to or delete souce links as needed for your project
 
 
--   [IMDb data files] (https://datasets.imdbws.com/)
--   [Source 2] (🚫add link to python notebook here)
--   [Source 3] (🚫add link to python notebook here)
--   [Source 4] (🚫add link to python notebook here)
--   [Source 5] (🚫add link to python notebook here)
+-   [IMDb data files](https://datasets.imdbws.com/)
+-   [Source 2](🚫add link to python notebook here)
+-   [Source 3](🚫add link to python notebook here)
+-   [Source 4](🚫add link to python notebook here)
+-   [Source 5](🚫add link to python notebook here)
 
 ### Python Notebooks
 
