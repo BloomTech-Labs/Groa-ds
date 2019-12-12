@@ -24,6 +24,8 @@ def create_log(movie_name,num_review,num_nan,elapsed):
 def imdb_scraper(id_list):
   t = time.perf_counter()
   # DataFrame Columns (not in order)
+  index = []
+  index_ = 0
   movie_id = []
   rating = []
   reviews = []
@@ -33,7 +35,6 @@ def imdb_scraper(id_list):
   found_useful_den = []
   date = []
   # total_ratings = 0
-  # movie_index = 0
 
 
   for id in id_list:
@@ -41,7 +42,6 @@ def imdb_scraper(id_list):
     Nan_count = 0
     review_count = 0
     movie_title = ''
-    movie_index += 1
 
 
     url_short = f'http://www.imdb.com/title/{id}/'
@@ -63,8 +63,6 @@ def imdb_scraper(id_list):
       response = requests.get(url_reviews)
       soup = BeautifulSoup(response.text, 'html.parser')
       items = soup.find_all(class_='lister-item-content')
-
-
       movie_title = (content.find(class_ = "subnav_heading").get_text())
 
 
@@ -80,6 +78,8 @@ def imdb_scraper(id_list):
           usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
           found_useful_num.append(usefuls[0])
           found_useful_den.append(usefuls[1])
+          index.append(index_)
+          index_ += 1
           try:
               rating.append(item.find(class_="rating-other-user-rating").find('span').text)
           except:
@@ -104,7 +104,7 @@ def imdb_scraper(id_list):
   # create DataFrame
   df = pd.DataFrame(
         {
-            # 'index'
+            'index':index,
             'movie_id':movie_id,
             'review':reviews,
             'rating':rating,
