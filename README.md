@@ -34,7 +34,7 @@ You can find the project at [🚫URL NAME GOES HERE](🚫copy and paste URL here
 
 1️⃣ [Trello Board](https://trello.com/b/ZyU1nW83/labs19-movierecommender)
 
-1️⃣ [Product Canvas](🚫add link to product canvas here)
+1️⃣ [Product Canvas](https://www.notion.so/b593b3d6c6ca41b5a32871e10e4ac3b7?v=bfe15a25eab44b15bfdc04fd1763cc2e)
 
 🚫 Replace lorem ipsum with a description of your project
 
