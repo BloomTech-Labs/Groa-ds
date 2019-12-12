@@ -44,9 +44,6 @@ Existing web sites geared towards providing a recommendation rely entirely on ba
 
 Movie Recommendation Engine will use NLP to create unique recommendations based upon the way in which users talk about movies rather than the reductive 1-5 or 1-10 rating system. 
 
-🚫  delete if front end is not applicable to your project
-
-1️⃣ [Deployed Front End](🚫add link to deployed app here)
 
 ### Tech Stack
 
