@@ -47,7 +47,23 @@ Movie Recommendation Engine will use NLP to create unique recommendations based 
 
 ### Tech Stack
 
-🚫 List all of the languages, frameworks, services, etc used here.
+#### AWS:
+
+- EC2
+- S3 Bucket
+- RDS
+- SageMaker
+
+#### Machine Learning:
+
+- NLTK Transformers
+- Sklearn
+
+#### Data Manipulation:
+
+- Pandas
+- Numpy
+- SciPy
 
 ### 2️⃣ Predictions
 
