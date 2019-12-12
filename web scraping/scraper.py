@@ -46,7 +46,7 @@ def imdb_scraper(id_list):
     Nan_count = 0
     review_count = 0
     movie_title = ''
-    review_count = 0 
+    review_count = 0
 
 
     url_short = f'http://www.imdb.com/title/{id}/'
@@ -124,7 +124,7 @@ def imdb_scraper(id_list):
 
   # convert date column into date object
   df['date'] = pd.to_datetime(df['date'])
-  df['date'] = df['date'].dt.date
+  df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
 
   # convert rows into tuples
   row_insertions = ""
@@ -150,7 +150,7 @@ def imdb_scraper(id_list):
                                 helpful_num,
                                 helpful_denom)
             VALUES """ + row_insertions + ";"
-  #print(query)
+  print(query)
 
   # total time it took to scrape each review
   t3 = time.perf_counter()
@@ -162,4 +162,4 @@ def imdb_scraper(id_list):
 
 id_list = ["tt0000502","tt0000574","tt0000679","tt0001756","tt0002101","tt0002315","tt0002423","tt0002445","tt0002452","tt0002625","tt0002646","tt0002685","tt0002885"]
 df = imdb_scraper(id_list)
-#print(df.head())
+# print(df.head())

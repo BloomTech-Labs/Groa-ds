@@ -76,3 +76,549 @@ This movie has 0 reviews
 Out of 0 reviews there were 0 with NaN ratings
 Finished Scraping From Dusk to Dawn in 0.49 seconds
 ----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Bohemios
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Bohemios in 0.51 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Story of the Kelly Gang
+This movie has 7 reviews
+Out of 7 reviews there were 2 with NaN ratings
+Finished Scraping The Story of the Kelly Gang in 0.55 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Fairylogue and RadioPlays
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping The Fairylogue and RadioPlays in 0.46 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Lucha por la herencia
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Lucha por la herencia in 0.4 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Cleopatra
+This movie has 23 reviews
+Out of 23 reviews there were 6 with NaN ratings
+Finished Scraping Cleopatra in 0.58 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: El lobo de la sierra
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping El lobo de la sierra in 0.41 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Passion
+This movie has 11 reviews
+Out of 11 reviews there were 0 with NaN ratings
+Finished Scraping Passion in 0.68 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Quo Vadis
+This movie has 6 reviews
+Out of 6 reviews there were 0 with NaN ratings
+Finished Scraping Quo Vadis in 0.42 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Independenta Romaniei
+This movie has 3 reviews
+Out of 3 reviews there were 0 with NaN ratings
+Finished Scraping Independenta Romaniei in 0.4 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Ana Kadova
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Ana Kadova in 0.37 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Atlantis
+This movie has 9 reviews
+Out of 9 reviews there were 0 with NaN ratings
+Finished Scraping Atlantis in 0.45 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Blodets röst
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Blodets röst in 0.43 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: From Dusk to Dawn
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping From Dusk to Dawn in 0.54 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Bohemios
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Bohemios in 0.5 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Story of the Kelly Gang
+This movie has 7 reviews
+Out of 7 reviews there were 2 with NaN ratings
+Finished Scraping The Story of the Kelly Gang in 0.48 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Fairylogue and RadioPlays
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping The Fairylogue and RadioPlays in 0.44 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Lucha por la herencia
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Lucha por la herencia in 0.43 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Cleopatra
+This movie has 23 reviews
+Out of 23 reviews there were 6 with NaN ratings
+Finished Scraping Cleopatra in 0.67 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: El lobo de la sierra
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping El lobo de la sierra in 0.43 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Passion
+This movie has 11 reviews
+Out of 11 reviews there were 0 with NaN ratings
+Finished Scraping Passion in 0.54 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Quo Vadis
+This movie has 6 reviews
+Out of 6 reviews there were 0 with NaN ratings
+Finished Scraping Quo Vadis in 0.61 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Independenta Romaniei
+This movie has 3 reviews
+Out of 3 reviews there were 0 with NaN ratings
+Finished Scraping Independenta Romaniei in 0.65 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Ana Kadova
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Ana Kadova in 0.45 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Atlantis
+This movie has 9 reviews
+Out of 9 reviews there were 0 with NaN ratings
+Finished Scraping Atlantis in 0.45 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Blodets röst
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Blodets röst in 0.43 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: From Dusk to Dawn
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping From Dusk to Dawn in 0.42 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Bohemios
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Bohemios in 0.64 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Story of the Kelly Gang
+This movie has 7 reviews
+Out of 7 reviews there were 2 with NaN ratings
+Finished Scraping The Story of the Kelly Gang in 0.58 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Fairylogue and RadioPlays
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping The Fairylogue and RadioPlays in 0.39 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Lucha por la herencia
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Lucha por la herencia in 0.43 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Cleopatra
+This movie has 23 reviews
+Out of 23 reviews there were 6 with NaN ratings
+Finished Scraping Cleopatra in 0.64 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: El lobo de la sierra
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping El lobo de la sierra in 0.51 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Passion
+This movie has 11 reviews
+Out of 11 reviews there were 0 with NaN ratings
+Finished Scraping Passion in 0.65 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Quo Vadis
+This movie has 6 reviews
+Out of 6 reviews there were 0 with NaN ratings
+Finished Scraping Quo Vadis in 0.55 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Independenta Romaniei
+This movie has 3 reviews
+Out of 3 reviews there were 0 with NaN ratings
+Finished Scraping Independenta Romaniei in 0.58 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Ana Kadova
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Ana Kadova in 0.48 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Atlantis
+This movie has 9 reviews
+Out of 9 reviews there were 0 with NaN ratings
+Finished Scraping Atlantis in 0.63 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Blodets röst
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Blodets röst in 0.49 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: From Dusk to Dawn
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping From Dusk to Dawn in 0.49 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Bohemios
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Bohemios in 0.42 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Story of the Kelly Gang
+This movie has 7 reviews
+Out of 7 reviews there were 2 with NaN ratings
+Finished Scraping The Story of the Kelly Gang in 0.42 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Fairylogue and RadioPlays
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping The Fairylogue and RadioPlays in 0.33 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Lucha por la herencia
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Lucha por la herencia in 0.35 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Cleopatra
+This movie has 23 reviews
+Out of 23 reviews there were 6 with NaN ratings
+Finished Scraping Cleopatra in 0.51 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: El lobo de la sierra
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping El lobo de la sierra in 0.34 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Passion
+This movie has 11 reviews
+Out of 11 reviews there were 0 with NaN ratings
+Finished Scraping Passion in 0.43 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Quo Vadis
+This movie has 6 reviews
+Out of 6 reviews there were 0 with NaN ratings
+Finished Scraping Quo Vadis in 0.4 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Independenta Romaniei
+This movie has 3 reviews
+Out of 3 reviews there were 0 with NaN ratings
+Finished Scraping Independenta Romaniei in 0.4 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Ana Kadova
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Ana Kadova in 0.36 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Atlantis
+This movie has 9 reviews
+Out of 9 reviews there were 0 with NaN ratings
+Finished Scraping Atlantis in 0.4 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Blodets röst
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Blodets röst in 0.38 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: From Dusk to Dawn
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping From Dusk to Dawn in 0.45 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Bohemios
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Bohemios in 0.37 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Story of the Kelly Gang
+This movie has 7 reviews
+Out of 7 reviews there were 2 with NaN ratings
+Finished Scraping The Story of the Kelly Gang in 0.41 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Fairylogue and RadioPlays
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping The Fairylogue and RadioPlays in 0.51 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Lucha por la herencia
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Lucha por la herencia in 0.38 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Cleopatra
+This movie has 23 reviews
+Out of 23 reviews there were 6 with NaN ratings
+Finished Scraping Cleopatra in 0.42 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: El lobo de la sierra
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping El lobo de la sierra in 0.34 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Passion
+This movie has 11 reviews
+Out of 11 reviews there were 0 with NaN ratings
+Finished Scraping Passion in 0.41 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Quo Vadis
+This movie has 6 reviews
+Out of 6 reviews there were 0 with NaN ratings
+Finished Scraping Quo Vadis in 0.38 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Independenta Romaniei
+This movie has 3 reviews
+Out of 3 reviews there were 0 with NaN ratings
+Finished Scraping Independenta Romaniei in 0.34 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Ana Kadova
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Ana Kadova in 0.35 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Atlantis
+This movie has 9 reviews
+Out of 9 reviews there were 0 with NaN ratings
+Finished Scraping Atlantis in 0.39 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Blodets röst
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Blodets röst in 0.37 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: From Dusk to Dawn
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping From Dusk to Dawn in 0.4 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Bohemios
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Bohemios in 0.41 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Story of the Kelly Gang
+This movie has 7 reviews
+Out of 7 reviews there were 2 with NaN ratings
+Finished Scraping The Story of the Kelly Gang in 0.38 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Fairylogue and RadioPlays
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping The Fairylogue and RadioPlays in 0.4 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Lucha por la herencia
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Lucha por la herencia in 0.35 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Cleopatra
+This movie has 23 reviews
+Out of 23 reviews there were 6 with NaN ratings
+Finished Scraping Cleopatra in 0.42 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: El lobo de la sierra
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping El lobo de la sierra in 0.35 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Passion
+This movie has 11 reviews
+Out of 11 reviews there were 0 with NaN ratings
+Finished Scraping Passion in 0.38 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Quo Vadis
+This movie has 6 reviews
+Out of 6 reviews there were 0 with NaN ratings
+Finished Scraping Quo Vadis in 0.42 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Independenta Romaniei
+This movie has 3 reviews
+Out of 3 reviews there were 0 with NaN ratings
+Finished Scraping Independenta Romaniei in 0.37 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Ana Kadova
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Ana Kadova in 0.38 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Atlantis
+This movie has 9 reviews
+Out of 9 reviews there were 0 with NaN ratings
+Finished Scraping Atlantis in 0.45 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Blodets röst
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Blodets röst in 0.4 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: From Dusk to Dawn
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping From Dusk to Dawn in 0.34 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Bohemios
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Bohemios in 0.48 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Story of the Kelly Gang
+This movie has 7 reviews
+Out of 7 reviews there were 2 with NaN ratings
+Finished Scraping The Story of the Kelly Gang in 0.48 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: The Fairylogue and RadioPlays
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping The Fairylogue and RadioPlays in 0.46 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Lucha por la herencia
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Lucha por la herencia in 0.39 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Cleopatra
+This movie has 23 reviews
+Out of 23 reviews there were 6 with NaN ratings
+Finished Scraping Cleopatra in 0.6 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: El lobo de la sierra
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping El lobo de la sierra in 0.46 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Passion
+This movie has 11 reviews
+Out of 11 reviews there were 0 with NaN ratings
+Finished Scraping Passion in 0.52 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Quo Vadis
+This movie has 6 reviews
+Out of 6 reviews there were 0 with NaN ratings
+Finished Scraping Quo Vadis in 0.49 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Independenta Romaniei
+This movie has 3 reviews
+Out of 3 reviews there were 0 with NaN ratings
+Finished Scraping Independenta Romaniei in 0.5 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Ana Kadova
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Ana Kadova in 0.58 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Atlantis
+This movie has 9 reviews
+Out of 9 reviews there were 0 with NaN ratings
+Finished Scraping Atlantis in 0.55 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: Blodets röst
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping Blodets röst in 0.47 seconds
+----------------------------------------------------------------------
+---------------------------------------------------------------------
+Movie Title: From Dusk to Dawn
+This movie has 0 reviews
+Out of 0 reviews there were 0 with NaN ratings
+Finished Scraping From Dusk to Dawn in 0.5 seconds
+----------------------------------------------------------------------
