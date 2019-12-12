@@ -119,6 +119,25 @@ def imdb_scraper(id_list):
   # convert date column into datetime object
   df['date'] = pd.to_datetime(df['date'])
 
+  # convert rows into tuples
+  row_insertions = ""
+  row_tuples = list(df.itertuples(index=False))
+  for i in row_tuples:
+      row_insertions.append(i)
+
+  # create SQL INSERT query
+  query = """INSERT INTO reviews(review_id,
+                                username,
+                                movie_id,
+                                review_date,
+                                review_text,
+                                review_title,
+                                user_rating,
+                                helpful_num,
+                                helpful_denom)
+            VALUES""" + row_insertions + ";"
+  print(query)
+  
   # total time it took to scrape each review
   t3 = time.perf_counter()
   total = t3 - t
