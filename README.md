@@ -64,6 +64,7 @@ Movie Recommendation Engine will use NLP to create unique recommendations based 
 - Pandas
 - Numpy
 - SciPy
+- IMDbPy
 
 ### 2️⃣ Predictions
 
