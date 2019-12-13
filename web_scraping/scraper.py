@@ -86,11 +86,16 @@ def imdb_scraper(id_list):
     # total_ratings = re.findall(r'[0-9]+', total_ratings)
     # total_ratings = ''.join(total_ratings)
 
+    response = requests.get(url_reviews)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    items = soup.find_all(class_='lister-item-content')
+    # print(id, soup.find(class_ = "subnav_heading"))
+    movie_title = (soup.find(class_ = "subnav_heading").get_text())
+
     while True:
       response = requests.get(url_reviews)
       soup = BeautifulSoup(response.text, 'html.parser')
       items = soup.find_all(class_='lister-item-content')
-      movie_title = (soup.find(class_ = "subnav_heading").get_text())
 
 
 
@@ -191,7 +196,7 @@ def imdb_scraper(id_list):
   return df
 
 
-id_list = [row for row in df.iloc[:1000, 1]]
+id_list = [row for row in df.iloc[:10, 1]]
 df2 = imdb_scraper(id_list)
 # print(df.head())
 
