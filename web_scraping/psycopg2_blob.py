@@ -24,8 +24,9 @@ test_query = """INSERT INTO reviews (review_id, username, movie_id, review_date,
 small_test_query = """INSERT INTO test(mycolumn) VALUES (5)"""
 # execute query
 try:
-    cursor_boi.execute(small_test_query)
-    print(small_test_query)
+    cursor_boi.execute(test_query)
+    connection.commit()
+    print(test_query)
 except:
     print("oopsie!")
 
