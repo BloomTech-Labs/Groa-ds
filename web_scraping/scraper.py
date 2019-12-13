@@ -93,11 +93,6 @@ def imdb_scraper(id_list):
     movie_title = (soup.find(class_ = "subnav_heading").get_text())
 
     while True:
-      response = requests.get(url_reviews)
-      soup = BeautifulSoup(response.text, 'html.parser')
-      items = soup.find_all(class_='lister-item-content')
-
-
 
       # populate lists
       for item in items:
@@ -126,6 +121,10 @@ def imdb_scraper(id_list):
       except:
         break
       url_reviews = url_short + '/reviews/_ajax?paginationKey=' + key
+
+      response = requests.get(url_reviews)
+      soup = BeautifulSoup(response.text, 'html.parser')
+      items = soup.find_all(class_='lister-item-content')
 
     # time took to scrape each movie
     t2 = time.perf_counter()
@@ -196,7 +195,7 @@ def imdb_scraper(id_list):
   return df
 
 
-id_list = [row for row in df.iloc[:10, 1]]
+id_list = [row for row in df.iloc[:1000, 1]]
 df2 = imdb_scraper(id_list)
 # print(df.head())
 
