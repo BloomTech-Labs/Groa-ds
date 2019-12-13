@@ -8,6 +8,10 @@ import os
 import psycopg2
 from getpass import getpass
 from datetime import datetime
+import pandas as pd
+
+# open shuffled movie id list
+df = pd.read_csv('movieid_shuffle.csv', encoding='ascii')
 
 # connect to database
 connection = psycopg2.connect(
@@ -187,8 +191,8 @@ def imdb_scraper(id_list):
   return df
 
 
-id_list = ["tt0000502","tt0000574","tt0000679","tt0001756","tt0002101","tt0002315","tt0002423","tt0002445","tt0002452","tt0002625","tt0002646","tt0002685","tt0002885"]
-df = imdb_scraper(id_list)
+id_list = [row for row in df.iloc[:1000, 1]]
+df2 = imdb_scraper(id_list)
 # print(df.head())
 
 # close connection
