@@ -1,0 +1,4 @@
+Movie Title: Atlantis
+This movie has 9 reviews
+Out of 9 reviews there were 0 with NaN ratings
+Finished Screaping Atlantis in 1.05 seconds

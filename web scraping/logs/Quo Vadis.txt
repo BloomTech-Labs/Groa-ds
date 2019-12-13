@@ -1,0 +1,4 @@
+Movie Title: Quo Vadis
+This movie has 6 reviews
+Out of 6 reviews there were 0 with NaN ratings
+Finished Screaping Quo Vadis in 1.23 seconds
