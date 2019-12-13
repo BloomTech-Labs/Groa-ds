@@ -19,7 +19,7 @@ connection = psycopg2.connect(
 )
 
 # cursor object
-curser_boi = connection.cursor()
+cursor_boi = connection.cursor()
 
 print("Connected!")
 
@@ -33,7 +33,7 @@ def create_log(movie_name,num_review,num_nan,elapsed):
 
     with open('Logfile.txt','a+') as file:
         file.write("---------------------------------------------------------------------\n")
-        file.write(str(datetime.now()))
+        file.write(str(datetime.now()) + "\n")
         file.write(f"Movie Title: {movie_name}\n")
         file.write(f"This movie has {num_review} reviews\n")
         file.write(f"Out of {num_review} reviews there were {num_nan} with NaN ratings\n")
@@ -175,7 +175,7 @@ def imdb_scraper(id_list):
   test_query = """INSERT INTO reviews(review_id, username, movie_id, review_date, review_text, review_title, user_rating, helpful_num, helpful_denom) VALUES (1, 'coop', 12345678, '2016-06-23', 'I love this movie!', 'Me happy', 5, 6, 12 )"""
 
   # execute query
-  curser_boi.execute(query)
+  cursor_boi.execute(query)
   print(query)
 
   # total time it took to scrape each review
@@ -192,5 +192,5 @@ df = imdb_scraper(id_list)
 
 # # close connection
 # if connection:
-#     curser_boi.close()
+#     cursor_boi.close()
 #     connection.close()
