@@ -176,6 +176,7 @@ def imdb_scraper(id_list):
 
   # execute query
   cursor_boi.execute(query)
+  connection.commit()
   print(query)
 
   # total time it took to scrape each review
@@ -190,7 +191,7 @@ id_list = ["tt0000502","tt0000574","tt0000679","tt0001756","tt0002101","tt000231
 df = imdb_scraper(id_list)
 # print(df.head())
 
-# # close connection
-# if connection:
-#     cursor_boi.close()
-#     connection.close()
+# close connection
+if connection:
+    cursor_boi.close()
+    connection.close()
