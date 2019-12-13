@@ -5,6 +5,23 @@ import re
 import time
 import logging
 import os
+import psycopg2
+from getpass import getpass
+from datetime import datetime
+
+# connect to database
+connection = psycopg2.connect(
+    database  = "postgres",
+    user      = "postgres",
+    password  = getpass(),
+    host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
+    port      = '5432'
+)
+
+# cursor object
+curser_boi = connection.cursor()
+
+print("Connected!")
 
 def create_log(movie_name,num_review,num_nan,elapsed):
     # path = "C:\\Documents\\Atom\\Labs 2019\\Movie recommender\\web scraping\\logs"
@@ -16,6 +33,7 @@ def create_log(movie_name,num_review,num_nan,elapsed):
 
     with open('Logfile.txt','a+') as file:
         file.write("---------------------------------------------------------------------\n")
+        file.write(str(datetime.now()))
         file.write(f"Movie Title: {movie_name}\n")
         file.write(f"This movie has {num_review} reviews\n")
         file.write(f"Out of {num_review} reviews there were {num_nan} with NaN ratings\n")
@@ -135,9 +153,12 @@ def imdb_scraper(id_list):
                                     i.date,
                                     str(i.review.replace("'", "").replace('"', '')),
                                     str(i.title.replace("'", "").replace('"', '')),
-                                    i.rating,
+                                    int(i.rating),
                                     i.helpful_num,
                                     i.helpful_denom)) + ", "
+
+  # remove hanging comma
+  row_insertions = row_insertions[:-2]
 
   # create SQL INSERT query
   query = """INSERT INTO reviews(review_id,
@@ -149,7 +170,12 @@ def imdb_scraper(id_list):
                                 user_rating,
                                 helpful_num,
                                 helpful_denom)
-            VALUES """ + row_insertions + ";"
+                                VALUES """ + row_insertions + ";"
+  # simple test query
+  test_query = """INSERT INTO reviews(review_id, username, movie_id, review_date, review_text, review_title, user_rating, helpful_num, helpful_denom) VALUES (1, 'coop', 12345678, '2016-06-23', 'I love this movie!', 'Me happy', 5, 6, 12 )"""
+
+  # execute query
+  curser_boi.execute(query)
   print(query)
 
   # total time it took to scrape each review
@@ -163,3 +189,8 @@ def imdb_scraper(id_list):
 id_list = ["tt0000502","tt0000574","tt0000679","tt0001756","tt0002101","tt0002315","tt0002423","tt0002445","tt0002452","tt0002625","tt0002646","tt0002685","tt0002885"]
 df = imdb_scraper(id_list)
 # print(df.head())
+
+# # close connection
+# if connection:
+#     curser_boi.close()
+#     connection.close()
