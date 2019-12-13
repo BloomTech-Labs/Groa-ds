@@ -59,12 +59,14 @@ Movie Recommendation Engine will use NLP to create unique recommendations based 
 - NLTK Transformers
 - Sklearn
 
-#### Data Manipulation:
+#### Data Collection/Manipulation:
 
 - Pandas
 - Numpy
 - SciPy
 - IMDbPy
+- Psycopg2
+- BeautifulSoup
 
 ### 2️⃣ Predictions
 
