@@ -103,6 +103,7 @@ def imdb_scraper(id_list):
           date.append(item.find(class_ = "review-date").get_text())
           movie_id.append(int(id.replace("tt", "")))
           found_useful = item.find(class_ = "actions text-muted").get_text()
+          found_useful = found_useful.replace(",", "")
           usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
           found_useful_num.append(usefuls[0])
           found_useful_den.append(usefuls[1])
