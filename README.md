@@ -1,4 +1,4 @@
-# Movie Recommendation Engine [product name tdb]
+# Gróa
 
 In the current iteration this project does not have front end components. When those elements go live they will be linked here.
 
