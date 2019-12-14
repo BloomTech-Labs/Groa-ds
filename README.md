@@ -1,16 +1,8 @@
-🚫 Note: All lines that start with 🚫 are instructions and should be deleted before this is posted to your portfolio. This is intended to be a guideline. Feel free to add your own flare to it.
+# Gróa
 
-🚫 The numbers 1️⃣ through 5️⃣ next to each item represent the week that part of the docs needs to be comepleted by.  Make sure to delete the numbers by the end of Labs.
+In the current iteration this project does not have front end components. When those elements go live they will be linked here.
 
-🚫 Each student has a required minimum number of meaningful PRs each week per the rubric.  Contributing to docs does NOT count as a PR to meet your weekly requirements.
-
-# 1️⃣ Title of project goes here
-
-You can find the project at [🚫URL NAME GOES HERE](🚫copy and paste URL here).
-
-## 5️⃣ Contributors
-
-🚫Add contributor info below, make sure add images and edit the social links for each member. Add to or delete these place-holders as needed
+## Contributors
 
 |                                       [Student 1](https://github.com/)                                        |                                       [Student 2](https://github.com/)                                        |                                       [Student 3](https://github.com/)                                        |                                       [Student 4](https://github.com/)                                        |                                       [Eric Smith](https://github.com/moviedatascience)                                        |
 | :-----------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------: |
@@ -20,7 +12,6 @@ You can find the project at [🚫URL NAME GOES HERE](🚫copy and paste URL here
 
 
 
-🚫 5️⃣ Optional examples of using images with links for your tech stack, make sure to change these to fit your project
 
 ![MIT](https://img.shields.io/packagist/l/doctrine/orm.svg)
 ![Typescript](https://img.shields.io/npm/types/typescript.svg?style=flat)
@@ -32,9 +23,11 @@ You can find the project at [🚫URL NAME GOES HERE](🚫copy and paste URL here
 ## Project Overview
 
 
-1️⃣ [Trello Board](https://trello.com/b/ZyU1nW83/labs19-movierecommender)
+ [Trello Board](https://trello.com/b/ZyU1nW83/labs19-movierecommender)
+We use Trello as a quick wireframe tracker through the first stages of development. As the product moves past releases 1.1 and 1.2 we will transition away from Trello and into the git ecosystem entirely. 
 
-1️⃣ [Product Canvas](https://www.notion.so/b593b3d6c6ca41b5a32871e10e4ac3b7?v=bfe15a25eab44b15bfdc04fd1763cc2e)
+ [Product Canvas](https://www.notion.so/b593b3d6c6ca41b5a32871e10e4ac3b7?v=bfe15a25eab44b15bfdc04fd1763cc2e)
+This notion document serves as a solid resource if you want to learn more about our motivations for creating this product and the general development direction it is taking.
 
 ### Project Description
 
@@ -56,23 +49,23 @@ Movie Recommendation Engine will use NLP to create unique recommendations based 
 
 #### Machine Learning:
 
-- NLTK Transformers
+- [Huggingface Transformers](https://github.com/huggingface/transformers)
 - Sklearn
 
 #### Data Collection/Manipulation:
 
-- Pandas
-- Numpy
-- SciPy
-- IMDbPy
-- Psycopg2
-- BeautifulSoup
+- [Pandas](https://pypi.org/project/pandas/)
+- [Numpy]
+- [SciPy]
+- [IMDbPy]
+- [Psycopg2]
+- [BeautifulSoup]
 
-### 2️⃣ Predictions
+### Predictions
 
 Based on the user's movie ratings and reviews, provide recommendations for movies to watch that they have never before considered watching. We can do this by vectorizing the user's Letterboxd or IMDb reviews and finding KNN matches from 22GB worth of movie reviews. Results can be filtered to remove movies the user has already watched, so long as they provide their data exported from one of those sites.
 
-### 2️⃣ Explanatory Variables
+###  Explanatory Variables
 
 -   Explanatory Variable 1
 -   Explanatory Variable 2
