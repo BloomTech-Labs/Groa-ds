@@ -51,8 +51,8 @@ def create_log(movie_name,num_review,num_nan,elapsed):
 def imdb_scraper(id_list):
   t = time.perf_counter()
   # DataFrame Columns (not in order)
-  index = []
-  index_ = 0
+  # index = []
+  # index_ = 0
   movie_id = []
   rating = []
   reviews = []
@@ -110,8 +110,6 @@ def imdb_scraper(id_list):
           usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
           found_useful_num.append(usefuls[0])
           found_useful_den.append(usefuls[1])
-          index.append(index_)
-          index_ += 1
           try:
               rating.append(item.find(class_="rating-other-user-rating").find('span').text)
           except:
@@ -142,7 +140,6 @@ def imdb_scraper(id_list):
   # create DataFrame
   df = pd.DataFrame(
         {
-            'index':index,
             'movie_id':movie_id,
             'review':reviews,
             'rating':rating,
@@ -161,8 +158,7 @@ def imdb_scraper(id_list):
   # convert rows into tuples
   row_insertions = ""
   for i in list(df.itertuples(index=False)):
-      row_insertions += str((i.index,
-                                    str(i.username.replace("'", "").replace('"', '')),
+      row_insertions += str((str(i.username.replace("'", "").replace('"', '')),
                                     i.movie_id,
                                     i.date,
                                     str(i.review.replace("'", "").replace('"', '')),
@@ -175,8 +171,7 @@ def imdb_scraper(id_list):
   row_insertions = row_insertions[:-2]
 
   # create SQL INSERT query
-  query = """INSERT INTO reviews(review_id,
-                                username,
+  query = """INSERT INTO reviews(username,
                                 movie_id,
                                 review_date,
                                 review_text,
@@ -186,7 +181,7 @@ def imdb_scraper(id_list):
                                 helpful_denom)
                                 VALUES """ + row_insertions + ";"
   # simple test query
-  test_query = """INSERT INTO reviews(review_id, username, movie_id, review_date, review_text, review_title, user_rating, helpful_num, helpful_denom) VALUES (1, 'coop', 12345678, '2016-06-23', 'I love this movie!', 'Me happy', 5, 6, 12 )"""
+  test_query = """INSERT INTO reviews(username, movie_id, review_date, review_text, review_title, user_rating, helpful_num, helpful_denom) VALUES (1, 'coop', 12345678, '2016-06-23', 'I love this movie!', 'Me happy', 5, 6, 12 )"""
 
   # execute query
   cursor_boi.execute(query)
