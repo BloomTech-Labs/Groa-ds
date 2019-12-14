@@ -12,7 +12,21 @@ In addition to reviews and ratings, the scraper pulls some information which wil
 
 ### Blockers
 
-12/13/19 - We hit a snag which prevents us from populating the RDS DB tables with data output from the scraper. We believe it is isolated to a misconfiguration of
+#### 12/13/19
+- We hit a snag which prevents us from populating the RDS DB tables with data output from the scraper. We believe it is isolated to a misconfiguration of the psycopg2 (it was that we were not calling commit() properly)
+- Hit a problem where we were getting a null value for the title. It's been hitting at a similar
+place for all the scrapers and I'm starting to think that it is a built in mechanism IMDb has
+to keep people from scraping. Some type of booby trap.
+- We also had a problem where one scraper died on a 404, so we installed a catch all in the form of:
+```
+try:
+    movie_title = (soup.find(class_ = "subnav_heading").get_text())
+except:
+    pass
+```
+- After splitting the scraper into 7 different files to load into 7 EC2 instances we are running into some timeout issues with SSH as well as some communication errors being thrown from IMDb. I think it's best if I split these further down into smaller chunks to cut down on the time spent for any one instance scraping.  
+
+
 
 
 ### Installing
