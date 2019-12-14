@@ -14,7 +14,7 @@ In addition to reviews and ratings, the scraper pulls some information which wil
 
 #### 12/13/19
 - We hit a snag which prevents us from populating the RDS DB tables with data output from the scraper. We believe it is isolated to a misconfiguration of the psycopg2 (it was that we were not calling commit() properly)
-- Error getting thrown with movies where the "found this helpful" count was > 1k as IMDb put a comma in that value. Easy fix. 
+- Error getting thrown with movies where the "found this helpful" count was > 1k as IMDb put a comma in that value. Easy fix.
 - Hit a problem where we were getting a null value for the title. It's been hitting at a similar
 place for all the scrapers and I'm starting to think that it is a built in mechanism IMDb has
 to keep people from scraping. Some type of booby trap.
@@ -37,7 +37,7 @@ In order to run you will need to setup an AWS RDS DB
 Start of walkthrough for launching EC2:
 (Download the keypair
 cd into the folder you have the keypair stored
-connect using the example provided by AWS
+connect using the example provided by AWS 
 type yes and press enter when prompted )
 
 #### Configure EC2 to run scraper
