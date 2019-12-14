@@ -162,7 +162,7 @@ def imdb_scraper(id_list):
   row_insertions = ""
   for i in list(df.itertuples(index=False)):
       row_insertions += str((i.index,
-                                    i.username,
+                                    str(i.username.replace("'", "").replace('"', '')),
                                     i.movie_id,
                                     i.date,
                                     str(i.review.replace("'", "").replace('"', '')),
@@ -201,7 +201,7 @@ def imdb_scraper(id_list):
   return df
 
 
-id_list = [row for row in df.iloc[22749:28185, 1]]
+id_list = [row for row in df.iloc[1101:1600, 1]]
 df2 = imdb_scraper(id_list)
 # print(df.head())
 

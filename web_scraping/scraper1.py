@@ -161,7 +161,7 @@ def imdb_scraper(id_list):
   row_insertions = ""
   for i in list(df.itertuples(index=False)):
       row_insertions += str((i.index,
-                                    i.username,
+                                    str(i.username.replace("'", "").replace('"', '')),
                                     i.movie_id,
                                     i.date,
                                     str(i.review.replace("'", "").replace('"', '')),
