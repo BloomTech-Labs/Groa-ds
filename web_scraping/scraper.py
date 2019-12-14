@@ -9,6 +9,7 @@ import psycopg2
 from getpass import getpass
 from datetime import datetime
 import pandas as pd
+from random import randint
 
 # open shuffled movie id list
 df = pd.read_csv('movieid_shuffle.csv', encoding='ascii')
