@@ -1,6 +1,6 @@
-# 1️⃣ Title of project goes here
+# 1️⃣ Movie Recommendation Engine [product name tdb]
 
-You can find the project at [🚫URL NAME GOES HERE](🚫copy and paste URL here).
+In the current iteration this project does not have front end components. When those elements go live they will be linked here.
 
 ## 5️⃣ Contributors
 
