@@ -89,8 +89,10 @@ def imdb_scraper(id_list):
     response = requests.get(url_reviews)
     soup = BeautifulSoup(response.text, 'html.parser')
     items = soup.find_all(class_='lister-item-content')
-    # print(id, soup.find(class_ = "subnav_heading"))
-    movie_title = (soup.find(class_ = "subnav_heading").get_text())
+    try:
+        movie_title = (soup.find(class_ = "subnav_heading").get_text())
+    except:
+        pass
 
     while True:
 
@@ -126,6 +128,8 @@ def imdb_scraper(id_list):
       response = requests.get(url_reviews)
       soup = BeautifulSoup(response.text, 'html.parser')
       items = soup.find_all(class_='lister-item-content')
+      # sleep for 3-6 seconds to not spam their servers
+      time.sleep(randint(3,6))
 
     # time took to scrape each movie
     t2 = time.perf_counter()
