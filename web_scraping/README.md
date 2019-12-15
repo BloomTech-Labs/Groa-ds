@@ -37,7 +37,7 @@ In order to run you will need to setup an AWS RDS DB
 Start of walkthrough for launching EC2:
 (Download the keypair
 cd into the folder you have the keypair stored
-connect using the example provided by AWS 
+connect using the example provided by AWS
 type yes and press enter when prompted )
 
 #### Configure EC2 to run scraper
@@ -89,7 +89,7 @@ python -V
 
 Clone the repo which holds the scraper
 ```
-git clone [repoclonelink]
+git clone https://github.com/Lambda-School-Labs/movie-recommender.git
 ```
 
 CD into the repo
@@ -122,6 +122,7 @@ Sync the shell to install dependencies
 ```
 pipenv sync
 ```
+
 
 The psycopg2 install always fails but you can install the binary pkg and it works
 ```

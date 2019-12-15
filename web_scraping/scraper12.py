@@ -196,7 +196,7 @@ def imdb_scraper(id_list):
   return df
 
 
-id_list = [row for row in df.iloc[99001:103000, 1]]
+id_list = [row for row in df.iloc[147001:151000, 1]]
 df2 = imdb_scraper(id_list)
 # print(df.head())
 
