@@ -8,11 +8,10 @@ import os
 import psycopg2
 from getpass import getpass
 from datetime import datetime
-import pandas as pd
 from random import randint
 
 # open shuffled movie id list
-df = pd.read_csv('movieid_shuffle.csv', encoding='ascii')
+# df = pd.read_csv('movieid_shuffle.csv', encoding='ascii')
 
 # connect to database
 connection = psycopg2.connect(
@@ -32,13 +31,14 @@ except:
 
 def get_review_text(id):
     """Get all reviews for a movie_id. Returns ... ?"""
-    movie_query = "SELECT review_text FROM reviews WHERE movie_id=" \
-                + str(id)
+    movie_query = "SELECT movie_id, review_text FROM reviews LIMIT 10" \
+                # + str(id)
 
     # execute query
-    results = cursor_boi.execute(query)
+    cursor_boi.execute(movie_query)
+    result = cursor_boi.fetchall()
+    print(result)
     connection.commit()
-    print(results)
 
 get_review_text(32143)
 
