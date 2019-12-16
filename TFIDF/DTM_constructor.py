@@ -10,6 +10,8 @@ import spacy
 from getpass import getpass
 from datetime import datetime
 from random import randint
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 
 # open shuffled movie id list
 # df = pd.read_csv('movieid_shuffle.csv', encoding='ascii')
@@ -41,10 +43,19 @@ def get_review_text(id):
     return result
 
 def tokenize(text):
-    """Returns a list of tokens from text"""
+    """Returns a string of tokens from text"""
     tokens = re.sub(r'[^a-zA-Z ^0-9]','', text)
-    tokens = tokens.lower().split()
+    tokens = tokens.lower()
     return tokens
+
+def aggregate_reviews(review_list):
+    """Combine all reviews into one string"""
+    tokens = ""
+    for _, i in review_list:
+        tokens += i
+    return tokens
+
+
 
 get_review_text(32143)
 
