@@ -31,8 +31,8 @@ except:
 
 def get_review_text(id):
     """Get all reviews for a movie_id. Returns ... ?"""
-    movie_query = "SELECT movie_id, review_text FROM reviews LIMIT 10" \
-                # + str(id)
+    movie_query = "SELECT movie_id, review_text FROM reviews WHERE movie_id=" \
+                + str(id)
 
     # execute query
     cursor_boi.execute(movie_query)
