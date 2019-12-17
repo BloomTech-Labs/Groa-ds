@@ -50,16 +50,22 @@ def tokenize(text):
 def aggregate_reviews(review_list):
     """Combine all reviews into one string"""
     tokens = ""
-    for _, i in review_list:
+    for i in review_list:
         tokens += i
+        # print(i)
     return tokens
 
 # def aggregate_movies(data, dtm)
-
-text_list = get_review_text(32143)
-review_list = [tokenize(i) for i in text_list]
+id = 32143
+text_list = get_review_text(id)
+print(text_list)
+review_list = [tokenize(i[1]) for i in text_list]
+print("\n", review_list)
 tokens = aggregate_reviews(review_list)
-print(tokens)
+print("\n", tokens)
+
+# df = pd.DataFrame(columns=['movie_id', 'tokens'])
+
 
 
 # close connection

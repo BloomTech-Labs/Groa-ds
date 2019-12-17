@@ -9,7 +9,8 @@ verify_ssl = true
 requests = "*"
 beautifulsoup4 = "*"
 pandas = "*"
-psycopg2 = "*"
+psycopg2-binary = "*"
+sklearn = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"
