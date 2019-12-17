@@ -6,7 +6,6 @@ import time
 import logging
 import os
 import psycopg2
-import spacy
 from getpass import getpass
 from datetime import datetime
 from random import randint
@@ -55,10 +54,12 @@ def aggregate_reviews(review_list):
         tokens += i
     return tokens
 
+# def aggregate_movies(data, dtm)
 
-
-get_review_text(32143)
-
+text_list = get_review_text(32143)
+review_list = [tokenize(i) for i in text_list]
+tokens = aggregate_reviews(review_list)
+print(tokens)
 
 
 # close connection
