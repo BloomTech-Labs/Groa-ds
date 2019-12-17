@@ -57,57 +57,24 @@ def aggregate_reviews(review_list):
         # print(i)
     return tokens
 
-# def aggregate_movies(data, dtm)
-rows_list = []
-movie_id_list = ['0000502',
-'0000574',
-'0000679',
-'0001756',
-'0002101',
-'0002315',
-'0002423',
-'0002445',
-'0002452',
-'0002625',
-'0002646',
-'0002685',
-'0002885',
-'0002898',
-'0003014',
-'0003102',
-'0003113',
-'0003150',
-'0003159',
-'0003165',
-'0003241',
-'0003309',
-'0003330',
-'0003362',
-'0003419',
-'0003471',
-'0003489',
-'0003565',
-'0003637',
-'0003643',
-'0003657',
-'0003670',
-'0003675',
-'0003740'
-]
-for id in movie_id_df.movie_id[:300]:
-    text_list = get_review_text(id.strip('tt'))
-    if len(text_list) > 0:
-        # print(text_list)
-        review_list = [tokenize(i[1]) for i in text_list]
-        # print("\n", review_list)
-        tokens = aggregate_reviews(review_list)
-        # print("\n", tokens)
-        movie_dict = {'movie_id':id, 'tokens':tokens}
-        rows_list.append(movie_dict)
+def aggregate_movies(n):
+    """Combine all reviews for random n movies into a dataframe."""
+    rows_list = []
+    for id in movie_id_df.movie_id[:n]:
+        text_list = get_review_text(id.strip('tt'))
+        if len(text_list) > 0:
+            # print(text_list)
+            review_list = [tokenize(i[1]) for i in text_list]
+            # print("\n", review_list)
+            tokens = aggregate_reviews(review_list)
+            # print("\n", tokens)
+            movie_dict = {'movie_id':id, 'tokens':tokens}
+            rows_list.append(movie_dict)
 
-# df = pd.DataFrame(columns=['movie_id', 'tokens'])
-df = pd.DataFrame(rows_list, columns=['movie_id', 'tokens'])
-print(df.shape)
+    # df = pd.DataFrame(columns=['movie_id', 'tokens'])
+    df = pd.DataFrame(rows_list, columns=['movie_id', 'tokens'])
+    print(df.shape)
+    return df
 
 
 # close connection
