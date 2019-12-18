@@ -11,6 +11,9 @@ from getpass import getpass
 from datetime import datetime
 from random import randint
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import TruncatedSVD
+from sklearn.pipeline import Pipeline
+from sklearn.neighbors import NearestNeighbors
 from spacy.tokenizer import Tokenizer
 from spacy.lang.en import English
 
@@ -78,7 +81,7 @@ def aggregate_movies(n):
             # print("\n", review_list)
             tokens = aggregate_reviews(review_list)
             # print("\n", tokens)
-            movie_dict = {'movie_id':id, 'tokens':tokens}
+            movie_dict = {'movie_id':id.strip('tt'), 'tokens':tokens}
             rows_list.append(movie_dict)
 
     # df = pd.DataFrame(columns=['movie_id', 'tokens'])
@@ -86,19 +89,29 @@ def aggregate_movies(n):
     print(df.shape)
     return df
 
+
 # aggregate reviews from first n random movies
-df = aggregate_movies(500)
+df = aggregate_movies(2000)
 nlp = spacy.load("en_core_web_sm")
+# Instantiate pipeline
 STOPWORDS = nlp.Defaults.stop_words
-# fit a tfidf vectorizer
 tfidf = TfidfVectorizer(stop_words=STOPWORDS)
-tfidf.fit(df['tokens'])
-# build DTM
-dtm = tfidf.transform(df['tokens'])
-dtm = pd.DataFrame(dtm.todense(), columns=tfidf.get_feature_names())
-dtm.head()
-
-
+svd = TruncatedSVD(n_components=1000) # This may be too many components.
+DTMpipe = Pipeline([('tfidf', tfidf), ('svd', svd)])
+# build DTM with movie_id index
+dtm = DTMpipe.fit_transform(df['tokens'])
+dtm = pd.DataFrame(dtm)
+dtm = dtm.set_index(df['movie_id'])
+# instantiate and fit KNN
+knn = NearestNeighbors(n_neighbors=5, algorithm='kd_tree')
+knn.fit(dtm)
+# test a review
+test_review = ["This film is the most poignant exploration of the human condition\
+                I have ever seen. The ennui, pain, dread, pathos, and love\
+                on display here is overwhelming."]
+review_vect = DTMpipe.transform(test_review)
+for i in knn.kneighbors(review_vect)[1][0]:
+    print(i)
 
 # close connection
 if connection:
