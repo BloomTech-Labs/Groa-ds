@@ -111,7 +111,9 @@ test_review = ["This film is the most poignant exploration of the human conditio
                 on display here is overwhelming."]
 review_vect = DTMpipe.transform(test_review)
 for i in knn.kneighbors(review_vect)[1][0]:
-    print(i)
+    print(dtm.index[i])
+
+
 
 # close connection
 if connection:
