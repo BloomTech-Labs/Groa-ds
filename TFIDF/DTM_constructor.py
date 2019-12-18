@@ -3,8 +3,10 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import re
 import time
+import datetime
 import logging
 import os
+import sys
 import psycopg2
 import spacy
 from getpass import getpass
@@ -30,7 +32,7 @@ movie_id_df = pd.read_csv('../web_scraping/movieid_shuffle.csv',
 connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = "lambdaschoolsix",
+    password  = getpass(),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432'
 )
@@ -86,25 +88,34 @@ def aggregate_movies(n):
 
     # df = pd.DataFrame(columns=['movie_id', 'tokens'])
     df = pd.DataFrame(rows_list, columns=['movie_id', 'tokens'])
+    print("rows size: ", sys.getsizeof(rows_list))
+    print("dataframe size: ", sys.getsizeof(df))
     print(df.shape)
     return df
 
 
 # aggregate reviews from first n random movies
-df = aggregate_movies(2000)
+df = aggregate_movies(500)
 nlp = spacy.load("en_core_web_sm")
+
 # Instantiate pipeline
 STOPWORDS = nlp.Defaults.stop_words
 tfidf = TfidfVectorizer(stop_words=STOPWORDS)
 svd = TruncatedSVD(n_components=1000) # This may be too many components.
 DTMpipe = Pipeline([('tfidf', tfidf), ('svd', svd)])
+
 # build DTM with movie_id index
 dtm = DTMpipe.fit_transform(df['tokens'])
 dtm = pd.DataFrame(dtm)
 dtm = dtm.set_index(df['movie_id'])
+
+# save DTM
+dtm.to_csv('ReducedDTM'+str(datetime.datetime.now())+'.csv')
+
 # instantiate and fit KNN
 knn = NearestNeighbors(n_neighbors=5, algorithm='kd_tree')
 knn.fit(dtm)
+
 # test a review
 test_review = ["This film is the most poignant exploration of the human condition\
                 I have ever seen. The ennui, pain, dread, pathos, and love\
@@ -113,7 +124,11 @@ review_vect = DTMpipe.transform(test_review)
 for i in knn.kneighbors(review_vect)[1][0]:
     print(dtm.index[i])
 
-
+# give receommendations for user input
+user_review = [input("Paste a movie review here:  ")]
+user_review_vect = DTMpipe.transform(user_review)
+for i in knn.kneighbors(user_review_vect)[1][0]:
+    print("https://www.imdb.com/title/tt" + str(dtm.index[i]))
 
 # close connection
 if connection:
