@@ -11,6 +11,7 @@ beautifulsoup4 = "*"
 pandas = "*"
 psycopg2-binary = "*"
 sklearn = "*"
+spacy = "*"
 
 [requires]
 python_version = "3.7"

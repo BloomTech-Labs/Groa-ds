@@ -6,11 +6,17 @@ import time
 import logging
 import os
 import psycopg2
+import spacy
 from getpass import getpass
 from datetime import datetime
 from random import randint
 from sklearn.feature_extraction.text import TfidfVectorizer
+from spacy.tokenizer import Tokenizer
+from spacy.lang.en import English
 
+# Create a blank Tokenizer with just the English vocab
+nlp = English()
+tokenizer = Tokenizer(nlp.vocab)
 
 # open shuffled movie id list
 movie_id_df = pd.read_csv('../web_scraping/movieid_shuffle.csv',
@@ -21,7 +27,7 @@ movie_id_df = pd.read_csv('../web_scraping/movieid_shuffle.csv',
 connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = getpass(),
+    password  = "lambdaschoolsix",
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432'
 )
@@ -49,6 +55,10 @@ def tokenize(text):
     tokens = tokens.lower()
     return tokens
 
+def spacy_tokenize(text):
+    tokenlist = [token.text.lower() for token in tokenizer(text)]
+    return ' '.join(tokenlist)
+
 def aggregate_reviews(review_list):
     """Combine all reviews into one string"""
     tokens = ""
@@ -75,6 +85,19 @@ def aggregate_movies(n):
     df = pd.DataFrame(rows_list, columns=['movie_id', 'tokens'])
     print(df.shape)
     return df
+
+# aggregate reviews from first n random movies
+df = aggregate_movies(500)
+nlp = spacy.load("en_core_web_sm")
+STOPWORDS = nlp.Defaults.stop_words
+# fit a tfidf vectorizer
+tfidf = TfidfVectorizer(stop_words=STOPWORDS)
+tfidf.fit(df['tokens'])
+# build DTM
+dtm = tfidf.transform(df['tokens'])
+dtm = pd.DataFrame(dtm.todense(), columns=tfidf.get_feature_names())
+dtm.head()
+
 
 
 # close connection
