@@ -7,6 +7,7 @@ import datetime
 import logging
 import os
 import sys
+import pickle
 import psycopg2
 import spacy
 from getpass import getpass
@@ -90,6 +91,10 @@ def aggregate_movies(n):
     df = pd.DataFrame(rows_list, columns=['movie_id', 'tokens'])
     print("rows size: ", sys.getsizeof(rows_list))
     print("dataframe size: ", sys.getsizeof(df))
+    # pickle rows list
+    pickling_on = open("rows_list.pickle","wb")
+    pickle.dump(rows_list, pickling_on)
+    pickling_on.close()
     print(df.shape)
     return df
 
@@ -110,7 +115,7 @@ dtm = pd.DataFrame(dtm)
 dtm = dtm.set_index(df['movie_id'])
 
 # save DTM
-dtm.to_csv('ReducedDTM'+str(datetime.datetime.now())+'.csv')
+dtm.to_csv('ReducedDTM'+str(time.time())+'.csv')
 
 # instantiate and fit KNN
 knn = NearestNeighbors(n_neighbors=5, algorithm='kd_tree')
@@ -125,7 +130,7 @@ for i in knn.kneighbors(review_vect)[1][0]:
     print(dtm.index[i])
 
 # give receommendations for user input
-user_review = [input("Paste a movie review here:  ")]
+user_review = [input("Paste a movie review here (no \" or \' symbols):  ")]
 user_review_vect = DTMpipe.transform(user_review)
 for i in knn.kneighbors(user_review_vect)[1][0]:
     print("https://www.imdb.com/title/tt" + str(dtm.index[i]))
