@@ -131,38 +131,86 @@ def batch_get_all_movies():
     """Attempt to get all movies downloaded and serialized. Pickup where
     the last attempt left off."""
     goal = len(movie_id_df.movie_id)
-    pickup_start = check_row_files()
+    pickup = check_row_files()
     for i in range(5000, goal, 5000):
-        batch_serialize(pickup_start, i)
+        batch_serialize(pickup, i)
     if goal % 5000 != 0:
         remainder = goal % 5000
         batch_serialize(goal - remainder, goal)
     return True
 
-def aggregate_movies(n: int):
-    """Combine all reviews for the first n random movies into a dataframe."""
-
+def create_df(n: int):
+    """Combine all reviews for a certain list of movie reviews into a dataframe."""
+    # Get any rows that aren't already serialized.
+    pickup = check_row_files()
+    if pickup < n:
+        batch_serialize(pickup, n)
+    # unpickle the rows needed.
     rows_list = []
-    # df = pd.DataFrame(columns=['movie_id', 'tokens'])
+    p = pathlib.Path("./rows")
+    files = [path for path in p.iterdir() if path.is_file()]
+    file_numbers = [int(re.sub(r'[^0-9]', '', path.parts[1])) for path in p.iterdir() if path.is_file()]
+    for number in file_numbers:
+        if number <= n:
+            pickling_off = open(f"./rows/{number}.pickle", "rb")
+            temp_list = pickle.load(pickling_off)
+            rows_list.extend(temp_list)
     df = pd.DataFrame(rows_list, columns=['movie_id', 'tokens'])
     print("rows size: ", sys.getsizeof(rows_list))
     print("dataframe size: ", sys.getsizeof(df))
-
     print(df.shape)
     return df
 
-batch_get_all_movies()
-print("done!")
+def setup():
+    """Setup wizard."""
+    while True:
+        print("""Options: \n
+                    (1) Serialize all reviews (or whatever's left to get). \n
+                    (2) Check how many reviews have been serialized. \n
+                    (3) Fit a pipeline on a small dataframe. \n
+                    (4) Create a dataframe from all the reviews. \n
+                    (5) Transform the dataframe with the pipeline. \n
+                    (6) Get movie recommendations.
+                     """)
+        choice = int(input("Enter a choice: "))
+        if choice == 1:
+            batch_get_all_movies()
+            pickup = check_row_files()
+            print(f"Movies serialized: {pickup}")
+        if choice == 2:
+            pickup = check_row_files()
+            print(f"Movies serialized: {pickup}")
+        if choice == 3:
+            # Instantiate pipeline
+            STOPWORDS = nlp.Defaults.stop_words
+            tfidf = TfidfVectorizer(stop_words=STOPWORDS)
+            svd = TruncatedSVD(n_components=1000) # This may be too many components.
+            PickleMePipe = Pipeline([('tfidf', tfidf), ('svd', svd)])
+
+            # create a DataFrame
+            small_df = create_df(5000)
+
+            # fit the pipeline and pickle it
+            PickleMePipe.fit_transform(small_df['tokens'])
+            pickling_on = open("Pipeline.pickle", "wb")
+            pickle.dump(PickleMePipe, pickling_on)
+            pickling_on.close()
+            print("Pipeline has been pickled.")
+        if choice == 4:
+            all_movies = len(movie_id_df.movie_id)
+            master_df = create_df(all_movies)
+            print("""//////MASTER DATAFRAME CREATED\\\\\\\ """)
+            print(f"""shape:{master_df.shape}""")
+             
+
+
+
+
+
+
+setup()
 # The code for testing this commit stops here.
 
-## aggregate reviews from first n random movies
-# df = aggregate_movies(500)
-
-# Instantiate pipeline
-STOPWORDS = nlp.Defaults.stop_words
-tfidf = TfidfVectorizer(stop_words=STOPWORDS)
-svd = TruncatedSVD(n_components=1000) # This may be too many components.
-DTMpipe = Pipeline([('tfidf', tfidf), ('svd', svd)])
 
 # build DTM with movie_id index
 dtm = DTMpipe.fit_transform(df['tokens'])
