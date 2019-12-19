@@ -33,7 +33,7 @@ tokenizer = Tokenizer(nlp.vocab)
 
 # open shuffled movie id list
 # rand_index is the index. Renamed to avoid namespace issues.
-movie_id_df = pd.read_csv('../web_scraping/movieid_shuffle.csv',
+movie_id_df = pd.read_csv('../web_scraping/movieid_shuffle_small.csv',
                             encoding='ascii',
                             names=['rand_index', 'movie_id'])
 
@@ -107,11 +107,11 @@ def check_row_files():
 def batch_serialize(start: int, end: int):
     """Serialize a list of aggregated reviews starting and ending with a
     certain point in the movieid_shuffle.csv."""
-    print(check_row_files())
-    if check_row_files() > end:
+    pickup = check_row_files()
+    if pickup > end:
         return None
     rows_list = []
-    for id in movie_id_df.movie_id[start:end]:
+    for id in movie_id_df.movie_id[pickup:end]:
         text_list = get_review_text(id.strip('tt'))
         if len(text_list) > 0:
             # print(text_list)
@@ -127,6 +127,18 @@ def batch_serialize(start: int, end: int):
     pickling_on.close()
     return None
 
+def batch_get_all_movies():
+    """Attempt to get all movies downloaded and serialized. Pickup where
+    the last attempt left off."""
+    goal = len(movie_id_df.movie_id)
+    pickup_start = check_row_files()
+    for i in range(5000, goal, 5000):
+        batch_serialize(pickup_start, i)
+    if goal % 5000 != 0:
+        remainder = goal % 5000
+        batch_serialize(goal - remainder, goal)
+    return True
+
 def aggregate_movies(n: int):
     """Combine all reviews for the first n random movies into a dataframe."""
 
@@ -139,8 +151,9 @@ def aggregate_movies(n: int):
     print(df.shape)
     return df
 
-batch_serialize(0, 10)
+batch_get_all_movies()
 print("done!")
+# The code for testing this commit stops here.
 
 ## aggregate reviews from first n random movies
 # df = aggregate_movies(500)
