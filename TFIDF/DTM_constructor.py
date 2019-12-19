@@ -21,13 +21,16 @@ from spacy.tokenizer import Tokenizer
 from spacy.lang.en import English
 
 # Create a blank Tokenizer with just the English vocab
-nlp = English()
+# nlp = English()
+# This english corpus has to be installed locally, so it's good to check for first.
+nlp = spacy.load("en_core_web_sm")
 tokenizer = Tokenizer(nlp.vocab)
 
 # open shuffled movie id list
 movie_id_df = pd.read_csv('../web_scraping/movieid_shuffle.csv',
                             encoding='ascii',
                             names=['index', 'movie_id'])
+
 
 # connect to database
 connection = psycopg2.connect(
@@ -101,7 +104,6 @@ def aggregate_movies(n):
 
 # aggregate reviews from first n random movies
 df = aggregate_movies(500)
-nlp = spacy.load("en_core_web_sm")
 
 # Instantiate pipeline
 STOPWORDS = nlp.Defaults.stop_words
@@ -126,6 +128,7 @@ test_review = ["This film is the most poignant exploration of the human conditio
                 I have ever seen. The ennui, pain, dread, pathos, and love\
                 on display here is overwhelming."]
 review_vect = DTMpipe.transform(test_review)
+print(test_review)
 for i in knn.kneighbors(review_vect)[1][0]:
     print(dtm.index[i])
 
