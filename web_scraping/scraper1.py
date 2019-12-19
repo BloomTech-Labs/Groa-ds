@@ -86,7 +86,7 @@ def imdb_scraper(id_list):
     # total_ratings = total_ratings[0]
     # total_ratings = re.findall(r'[0-9]+', total_ratings)
     # total_ratings = ''.join(total_ratings)
-
+    time.sleep(randint(3,6))
     response = requests.get(url_reviews)
     soup = BeautifulSoup(response.text, 'html.parser')
     items = soup.find_all(class_='lister-item-content')
@@ -122,8 +122,8 @@ def imdb_scraper(id_list):
         key = load['data-key']
       except:
         break
-      url_reviews = url_short + '/reviews/_ajax?paginationKey=' + key
-
+      url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
+      time.sleep(randint(3,6))
       response = requests.get(url_reviews)
       soup = BeautifulSoup(response.text, 'html.parser')
       # sleep for 3-6 seconds to not spam their servers
