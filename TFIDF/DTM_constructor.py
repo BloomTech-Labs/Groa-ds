@@ -33,7 +33,7 @@ tokenizer = Tokenizer(nlp.vocab)
 
 # open shuffled movie id list
 # rand_index is the index. Renamed to avoid namespace issues.
-movie_id_df = pd.read_csv('../web_scraping/movieid_shuffle_small.csv',
+movie_id_df = pd.read_csv('../web_scraping/movieid_shuffle.csv',
                             encoding='ascii',
                             names=['rand_index', 'movie_id'])
 
@@ -122,6 +122,7 @@ def batch_serialize(start: int, end: int):
             movie_dict = {'movie_id':id.strip('tt'), 'tokens':tokens}
             rows_list.append(movie_dict)
     # pickle list of rows, with the ending row as file name.
+    print(rows_list)
     pickling_on = open(f"rows/{end}.pickle","wb")
     pickle.dump(rows_list, pickling_on)
     pickling_on.close()
@@ -133,6 +134,7 @@ def batch_get_all_movies():
     goal = len(movie_id_df.movie_id)
     pickup = check_row_files()
     for i in range(5000, goal, 5000):
+        print(f"serializing, starting at {i}")
         batch_serialize(pickup, i)
     if goal % 5000 != 0:
         remainder = goal % 5000
@@ -165,16 +167,26 @@ def setup():
     """Setup wizard."""
     while True:
         print("""Options: \n
-                    (1) Serialize all reviews (or whatever's left to get). \n
+                    (1) Serialize all reviews, or up to a certain point. \n
                     (2) Check how many reviews have been serialized. \n
                     (3) Fit a pipeline on a small dataframe. \n
                     (4) Create a dataframe from all the reviews. \n
                     (5) Transform the dataframe with the pipeline. \n
-                    (6) Get movie recommendations.
+                    (6) Get movie recommendations. \n
+                    (7) Exit this setup wizard.
                      """)
         choice = int(input("Enter a choice: "))
         if choice == 1:
-            batch_get_all_movies()
+            pickup = check_row_files()
+            print(f"""Movies serialized: {pickup}""")
+            print("""Options: \n
+                    (1) Serialize all reviews. \n
+                    (2) Or enter a number greater than 1 to specify how many.""")
+            second_choice = int(input("Enter a choice: "))
+            if second_choice == 1:
+                batch_get_all_movies()
+            if second_choice > 1:
+                batch_serialize(pickup, second_choice)
             pickup = check_row_files()
             print(f"Movies serialized: {pickup}")
         if choice == 2:
@@ -201,7 +213,8 @@ def setup():
             master_df = create_df(all_movies)
             print("""//////MASTER DATAFRAME CREATED\\\\\\\ """)
             print(f"""shape:{master_df.shape}""")
-             
+
+
 
 
 
