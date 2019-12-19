@@ -213,9 +213,15 @@ def setup():
             master_df = create_df(all_movies)
             print("""//////MASTER DATAFRAME CREATED\\\\\\\ """)
             print(f"""shape:{master_df.shape}""")
-
-
-
+        if choice == 5:
+            pickling_off = open(f"Pipeline.pickle", "rb")
+            FrankenPipe = pickle.load(pickling_off)
+            master_dtm = FrankenPipe.transform(master_df['tokens'])
+            master_dtm = pd.DataFrame(master_dtm)
+            master_dtm = master_dtm.set_index(master_df['movie_id'])
+            print("//////MASTER DOCUMENT-TERM-MATRIX CREATED\\\\\\\ """)
+        if choice == 6:
+            
 
 
 
