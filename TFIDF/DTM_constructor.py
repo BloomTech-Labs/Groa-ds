@@ -7,6 +7,7 @@ import datetime
 import logging
 import os
 import sys
+import pathlib
 import pickle
 import psycopg2
 import spacy
@@ -27,10 +28,10 @@ nlp = spacy.load("en_core_web_sm")
 tokenizer = Tokenizer(nlp.vocab)
 
 # open shuffled movie id list
+# rand_index is the index. Renamed to avoid namespace issues.
 movie_id_df = pd.read_csv('../web_scraping/movieid_shuffle.csv',
                             encoding='ascii',
-                            names=['index', 'movie_id'])
-
+                            names=['rand_index', 'movie_id'])
 
 # connect to database
 connection = psycopg2.connect(
@@ -65,19 +66,48 @@ def tokenize(text):
     return tokens
 
 def spacy_tokenize(text):
+    """Tokenize with spacy. Currently not in use."""
     tokenlist = [token.text.lower() for token in tokenizer(text)]
     return ' '.join(tokenlist)
 
 def aggregate_reviews(review_list):
-    """Combine all reviews into one string"""
+    """Combine all reviews into one string."""
     tokens = ""
     for i in review_list:
         tokens += i
         # print(i)
     return tokens
 
-def aggregate_movies(n):
-    """Combine all reviews for random n movies into a dataframe."""
+def check_row_files():
+    """Check for the existence of rows in the rows directory.
+    The files in this directory are serialized lists of aggrgated movie reviews.
+    They're stored in this format so that they can be used to construct the
+    master DTM all at once, which is necessary because appending to a DataFrame
+    involves copying the entire thing. This method should make the process happen
+    much faster.
+
+    Returns the position of the movieid_shuffle.csv to pick back up at."""
+    # If rows folder is empty, then return 0 (start at the beginning).
+    # If rows folder is not empty, return the largest number in a filename.
+    if os.stat("rows/").st_size == 0:
+        return 0
+    elif os.stat("rows/").st_size != 0:
+        file_list = []
+        for file in Path.iterdir():
+            if file.is_file():
+                file_list.append(file)
+        return max([int(re.sub(r'[^0-9]', '', x)) for x in file_list])
+    else:
+        return 0
+
+def batch_serialize(start: int, end: int, id_list):
+    """Serialize a list of aggregated reviews starting and ending with a
+    certain point in the movieid_shuffle.csv."""
+
+    pass
+
+def aggregate_movies(n: int):
+    """Combine all reviews for the first n random movies into a dataframe."""
     rows_list = []
     for id in movie_id_df.movie_id[:n]:
         text_list = get_review_text(id.strip('tt'))
@@ -95,7 +125,7 @@ def aggregate_movies(n):
     print("rows size: ", sys.getsizeof(rows_list))
     print("dataframe size: ", sys.getsizeof(df))
     # pickle rows list
-    pickling_on = open("rows_list.pickle","wb")
+    pickling_on = open(f"{n}_rows_list.pickle","wb")
     pickle.dump(rows_list, pickling_on)
     pickling_on.close()
     print(df.shape)
