@@ -24,7 +24,11 @@ from spacy.lang.en import English
 # Create a blank Tokenizer with just the English vocab
 # nlp = English()
 # This english corpus has to be installed locally, so it's good to check for first.
-nlp = spacy.load("en_core_web_sm")
+try:
+    nlp = spacy.load("en_core_web_sm")
+except:
+    os.system("python -m spacy download en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
 tokenizer = Tokenizer(nlp.vocab)
 
 # open shuffled movie id list
@@ -89,27 +93,25 @@ def check_row_files():
     Returns the position of the movieid_shuffle.csv to pick back up at."""
     # If rows folder is empty, then return 0 (start at the beginning).
     # If rows folder is not empty, return the largest number in a filename.
-    if os.stat("rows/").st_size == 0:
+    p = pathlib.Path("./rows")
+    files = [path.parts[1] for path in p.iterdir() if path.is_file()]
+    if len(files) == 0:
+        print("dir 'rows' is empty")
         return 0
-    elif os.stat("rows/").st_size != 0:
-        file_list = []
-        for file in Path.iterdir():
-            if file.is_file():
-                file_list.append(file)
-        return max([int(re.sub(r'[^0-9]', '', x)) for x in file_list])
+    elif len(files) != 0:
+        return max([int(re.sub(r'[^0-9]', '', x)) for x in files])
     else:
+        print("dir 'rows' does not seem empty or non-empty. Weird!")
         return 0
 
-def batch_serialize(start: int, end: int, id_list):
+def batch_serialize(start: int, end: int):
     """Serialize a list of aggregated reviews starting and ending with a
     certain point in the movieid_shuffle.csv."""
-
-    pass
-
-def aggregate_movies(n: int):
-    """Combine all reviews for the first n random movies into a dataframe."""
+    print(check_row_files())
+    if check_row_files() > end:
+        return None
     rows_list = []
-    for id in movie_id_df.movie_id[:n]:
+    for id in movie_id_df.movie_id[start:end]:
         text_list = get_review_text(id.strip('tt'))
         if len(text_list) > 0:
             # print(text_list)
@@ -119,21 +121,29 @@ def aggregate_movies(n: int):
             # print("\n", tokens)
             movie_dict = {'movie_id':id.strip('tt'), 'tokens':tokens}
             rows_list.append(movie_dict)
+    # pickle list of rows, with the ending row as file name.
+    pickling_on = open(f"rows/{end}.pickle","wb")
+    pickle.dump(rows_list, pickling_on)
+    pickling_on.close()
+    return None
 
+def aggregate_movies(n: int):
+    """Combine all reviews for the first n random movies into a dataframe."""
+
+    rows_list = []
     # df = pd.DataFrame(columns=['movie_id', 'tokens'])
     df = pd.DataFrame(rows_list, columns=['movie_id', 'tokens'])
     print("rows size: ", sys.getsizeof(rows_list))
     print("dataframe size: ", sys.getsizeof(df))
-    # pickle rows list
-    pickling_on = open(f"{n}_rows_list.pickle","wb")
-    pickle.dump(rows_list, pickling_on)
-    pickling_on.close()
+
     print(df.shape)
     return df
 
+batch_serialize(0, 10)
+print("done!")
 
-# aggregate reviews from first n random movies
-df = aggregate_movies(500)
+## aggregate reviews from first n random movies
+# df = aggregate_movies(500)
 
 # Instantiate pipeline
 STOPWORDS = nlp.Defaults.stop_words
