@@ -173,7 +173,7 @@ def setup():
                     (4) Create a dataframe from all the reviews. \n
                     (5) Transform the dataframe with the pipeline. \n
                     (6) Get movie recommendations. \n
-                    (7) Exit this setup wizard.
+                    (7) Exit this setup wizard with the DB connection open.
                      """)
         choice = int(input("Enter a choice: "))
         if choice == 1:
@@ -202,6 +202,9 @@ def setup():
             # create a DataFrame
             small_df = create_df(5000)
 
+            # save DTM
+            small_df.to_csv('small_df.csv')
+
             # fit the pipeline and pickle it
             PickleMePipe.fit_transform(small_df['tokens'])
             pickling_on = open("Pipeline.pickle", "wb")
@@ -214,49 +217,38 @@ def setup():
             print("""//////MASTER DATAFRAME CREATED\\\\\\\ """)
             print(f"""shape:{master_df.shape}""")
         if choice == 5:
+            # Load the Pipeline
             pickling_off = open(f"Pipeline.pickle", "rb")
             FrankenPipe = pickle.load(pickling_off)
+            # Construct master document-term matrix.
             master_dtm = FrankenPipe.transform(master_df['tokens'])
             master_dtm = pd.DataFrame(master_dtm)
             master_dtm = master_dtm.set_index(master_df['movie_id'])
-            print("//////MASTER DOCUMENT-TERM-MATRIX CREATED\\\\\\\ """)
+            print("//////MASTER DOCUMENT-TERM MATRIX CREATED\\\\\\\ """)
         if choice == 6:
-            
+            # Load the Pipeline
+            pickling_off = open(f"Pipeline.pickle", "rb")
+            FrankenPipe = pickle.load(pickling_off)
+            # instantiate and fit KNN
+            knn = NearestNeighbors(n_neighbors=10, algorithm='kd_tree')
+            knn.fit(master_dtm)
 
+            # test a review
+            test_review = ["This film is the most poignant exploration of the human condition\
+                            I have ever seen. The ennui, pain, dread, pathos, and love\
+                            on display here is overwhelming."]
+            review_vect = FrankenPipe.transform(test_review)
+            print(test_review)
+            for i in knn.kneighbors(review_vect)[1][0]:
+                print("https://www.imdb.com/title/tt" + str(dtm.index[i]))
 
-
-
+            # give recommendations for user input
+            user_review = [input("Paste a movie review here (no \" or \' symbols):  ")]
+            user_review_vect = FrankenPipe.transform(user_review)
+            for i in knn.kneighbors(user_review_vect)[1][0]:
+                print("https://www.imdb.com/title/tt" + str(dtm.index[i]))
 
 setup()
-# The code for testing this commit stops here.
-
-
-# build DTM with movie_id index
-dtm = DTMpipe.fit_transform(df['tokens'])
-dtm = pd.DataFrame(dtm)
-dtm = dtm.set_index(df['movie_id'])
-
-# save DTM
-dtm.to_csv('ReducedDTM'+str(time.time())+'.csv')
-
-# instantiate and fit KNN
-knn = NearestNeighbors(n_neighbors=5, algorithm='kd_tree')
-knn.fit(dtm)
-
-# test a review
-test_review = ["This film is the most poignant exploration of the human condition\
-                I have ever seen. The ennui, pain, dread, pathos, and love\
-                on display here is overwhelming."]
-review_vect = DTMpipe.transform(test_review)
-print(test_review)
-for i in knn.kneighbors(review_vect)[1][0]:
-    print(dtm.index[i])
-
-# give receommendations for user input
-user_review = [input("Paste a movie review here (no \" or \' symbols):  ")]
-user_review_vect = DTMpipe.transform(user_review)
-for i in knn.kneighbors(user_review_vect)[1][0]:
-    print("https://www.imdb.com/title/tt" + str(dtm.index[i]))
 
 # close connection
 if connection:
