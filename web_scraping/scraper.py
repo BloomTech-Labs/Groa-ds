@@ -86,7 +86,8 @@ def imdb_scraper(id_list):
             if iteration_counter > 9999:
                 make_dataframe(index, movie_id, review, rating, title, username,
                                found_useful_num, found_useful_den, date)
-                pass # TODO
+                insert_rows(df)
+
                 iteration_counter = 0
             # populate lists
             for item in items:
