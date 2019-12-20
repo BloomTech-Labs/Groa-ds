@@ -61,7 +61,6 @@ def imdb_scraper(id_list):
   found_useful_num = []
   found_useful_den = []
   date = []
-  # total_ratings = 0
 
 
   for id in id_list:
@@ -74,18 +73,6 @@ def imdb_scraper(id_list):
 
     url_short = f'http://www.imdb.com/title/{id}/'
     url_reviews = url_short + 'reviews?ref_=tt_urv'
-    # url_ratings = url_short + 'ratings?ref_=tturv_ql_4'
-
-
-
-    # Ratings page
-    # page = requests.get(url_ratings)
-    # content = BeautifulSoup(page.content, 'html.parser')
-    #
-    # total_ratings = list(content.find(class_ = "allText"))
-    # total_ratings = total_ratings[0]
-    # total_ratings = re.findall(r'[0-9]+', total_ratings)
-    # total_ratings = ''.join(total_ratings)
     time.sleep(randint(3,6))
     response = requests.get(url_reviews)
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -118,12 +105,12 @@ def imdb_scraper(id_list):
               rating.append(11)
               Nan_count += 1
 
-      # loading more data
+      # loading more data if there are more than 25 reviews
       load = soup.find(class_='load-more-data')
       try:
-        key = load['data-key']
+        key = load['data-key'] # exists only if there is a "load More" button
       except:
-        break
+        break # End the while loop and go to next movie id
       url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
       time.sleep(randint(3,6))
       response = requests.get(url_reviews)
@@ -149,7 +136,6 @@ def imdb_scraper(id_list):
             'helpful_num':found_useful_num,
             'helpful_denom':found_useful_den,
             'date':date
-            # 'no. of ratings':total_ratings
         })
 
   # convert date column into date object
@@ -201,7 +187,6 @@ def imdb_scraper(id_list):
 
 id_list = [row for row in df.iloc[:1000, 1]]
 df2 = imdb_scraper(id_list)
-# print(df.head())
 
 # close connection
 if connection:
