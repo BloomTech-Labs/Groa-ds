@@ -125,7 +125,6 @@ def batch_serialize(start: int, end: int):
             movie_dict = {'movie_id':id.strip('tt'), 'tokens':tokens}
             rows_list.append(movie_dict)
     # pickle list of rows, with the ending row as file name.
-    print(rows_list)
     pickling_on = open(f"rows/{end}.pickle","wb")
     pickle.dump(rows_list, pickling_on)
     pickling_on.close()
@@ -144,12 +143,12 @@ def batch_get_all_movies():
     return True
 
 def create_df(n: int):
-    """Combine all reviews for a certain list of movie reviews into a dataframe."""
+    """Combine all reviews for a certain number of movie reviews into a dataframe."""
     # Get any rows that aren't already serialized.
     pickup = check_row_files()
     if pickup < n:
         batch_serialize(pickup, n)
-    # unpickle the rows needed.
+    # unpickle the rows specified by n.
     rows_list = []
     p = pathlib.Path("./rows")
     files = [path for path in p.iterdir() if path.is_file()]
@@ -159,6 +158,7 @@ def create_df(n: int):
             pickling_off = open(f"./rows/{number}.pickle", "rb")
             temp_list = pickle.load(pickling_off)
             rows_list.extend(temp_list)
+    # Construct DataFrame
     df = pd.DataFrame(rows_list, columns=['movie_id', 'tokens'])
     print("rows size: ", sys.getsizeof(rows_list))
     print("dataframe size: ", sys.getsizeof(df))
