@@ -136,6 +136,7 @@ def batch_get_all_movies():
     goal = len(movie_id_df.movie_id)
     pickup = check_row_files()
     for i in range(5000, goal, 5000):
+        print(f"Batch serializing the next 5000 movies (to {i}).")
         batch_serialize(pickup, i)
     if goal % 5000 != 0:
         remainder = goal % 5000
