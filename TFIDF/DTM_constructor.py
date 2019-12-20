@@ -53,6 +53,9 @@ try:
 except:
     print("Connection problem chief!")
 
+# Control for optional connection closing
+close_me = True
+
 def get_review_text(id):
     """Get all reviews for a movie_id. Returns list of tuples from DB."""
     movie_query = "SELECT movie_id, review_text FROM reviews WHERE movie_id=" \
@@ -134,7 +137,6 @@ def batch_get_all_movies():
     goal = len(movie_id_df.movie_id)
     pickup = check_row_files()
     for i in range(5000, goal, 5000):
-        print(f"serializing, starting at {i}")
         batch_serialize(pickup, i)
     if goal % 5000 != 0:
         remainder = goal % 5000
@@ -169,7 +171,7 @@ def setup():
         print("""Options: \n
                     (1) Serialize all reviews, or up to a certain point. \n
                     (2) Check how many reviews have been serialized. \n
-                    (3) Fit a pipeline on a small dataframe. \n
+                    (3) Fit a pipeline on a small dataframe, and pickle both. \n
                     (4) Create a dataframe from all the reviews. \n
                     (5) Transform the dataframe with the pipeline. \n
                     (6) Get movie recommendations. \n
@@ -186,6 +188,7 @@ def setup():
             if second_choice == 1:
                 batch_get_all_movies()
             if second_choice > 1:
+                print(f"serializing movies from {pickup} to {second_choice}")
                 batch_serialize(pickup, second_choice)
             pickup = check_row_files()
             print(f"Movies serialized: {pickup}")
@@ -202,19 +205,22 @@ def setup():
             # create a DataFrame
             small_df = create_df(5000)
 
-            # save DTM
-            small_df.to_csv('small_df.csv')
-
             # fit the pipeline and pickle it
-            PickleMePipe.fit_transform(small_df['tokens'])
+            small_dtm = PickleMePipe.fit_transform(small_df['tokens'])
             pickling_on = open("Pipeline.pickle", "wb")
             pickle.dump(PickleMePipe, pickling_on)
             pickling_on.close()
             print("Pipeline has been pickled.")
+
+            # save DTM
+            small_dtm.to_csv('small_dtm.csv')
+            print("Small DTM has been pickled.")
+
         if choice == 4:
-            all_movies = len(movie_id_df.movie_id)
+            # Make master DataFrame from whatever rows are currently serialized.
+            all_movies = check_row_files()
             master_df = create_df(all_movies)
-            print("""//////MASTER DATAFRAME CREATED\\\\\\\ """)
+            print("""\n\n//////MASTER DATAFRAME CREATED\\\\\\\ \n\n""")
             print(f"""shape:{master_df.shape}""")
         if choice == 5:
             # Load the Pipeline
@@ -224,7 +230,7 @@ def setup():
             master_dtm = FrankenPipe.transform(master_df['tokens'])
             master_dtm = pd.DataFrame(master_dtm)
             master_dtm = master_dtm.set_index(master_df['movie_id'])
-            print("//////MASTER DOCUMENT-TERM MATRIX CREATED\\\\\\\ """)
+            print("\n\n//////MASTER DOCUMENT-TERM MATRIX CREATED\\\\\\\ \n\n""")
         if choice == 6:
             # Load the Pipeline
             pickling_off = open(f"Pipeline.pickle", "rb")
@@ -238,19 +244,27 @@ def setup():
                             I have ever seen. The ennui, pain, dread, pathos, and love\
                             on display here is overwhelming."]
             review_vect = FrankenPipe.transform(test_review)
-            print(test_review)
+            print("Here's an example review: ", test_review)
             for i in knn.kneighbors(review_vect)[1][0]:
-                print("https://www.imdb.com/title/tt" + str(dtm.index[i]))
+                print("...And some example recommendations: \n")
+                print("    https://www.imdb.com/title/tt" + str(master_dtm.index[i]))
 
             # give recommendations for user input
-            user_review = [input("Paste a movie review here (no \" or \' symbols):  ")]
+            user_review = [input("\nPaste a movie review here (no \" or \' symbols):  ")]
             user_review_vect = FrankenPipe.transform(user_review)
             for i in knn.kneighbors(user_review_vect)[1][0]:
-                print("https://www.imdb.com/title/tt" + str(dtm.index[i]))
+                print("    https://www.imdb.com/title/tt" + str(master_dtm.index[i]))
+        if choice == 7:
+            # Turn off the connection closure setting so the database can be
+            # accessed in interactive mode.
+            global close_me
+            close_me = False
+            break
+
 
 setup()
 
 # close connection
-if connection:
+if close_me:
   cursor_boi.close()
   connection.close()
