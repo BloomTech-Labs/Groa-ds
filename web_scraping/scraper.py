@@ -40,9 +40,9 @@ def create_log(movie_name, num_review, num_nan, elapsed):
     os.chdir(path)
 
     # remove punctuation from the movie name
-    movie_name = re.sub(r'[^\w\s]','',movie_name)
+    movie_name = re.sub(r'[^\w\s]', '', movie_name)
 
-    with open('Logfile.txt','a+') as file:
+    with open('Logfile.txt', 'a+') as file:
         file.write("---------------------------------------------------------------------\n")
         file.write(str(datetime.now()) + "\n")
         file.write(f"Movie Title: {movie_name}\n")
@@ -51,7 +51,6 @@ def create_log(movie_name, num_review, num_nan, elapsed):
         file.write(f"Finished Scraping {movie_name} in {round(elapsed,2)} seconds\n")
         file.write("----------------------------------------------------------------------")
         file.write("\n")
-
 
 
 def imdb_scraper(id_list):
@@ -73,7 +72,7 @@ def imdb_scraper(id_list):
     found_useful_num = []
     found_useful_den = []
     date = []
-    iteration_counter = 0 # number of times the while loop has passed
+    iteration_counter = 0  # number of times the while loop has passed
 
     for id in id_list:
         t1 = time.perf_counter()
@@ -81,16 +80,14 @@ def imdb_scraper(id_list):
         review_count = 0
         movie_title = ''
 
-
         url_short = f'http://www.imdb.com/title/{id}/'
         url_reviews = url_short + 'reviews?ref_=tt_urv'
-        time.sleep(randint(3,6))
+        time.sleep(randint(3, 6))
         response = requests.get(url_reviews)
         if response.status_code != 200:
             continue
         soup = BeautifulSoup(response.text, 'html.parser')
         items = soup.find_all(class_='lister-item-content')
-
 
         while True:
             if iteration_counter > 9999:
@@ -129,11 +126,12 @@ def imdb_scraper(id_list):
             load = soup.find(class_='load-more-data')
             iteration_counter += 1
             try:
-                key = load['data-key'] # exists only if there is a "load More" button
+                key = load['data-key']
+                # exists only if there is a "load More" button
             except:
-                break # End the while loop and go to next movie id
+                break  # End the while loop and go to next movie id
             url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
-            time.sleep(randint(3,6))
+            time.sleep(randint(3, 6))
             response = requests.get(url_reviews)
             soup = BeautifulSoup(response.text, 'html.parser')
             items = soup.find_all(class_='lister-item-content')
@@ -144,7 +142,7 @@ def imdb_scraper(id_list):
         finish = t2-t1
 
         # log the movie
-        create_log(movie_title,review_count,Nan_count,finish)
+        create_log(movie_title, review_count, Nan_count, finish)
         # for loop ends here
 
     # create DataFrame
@@ -158,28 +156,29 @@ def make_dataframe(movie_id, review, rating, title, username,
                    found_useful_num, found_useful_den, date):
     df = pd.DataFrame(
            {
-            'movie_id':movie_id,
-            'review':reviews,
-            'rating':rating,
-            'title':titles,
-            'username':username,
-            'helpful_num':found_useful_num,
-            'helpful_denom':found_useful_den,
-            'date':date
+            'movie_id': movie_id,
+            'review': reviews,
+            'rating': rating,
+            'title': titles,
+            'username': username,
+            'helpful_num': found_useful_num,
+            'helpful_denom': found_useful_den,
+            'date': date
             })
     df['date'] = pd.to_datetime(df['date'])
     df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
     return df
 
+
 def insert_rows(df):
     # convert rows into tuples
     row_insertions = ""
     for i in list(df.itertuples(index=False)):
-        row_insertions += str((str(i.username.replace("'","").replace('"','')),
+        row_insertions += str((str(i.username.replace("'", "").replace('"', '')),
                                i.movie_id,
                                i.date,
-                               str(i.review.replace("'","").replace('"','')),
-                               str(i.title.replace("'","").replace('"','')),
+                               str(i.review.replace("'", "").replace('"', '')),
+                               str(i.title.replace("'", "").replace('"', '')),
                                int(i.rating),
                                i.helpful_num,
                                i.helpful_denom)) + ", "
