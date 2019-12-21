@@ -12,7 +12,7 @@ import pandas as pd
 from random import randint
 
 # open shuffled movie id list
-df = pd.read_csv('movieid_shuffle.csv', encoding='ascii')
+id_list = pd.read_csv('movieid_shuffle.csv', encoding='ascii')
 
 # connect to database
 connection = psycopg2.connect(
