@@ -152,14 +152,14 @@ def imdb_scraper(id_list):
     print('All done!')
 
 
-def make_dataframe(movie_id, review, rating, title, username,
+def make_dataframe(movie_id, reviews, rating, titles, username,
                    found_useful_num, found_useful_den, date):
     df = pd.DataFrame(
            {
             'movie_id': movie_id,
-            'review': reviews,
+            'reviews': reviews,
             'rating': rating,
-            'title': titles,
+            'titles': titles,
             'username': username,
             'helpful_num': found_useful_num,
             'helpful_denom': found_useful_den,
@@ -177,8 +177,8 @@ def insert_rows(df):
         row_insertions += str((str(i.username.replace("'", "").replace('"', '')),
                                i.movie_id,
                                i.date,
-                               str(i.review.replace("'", "").replace('"', '')),
-                               str(i.title.replace("'", "").replace('"', '')),
+                               str(i.reviews.replace("'", "").replace('"', '')),
+                               str(i.titles.replace("'", "").replace('"', '')),
                                int(i.rating),
                                i.helpful_num,
                                i.helpful_denom)) + ", "
