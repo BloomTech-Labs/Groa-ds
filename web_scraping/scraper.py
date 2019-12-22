@@ -207,6 +207,10 @@ def insert_rows(df):
     total = t3 - t
     print(f"Scraped {len(id_list)} movies in {round(total,2)} seconds")
 
+
+id_list = [row for row in df.iloc[:, 1]]
+df2 = imdb_scraper(id_list)
+
 # close connection
 if connection:
     cursor_boi.close()
