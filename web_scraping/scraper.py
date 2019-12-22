@@ -90,7 +90,7 @@ def imdb_scraper(id_list):
         items = soup.find_all(class_='lister-item-content')
 
         while True:
-            if iteration_counter > 9999:
+            if iteration_counter > 8999:
                 make_dataframe(movie_id, reviews, rating, titles, username,
                                found_useful_num, found_useful_den, date)
                 insert_rows(df)
