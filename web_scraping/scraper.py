@@ -82,7 +82,7 @@ def imdb_scraper(id_list):
 
         url_short = f'http://www.imdb.com/title/{id}/'
         url_reviews = url_short + 'reviews?ref_=tt_urv'
-        time.sleep(randint(3, 6))
+        # time.sleep(randint(3, 6))
         response = requests.get(url_reviews)
         if response.status_code != 200:
             continue
@@ -131,7 +131,7 @@ def imdb_scraper(id_list):
             except:
                 break  # End the while loop and go to next movie id
             url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
-            time.sleep(randint(3, 6))
+            # time.sleep(randint(3, 6))
             response = requests.get(url_reviews)
             soup = BeautifulSoup(response.text, 'html.parser')
             items = soup.find_all(class_='lister-item-content')
