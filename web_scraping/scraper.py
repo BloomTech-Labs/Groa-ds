@@ -146,7 +146,7 @@ def imdb_scraper(id_list):
         # for loop ends here
 
     # create DataFrame
-    df = make_dataframe(movie_id, review, rating, title, username,
+    df = make_dataframe(movie_id, reviews, rating, titles, username,
                         found_useful_num, found_useful_den, date)
     df = insert_rows(df)
     print('All done!')
