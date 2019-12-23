@@ -91,7 +91,7 @@ def imdb_scraper(id_list):
 
         while True:
             if iteration_counter > 8999:
-                make_dataframe(movie_id, reviews, rating, titles, username,
+                df = make_dataframe(movie_id, reviews, rating, titles, username,
                                found_useful_num, found_useful_den, date)
                 insert_rows(df)
                 movie_id = []
