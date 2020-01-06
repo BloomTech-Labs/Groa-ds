@@ -1,21 +1,21 @@
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-import re
-import time
 import datetime
 import logging
+import time
 import os
-import sys
+import pandas as pd
 import pathlib
 import pickle
 import psycopg2
+import re
+import requests
 import spacy
-from getpass import getpass
+import sys
+from bs4 import BeautifulSoup
 from datetime import datetime
+from getpass import getpass
 from random import randint
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import NearestNeighbors
 from spacy.tokenizer import Tokenizer
