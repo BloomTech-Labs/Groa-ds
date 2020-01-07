@@ -27,7 +27,7 @@ class Scraper():
         takes in the names of a file or path to a file to read into a dataframe
         '''
 
-        df = pd.read_csv(path,encoding = 'ascii')
+        df = pd.read_csv(path,encoding = 'ascii',header = None)
 
         # get all the rows from the second column and then select only the ones from the start and end positions
         id_list = [row for row in df.iloc[:,1]]
@@ -111,8 +111,10 @@ class Scraper():
         found_useful_den = []
         date = []
         iteration_counter = 0
-        try:
-            for id in id_list:
+        broken = []
+        
+        for count,id in enumerate(id_list):
+            try:
                 t1 = time.perf_counter()
                 Nan_count = 0
                 review_count = 0
@@ -124,7 +126,7 @@ class Scraper():
                 time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
-                    continue
+                        continue
                 soup = BeautifulSoup(response.text, 'html.parser')
                 items = soup.find_all(class_='lister-item-content')
 
@@ -139,8 +141,8 @@ class Scraper():
 
                     if iteration_counter > self.max_iter_count:
                         df = self.make_dataframe(movie_id, reviews, rating, titles,
-                                                username, found_useful_num,
-                                                found_useful_den, date)
+                                                    username, found_useful_num,
+                                                    found_useful_den, date)
                         #insert_rows(df)
                         movie_id.clear()
                         rating.clear()
@@ -191,11 +193,22 @@ class Scraper():
                 t2 = time.perf_counter()
                 finish = t2-t1
 
+                # if the logfile exist already within the first iteration
+                # it will be deleted and recreated which fixes the issue of
+                # duplicating info when ran several times
+                if count == 0 and os.path.exists("logfile.txt"):
+                    os.remove("Logfile.txt")
+
                 # log the movie
                 self.create_log(movie_title, review_count, Nan_count, finish)
                 # for loop ends here
-        except Exception:
-            self.locate(id)
+
+            # catches any error and lets you know which ID was the last one scraped    
+            except Exception as e:
+                broken.append(id)
+                self.locate(broken[0])
+                print(e)
+                break
 
         # create DataFrame
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
@@ -207,9 +220,11 @@ class Scraper():
         #total time it took to scrape each review
         t3 = time.perf_counter()
         total = t3 - t
-        print(f"Scraped {len(id_list)} movies in {round(total,2)} seconds")
+        print(f"Scraped {count} movies in {round(total,2)} seconds")
 
-        print('All done!')
+        print('All done!\n')
+        print(f"This ID was the last one scraped")
+        self.show(broken)
         return df
 
     def locate(self,last_id):
@@ -222,12 +237,19 @@ class Scraper():
 
         #writes the last used ID to a file
         with open("pickup.txt",'w') as file:
-            file.write(str(self.pickup))
+            file.write(str(self.pickup+1))
+            file.write("\n")
+            file.write(str(self.end))
 
     def pick_up(self):
         with open("pickup.txt",'r') as file:
-            self.pickup = file.read()
+            lines = file.readlines()
+            self.pickup = lines[0]
+            self.end = lines[1]
             self.pickup = int(self.pickup)
+            self.end = int(self.end)
+
+        
 
 
 
