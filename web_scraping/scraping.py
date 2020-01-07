@@ -74,7 +74,7 @@ class Scraper():
             file.write("\n")
 
     def make_dataframe(self,movie_id, reviews, rating, titles, username,
-                   found_useful_num, found_useful_den, date):
+                   found_useful_num, found_useful_den, date, review_id):
         df = pd.DataFrame(
             {
                 'movie_id': movie_id,
@@ -84,10 +84,12 @@ class Scraper():
                 'username': username,
                 'helpful_num': found_useful_num,
                 'helpful_denom': found_useful_den,
-                'date': date
+                'date': date,
+                'review_id': review_id
                 })
         df['date'] = pd.to_datetime(df['date'])
         df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
+        print(df.shape) #test line
         return df
 
     def scrape(self,id_list = None):
@@ -110,9 +112,10 @@ class Scraper():
         found_useful_num = []
         found_useful_den = []
         date = []
+        review_id = []
         iteration_counter = 0
         broken = []
-        
+
         for count,id in enumerate(id_list):
             try:
                 t1 = time.perf_counter()
@@ -139,10 +142,10 @@ class Scraper():
                 ##############################
                 while True:
 
-                    if iteration_counter > self.max_iter_count:
+                    if iteration_counter >= self.max_iter_count:
                         df = self.make_dataframe(movie_id, reviews, rating, titles,
-                                                    username, found_useful_num,
-                                                    found_useful_den, date)
+                                                 username, found_useful_num,
+                                                 found_useful_den, date, review_id)
                         #insert_rows(df)
                         movie_id.clear()
                         rating.clear()
@@ -152,6 +155,7 @@ class Scraper():
                         found_useful_num.clear()
                         found_useful_den.clear()
                         date.clear()
+                        review_id.clear()
                         iteration_counter = 0
                         df = df.iloc[0:0]
 
@@ -168,6 +172,8 @@ class Scraper():
                         usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
                         found_useful_num.append(usefuls[0])
                         found_useful_den.append(usefuls[1])
+                        raw_revid = (item.find(class_="title").get("href"))
+                        review_id.append(re.search('rw\d+', raw_revid))
                         try:
                             rating.append(item.find(class_="rating-other-user-rating").find('span').text)
                         except:
@@ -176,7 +182,8 @@ class Scraper():
                         # for loop ends here
                     # loading more data if there are more than 25 reviews
                     load = soup.find(class_='load-more-data')
-                    iteration_counter += 1
+                    if items:
+                        iteration_counter += 1
                     try:
                         key = load['data-key']
                         # exists only if there is a "load More" button
@@ -203,7 +210,7 @@ class Scraper():
                 self.create_log(movie_title, review_count, Nan_count, finish)
                 # for loop ends here
 
-            # catches any error and lets you know which ID was the last one scraped    
+            # catches any error and lets you know which ID was the last one scraped
             except Exception as e:
                 broken.append(id)
                 self.locate(broken[0])
@@ -212,7 +219,7 @@ class Scraper():
 
         # create DataFrame
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
-                            found_useful_num, found_useful_den, date)
+                            found_useful_num, found_useful_den, date, review_id)
 
         # this line was causing a return error so i removed it and re-added it without having it assigned to anything
         #insert_rows(df)
@@ -220,7 +227,7 @@ class Scraper():
         #total time it took to scrape each review
         t3 = time.perf_counter()
         total = t3 - t
-        print(f"Scraped {count} movies in {round(total,2)} seconds")
+        print(f"Scraped {count + 1} movies in {round(total,2)} seconds")
 
         print('All done!\n')
         print(f"This ID was the last one scraped")
@@ -249,14 +256,14 @@ class Scraper():
             self.pickup = int(self.pickup)
             self.end = int(self.end)
 
-        
 
 
 
 
 
 
-path = "D:\\Documents\\Atom\\Labs 2019\\movie-recommender\\web_scraping\\movieid_shuffle_small.csv"
+
+path = "C:\\Users\\Michael\\Downloads\\movie\\movie-recommender\\Groa\\web_scraping\\movieid_shuffle_small.csv"
 
 start = int(input("Start at which row? "))
 end = int(input("End at which row? "))
