@@ -1,4 +1,0 @@
-Movie Title: Ana Kadova
-This movie has 0 reviews
-Out of 0 reviews there were 0 with NaN ratings
-Finished Screaping Ana Kadova in 0.96 seconds

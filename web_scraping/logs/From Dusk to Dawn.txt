@@ -1,4 +1,0 @@
-Movie Title: From Dusk to Dawn
-This movie has 0 reviews
-Out of 0 reviews there were 0 with NaN ratings
-Finished Screaping From Dusk to Dawn in 0.83 seconds
