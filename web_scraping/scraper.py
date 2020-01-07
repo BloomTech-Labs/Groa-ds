@@ -72,12 +72,12 @@ class Scraper():
         os.chdir(path)
 
         # remove punctuation from the movie name
-        movie_name = re.sub(r'[^\w\s]', '', movie_name)
+        # movie_name = re.sub(r'[^\w\s]', '', movie_name)
 
         with open('Logfile.txt', 'a+') as file:
             file.write("---------------------------------------------------------------------\n")
             file.write(str(datetime.now()) + "\n")
-            file.write(f"Movie Title: {movie_name}\n")
+            file.write(f"Movie ID: {movie_name}\n")
             file.write(f"This movie has {num_review} reviews\n")
             file.write(f"Out of {num_review} reviews there were {num_nan} with NaN ratings\n")
             file.write(f"Finished Scraping {movie_name} in {round(elapsed,2)} seconds\n")
@@ -214,7 +214,7 @@ class Scraper():
                     os.remove("Logfile.txt")
 
                 # log the movie
-                self.create_log(movie_title, review_count, Nan_count, finish)
+                self.create_log(id, review_count, Nan_count, finish)
                 # for loop ends here
 
             # catches any error and lets you know which ID was the last one scraped
