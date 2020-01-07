@@ -12,6 +12,8 @@ import pandas as pd
 from random import randint
 
 # open shuffled movie id list
+#print(os.getcwd())
+#os.chdir("D:\\Documents\\Atom\\Labs 2019\\movie-recommender\\web_scraping")
 df = pd.read_csv('movieid_shuffle.csv', encoding='ascii')
 
 # connect to database
@@ -148,8 +150,12 @@ def imdb_scraper(id_list):
     # create DataFrame
     df = make_dataframe(movie_id, reviews, rating, titles, username,
                         found_useful_num, found_useful_den, date)
-    df = insert_rows(df)
+
+    # this line was causing a return error so i removed it and re-added it without having it assigned to anything                    
+    #df = insert_rows(df)
+    insert_rows(df)
     print('All done!')
+    return df
 
 
 def make_dataframe(movie_id, reviews, rating, titles, username,
@@ -202,10 +208,12 @@ def insert_rows(df):
     connection.commit()
     print("Insertion Complete")
 
+    # I believe this section wasnt supposed to be added to this function since all it does is keep
+    # track of how long it took for code to run so im going to comment it out for now
     # total time it took to scrape each review
-    t3 = time.perf_counter()
-    total = t3 - t
-    print(f"Scraped {len(id_list)} movies in {round(total,2)} seconds")
+    #t3 = time.perf_counter()
+    #total = t3 - t
+    #print(f"Scraped {len(id_list)} movies in {round(total,2)} seconds")
 
 
 id_list = [row for row in df.iloc[:, 1]]
