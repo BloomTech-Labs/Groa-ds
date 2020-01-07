@@ -169,7 +169,7 @@ class Scraper():
                         titles.append(item.find(class_="title").get_text())
                         username.append(item.find(class_="display-name-link").get_text())
                         date.append(item.find(class_="review-date").get_text())
-                        movie_id.append(id)
+                        movie_id.append(id.replace("tt", ""))
                         found_useful = item.find(class_="actions text-muted").get_text()
                         found_useful = found_useful.replace(",", "")
                         usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
