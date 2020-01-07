@@ -11,6 +11,17 @@ from datetime import datetime
 import pandas as pd
 from random import randint
 
+connection = psycopg2.connect(
+    database = "postgres",
+    user     = "postgres",
+    password = getpass(),
+    host     = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
+    port     = "5432"
+    )
+
+# cursor object
+cursor_boi = connection.cursor()
+
 class Scraper():
 
     def __init__(self,start,end,max_iter):
@@ -89,7 +100,6 @@ class Scraper():
                 })
         df['date'] = pd.to_datetime(df['date'])
         df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
-        print(df.shape) #test line
         return df
 
     def scrape(self,id_list = None):
@@ -132,21 +142,14 @@ class Scraper():
                         continue
                 soup = BeautifulSoup(response.text, 'html.parser')
                 items = soup.find_all(class_='lister-item-content')
-
-                ###############################
-                if id == "tt10778974":
-                    print("breaking")
-                    1/0
-                ##############################
                 print(f"ID: {id} at index {self.all_ids.index(id)}")
-                
                 while True:
 
                     if iteration_counter >= self.max_iter_count:
                         df = self.make_dataframe(movie_id, reviews, rating, titles,
                                                  username, found_useful_num,
                                                  found_useful_den, date, review_id)
-                        #insert_rows(df)
+                        self.insert_rows(df)
                         movie_id.clear()
                         rating.clear()
                         reviews.clear()
@@ -173,7 +176,11 @@ class Scraper():
                         found_useful_num.append(usefuls[0])
                         found_useful_den.append(usefuls[1])
                         raw_revid = (item.find(class_="title").get("href"))
-                        review_id.append(re.search('rw\d+', raw_revid))
+                        match = re.search('rw\d+', raw_revid)
+                        try:
+                            review_id.append(match.group())
+                        except:
+                            review_id.append('')
                         try:
                             rating.append(item.find(class_="rating-other-user-rating").find('span').text)
                         except:
@@ -190,7 +197,7 @@ class Scraper():
                     except:
                         break  # End the while loop and go to next movie id
                     url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
-                    # time.sleep(randint(3, 6))
+                    time.sleep(randint(3, 6))
                     response = requests.get(url_reviews)
                     soup = BeautifulSoup(response.text, 'html.parser')
                     items = soup.find_all(class_='lister-item-content')
@@ -220,9 +227,7 @@ class Scraper():
         # create DataFrame
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
                             found_useful_num, found_useful_den, date, review_id)
-
-        # this line was causing a return error so i removed it and re-added it without having it assigned to anything
-        #insert_rows(df)
+        self.insert_rows(df)
 
         #total time it took to scrape each review
         t3 = time.perf_counter()
@@ -257,6 +262,39 @@ class Scraper():
             self.end = int(self.end)
 
 
+    def insert_rows(self, df):
+        # convert rows into tuples
+        row_insertions = ""
+        for i in list(df.itertuples(index=False)):
+            row_insertions += str((str(i.username.replace("'", "").replace('"', '')),
+                                i.movie_id,
+                                i.date,
+                                str(i.reviews.replace("'", "").replace('"', '')),
+                                str(i.titles.replace("'", "").replace('"', '')),
+                                int(i.rating),
+                                i.helpful_num,
+                                i.helpful_denom,
+                                i.review_id)) + ", "
+
+        # remove hanging comma
+        row_insertions = row_insertions[:-2]
+
+        # create SQL INSERT query
+        query = """INSERT INTO reviews(username,
+                                    movie_id,
+                                    review_date,
+                                    review_text,
+                                    review_title,
+                                    user_rating,
+                                    helpful_num,
+                                    helpful_denom,
+                                    review_id)
+                                    VALUES """ + row_insertions + ";"
+
+        # execute query
+        cursor_boi.execute(query)
+        connection.commit()
+        print("Insertion Complete")
 
 
 

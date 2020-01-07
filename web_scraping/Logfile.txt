@@ -1,63 +1,21 @@
 ---------------------------------------------------------------------
-2020-01-07 15:21:17.804964
+2020-01-07 15:39:29.268010
 Movie Title: 
 This movie has 0 reviews
 Out of 0 reviews there were 0 with NaN ratings
-Finished Scraping  in 3.6 seconds
+Finished Scraping  in 4.62 seconds
 ----------------------------------------------------------------------
 ---------------------------------------------------------------------
-2020-01-07 15:21:23.630609
+2020-01-07 15:39:34.835995
 Movie Title: 
 This movie has 0 reviews
 Out of 0 reviews there were 0 with NaN ratings
-Finished Scraping  in 5.82 seconds
+Finished Scraping  in 5.56 seconds
 ----------------------------------------------------------------------
 ---------------------------------------------------------------------
-2020-01-07 15:21:30.464338
+2020-01-07 15:39:39.522607
 Movie Title: 
 This movie has 2 reviews
-Out of 2 reviews there were 1 with NaN ratings
-Finished Scraping  in 6.83 seconds
-----------------------------------------------------------------------
----------------------------------------------------------------------
-2020-01-07 15:21:35.097726
-Movie Title: 
-This movie has 5 reviews
-Out of 5 reviews there were 0 with NaN ratings
-Finished Scraping  in 4.63 seconds
-----------------------------------------------------------------------
----------------------------------------------------------------------
-2020-01-07 15:21:40.778827
-Movie Title: 
-This movie has 0 reviews
-Out of 0 reviews there were 0 with NaN ratings
-Finished Scraping  in 5.68 seconds
-----------------------------------------------------------------------
----------------------------------------------------------------------
-2020-01-07 15:21:47.461295
-Movie Title: 
-This movie has 1 reviews
-Out of 1 reviews there were 0 with NaN ratings
-Finished Scraping  in 6.67 seconds
-----------------------------------------------------------------------
----------------------------------------------------------------------
-2020-01-07 15:21:53.342614
-Movie Title: 
-This movie has 9 reviews
-Out of 9 reviews there were 0 with NaN ratings
-Finished Scraping  in 5.87 seconds
-----------------------------------------------------------------------
----------------------------------------------------------------------
-2020-01-07 15:22:00.028125
-Movie Title: 
-This movie has 0 reviews
-Out of 0 reviews there were 0 with NaN ratings
-Finished Scraping  in 6.68 seconds
-----------------------------------------------------------------------
----------------------------------------------------------------------
-2020-01-07 15:22:03.680100
-Movie Title: 
-This movie has 1 reviews
-Out of 1 reviews there were 0 with NaN ratings
-Finished Scraping  in 3.64 seconds
+Out of 2 reviews there were 0 with NaN ratings
+Finished Scraping  in 4.68 seconds
 ----------------------------------------------------------------------
