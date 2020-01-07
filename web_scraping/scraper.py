@@ -75,7 +75,7 @@ def imdb_scraper(id_list):
     found_useful_den = []
     date = []
     iteration_counter = 0  # number of times the while loop has passed
-
+    
     for id in id_list:
         t1 = time.perf_counter()
         Nan_count = 0

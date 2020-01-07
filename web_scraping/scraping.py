@@ -13,15 +13,16 @@ from random import randint
 
 class Scraper():
 
-    def __init__(self):
+    def __init__(self,start,end,max_iter):
+        self.start = start
+        self.end = end
         self.current_ids = []
         self.all_ids = []
         self.range = 0
         self.pickup = 0
-        self.max_iter_count = 99
-        pass
-
-    def get_ids(self,path,start,end):
+        self.max_iter_count = max_iter
+       
+    def get_ids(self,path):
         '''
         takes in the names of a file or path to a file to read into a dataframe
         '''
@@ -32,13 +33,13 @@ class Scraper():
         id_list = [row for row in df.iloc[:,1]]
         self.all_ids = id_list
 
-        id_list = id_list[start:end]
+        id_list = id_list[self.start:self.end]
         self.current_ids = id_list
 
         # lets the class know the range of ID's its grabbing at a time
-        if start > end:
+        if self.start > self.end:
             raise ValueError("The start position needs to be less than the end position")
-        self.range = abs(end - start)
+        self.range = abs(self.end - self.start)
 
         return id_list
 
@@ -110,88 +111,99 @@ class Scraper():
         found_useful_den = []
         date = []
         iteration_counter = 0
+        try:
+            for id in id_list:
+                t1 = time.perf_counter()
+                Nan_count = 0
+                review_count = 0
+                movie_title = ''
+                self.locate(id)
 
-        for id in id_list:
-            t1 = time.perf_counter()
-            Nan_count = 0
-            review_count = 0
-            movie_title = ''
-            self.locate(id)
-
-            url_short = f'http://www.imdb.com/title/{id}/'
-            url_reviews = url_short + 'reviews?ref_=tt_urv'
-            time.sleep(randint(3, 6))
-            response = requests.get(url_reviews)
-            if response.status_code != 200:
-                continue
-            soup = BeautifulSoup(response.text, 'html.parser')
-            items = soup.find_all(class_='lister-item-content')
-
-            while True:
-                if iteration_counter > self.max_iter_count:
-                    df = self.make_dataframe(movie_id, reviews, rating, titles,
-                                             username, found_useful_num,
-                                             found_useful_den, date)
-
-                    insert_rows(df)
-                    movie_id = []
-                    rating = []
-                    reviews = []
-                    titles = []
-                    username = []
-                    found_useful_num = []
-                    found_useful_den = []
-                    date = []
-                    iteration_counter = 0
-
-                # populate lists
-                for item in items:
-                    review_count += 1
-                    reviews.append(item.find(class_="text show-more__control").get_text())
-                    titles.append(item.find(class_="title").get_text())
-                    username.append(item.find(class_="display-name-link").get_text())
-                    date.append(item.find(class_="review-date").get_text())
-                    movie_id.append(id)
-                    found_useful = item.find(class_="actions text-muted").get_text()
-                    found_useful = found_useful.replace(",", "")
-                    usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
-                    found_useful_num.append(usefuls[0])
-                    found_useful_den.append(usefuls[1])
-                    try:
-                        rating.append(item.find(class_="rating-other-user-rating").find('span').text)
-                    except:
-                        rating.append(11)
-                        Nan_count += 1
-                    # for loop ends here
-                # loading more data if there are more than 25 reviews
-                load = soup.find(class_='load-more-data')
-                iteration_counter += 1
-                try:
-                    key = load['data-key']
-                    # exists only if there is a "load More" button
-                except:
-                    break  # End the while loop and go to next movie id
-                url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
-                # time.sleep(randint(3, 6))
+                url_short = f'http://www.imdb.com/title/{id}/'
+                url_reviews = url_short + 'reviews?ref_=tt_urv'
+                time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
+                if response.status_code != 200:
+                    continue
                 soup = BeautifulSoup(response.text, 'html.parser')
                 items = soup.find_all(class_='lister-item-content')
-                # while loop ends here
 
-            # time took to scrape each movie
-            t2 = time.perf_counter()
-            finish = t2-t1
+                ###############################
+                if id == "tt10778974":
+                    print("breaking")
+                    1/0
 
-            # log the movie
-            self.create_log(movie_title, review_count, Nan_count, finish)
-            # for loop ends here
+                print(f"ID: {id}")
+                ##############################
+                while True:
+                    
+                    if iteration_counter > self.max_iter_count:
+                        df = self.make_dataframe(movie_id, reviews, rating, titles,
+                                                username, found_useful_num,
+                                                found_useful_den, date)
+                        df = df.iloc[0:0]
+
+                        #insert_rows(df)
+                        movie_id = []
+                        rating = []
+                        reviews = []
+                        titles = []
+                        username = []
+                        found_useful_num = []
+                        found_useful_den = []
+                        date = []
+                        iteration_counter = 0
+
+                    # populate lists
+                    for item in items:
+                        review_count += 1
+                        reviews.append(item.find(class_="text show-more__control").get_text())
+                        titles.append(item.find(class_="title").get_text())
+                        username.append(item.find(class_="display-name-link").get_text())
+                        date.append(item.find(class_="review-date").get_text())
+                        movie_id.append(id)
+                        found_useful = item.find(class_="actions text-muted").get_text()
+                        found_useful = found_useful.replace(",", "")
+                        usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
+                        found_useful_num.append(usefuls[0])
+                        found_useful_den.append(usefuls[1])
+                        try:
+                            rating.append(item.find(class_="rating-other-user-rating").find('span').text)
+                        except:
+                            rating.append(11)
+                            Nan_count += 1
+                        # for loop ends here
+                    # loading more data if there are more than 25 reviews
+                    load = soup.find(class_='load-more-data')
+                    iteration_counter += 1
+                    try:
+                        key = load['data-key']
+                        # exists only if there is a "load More" button
+                    except:
+                        break  # End the while loop and go to next movie id
+                    url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
+                    # time.sleep(randint(3, 6))
+                    response = requests.get(url_reviews)
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    items = soup.find_all(class_='lister-item-content')
+                    # while loop ends here
+        
+                # time took to scrape each movie
+                t2 = time.perf_counter()
+                finish = t2-t1
+
+                # log the movie
+                self.create_log(movie_title, review_count, Nan_count, finish)
+                # for loop ends here
+        except Exception:
+            self.locate(id)
 
         # create DataFrame
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
                             found_useful_num, found_useful_den, date)
 
         # this line was causing a return error so i removed it and re-added it without having it assigned to anything
-        insert_rows(df)
+        #insert_rows(df)
 
         #total time it took to scrape each review
         t3 = time.perf_counter()
@@ -208,16 +220,27 @@ class Scraper():
         also will tell you how many more ids there are left to scrape.
         '''
         self.pickup = self.all_ids.index(last_id)
+
+        #writes the last used ID to a file
+        with open("pickup.txt",'w') as file:
+            file.write(str(self.pickup))
         
+    def pick_up(self):
+        with open("pickup.txt",'r') as file:
+            self.pickup = file.read()
+            self.pickup = int(self.pickup)
 
 
 
 
 
-s = Scraper()
+
 path = "D:\\Documents\\Atom\\Labs 2019\\movie-recommender\\web_scraping\\movieid_shuffle_small.csv"
-start = int(input("Start at which row?"))
-end = int(input("End at which row?"))
-ids = s.get_ids(path,start,end)
+
+start = int(input("Start at which row? "))
+end = int(input("End at which row? "))
+max_iter = int(input("Maximum iterations? "))
+s = Scraper(start,end,max_iter)
+ids = s.get_ids(path)
 #s.show(ids)
 df = s.scrape(ids)
