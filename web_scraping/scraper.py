@@ -24,7 +24,7 @@ cursor_boi = connection.cursor()
 
 class Scraper():
 
-    def __init__(self,start,end,max_iter):
+    def __init__(self,start,end,max_iter, scraper_instance):
         self.start = start
         self.end = end
         self.current_ids = []
@@ -32,6 +32,7 @@ class Scraper():
         self.range = 0
         self.pickup = 0
         self.max_iter_count = max_iter
+        self.scraper_instance = scraper_instance
 
     def get_ids(self,path):
         '''
@@ -71,10 +72,7 @@ class Scraper():
         path = os.getcwd()
         os.chdir(path)
 
-        # remove punctuation from the movie name
-        # movie_name = re.sub(r'[^\w\s]', '', movie_name)
-
-        with open('Logfile.txt', 'a+') as file:
+        with open(f'Logfile{self.scraper_instance}.txt', 'a+') as file:
             file.write("---------------------------------------------------------------------\n")
             file.write(str(datetime.now()) + "\n")
             file.write(f"Movie ID: {movie_name}\n")
@@ -254,13 +252,12 @@ class Scraper():
             file.write(str(self.end))
 
     def pick_up(self):
-        with open("pickup.txt",'r') as file:
+        with open(f"pickup{self.scraper_instance}.txt",'r') as file:
             lines = file.readlines()
             self.pickup = lines[0]
             self.end = lines[1]
             self.pickup = int(self.pickup)
             self.end = int(self.end)
-
 
     def insert_rows(self, df):
         # convert rows into tuples
