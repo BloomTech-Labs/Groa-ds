@@ -137,9 +137,9 @@ class Scraper():
                 if id == "tt10778974":
                     print("breaking")
                     1/0
-
-                print(f"ID: {id}")
                 ##############################
+                print(f"ID: {id} at index {self.all_ids.index(id)}")
+                
                 while True:
 
                     if iteration_counter >= self.max_iter_count:
