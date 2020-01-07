@@ -18,6 +18,7 @@ class Scraper():
         self.all_ids = []
         self.range = 0
         self.pickup = 0
+        self.max_iter_count = 99
         pass
 
     def get_ids(self,path,start,end):
@@ -33,7 +34,7 @@ class Scraper():
 
         id_list = id_list[start:end]
         self.current_ids = id_list
-        
+
         # lets the class know the range of ID's its grabbing at a time
         if start > end:
             raise ValueError("The start position needs to be less than the end position")
@@ -70,7 +71,7 @@ class Scraper():
             file.write(f"Finished Scraping {movie_name} in {round(elapsed,2)} seconds\n")
             file.write("----------------------------------------------------------------------")
             file.write("\n")
-    
+
     def make_dataframe(self,movie_id, reviews, rating, titles, username,
                    found_useful_num, found_useful_den, date):
         df = pd.DataFrame(
@@ -109,7 +110,7 @@ class Scraper():
         found_useful_den = []
         date = []
         iteration_counter = 0
-        
+
         for id in id_list:
             t1 = time.perf_counter()
             Nan_count = 0
@@ -119,7 +120,7 @@ class Scraper():
 
             url_short = f'http://www.imdb.com/title/{id}/'
             url_reviews = url_short + 'reviews?ref_=tt_urv'
-            # time.sleep(randint(3, 6))
+            time.sleep(randint(3, 6))
             response = requests.get(url_reviews)
             if response.status_code != 200:
                 continue
@@ -127,11 +128,12 @@ class Scraper():
             items = soup.find_all(class_='lister-item-content')
 
             while True:
-                if iteration_counter > 8999:
-                    df = self.make_dataframe(movie_id, reviews, rating, titles, username,
-                                found_useful_num, found_useful_den, date)
+                if iteration_counter > self.max_iter_count:
+                    df = self.make_dataframe(movie_id, reviews, rating, titles,
+                                             username, found_useful_num,
+                                             found_useful_den, date)
 
-                    #insert_rows(df)
+                    insert_rows(df)
                     movie_id = []
                     rating = []
                     reviews = []
@@ -149,7 +151,7 @@ class Scraper():
                     titles.append(item.find(class_="title").get_text())
                     username.append(item.find(class_="display-name-link").get_text())
                     date.append(item.find(class_="review-date").get_text())
-                    movie_id.append(int(id.replace("tt", "")))
+                    movie_id.append(id)
                     found_useful = item.find(class_="actions text-muted").get_text()
                     found_useful = found_useful.replace(",", "")
                     usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
@@ -188,9 +190,8 @@ class Scraper():
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
                             found_useful_num, found_useful_den, date)
 
-        # this line was causing a return error so i removed it and re-added it without having it assigned to anything                    
-        #df = insert_rows(df)
-        #insert_rows(df)
+        # this line was causing a return error so i removed it and re-added it without having it assigned to anything
+        insert_rows(df)
 
         #total time it took to scrape each review
         t3 = time.perf_counter()
@@ -203,20 +204,20 @@ class Scraper():
     def locate(self,last_id):
         '''
         This function takes in the last id used for scraping and tells you its
-        index in the master list of movie ids and the curent ids being used. it also 
-        will tell you how many more ids there are left to scrape.
+        index in the master list of movie ids and the curent ids being used. it
+        also will tell you how many more ids there are left to scrape.
         '''
         self.pickup = self.all_ids.index(last_id)
         
 
 
 
-        
+
 
 s = Scraper()
 path = "D:\\Documents\\Atom\\Labs 2019\\movie-recommender\\web_scraping\\movieid_shuffle_small.csv"
 start = int(input("Start at which row?"))
-end = int(input("End at which row?"))      
+end = int(input("End at which row?"))
 ids = s.get_ids(path,start,end)
 #s.show(ids)
 df = s.scrape(ids)
