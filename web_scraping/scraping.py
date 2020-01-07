@@ -21,7 +21,7 @@ class Scraper():
         self.range = 0
         self.pickup = 0
         self.max_iter_count = max_iter
-       
+
     def get_ids(self,path):
         '''
         takes in the names of a file or path to a file to read into a dataframe
@@ -136,23 +136,22 @@ class Scraper():
                 print(f"ID: {id}")
                 ##############################
                 while True:
-                    
+
                     if iteration_counter > self.max_iter_count:
                         df = self.make_dataframe(movie_id, reviews, rating, titles,
                                                 username, found_useful_num,
                                                 found_useful_den, date)
-                        df = df.iloc[0:0]
-
                         #insert_rows(df)
-                        movie_id = []
-                        rating = []
-                        reviews = []
-                        titles = []
-                        username = []
-                        found_useful_num = []
-                        found_useful_den = []
-                        date = []
+                        movie_id.clear()
+                        rating.clear()
+                        reviews.clear()
+                        titles.clear()
+                        username.clear()
+                        found_useful_num.clear()
+                        found_useful_den.clear()
+                        date.clear()
                         iteration_counter = 0
+                        df = df.iloc[0:0]
 
                     # populate lists
                     for item in items:
@@ -187,7 +186,7 @@ class Scraper():
                     soup = BeautifulSoup(response.text, 'html.parser')
                     items = soup.find_all(class_='lister-item-content')
                     # while loop ends here
-        
+
                 # time took to scrape each movie
                 t2 = time.perf_counter()
                 finish = t2-t1
@@ -224,7 +223,7 @@ class Scraper():
         #writes the last used ID to a file
         with open("pickup.txt",'w') as file:
             file.write(str(self.pickup))
-        
+
     def pick_up(self):
         with open("pickup.txt",'r') as file:
             self.pickup = file.read()
