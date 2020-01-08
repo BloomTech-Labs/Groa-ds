@@ -298,7 +298,7 @@ class Scraper():
 
 
 
-path = "/movieid.csv"
+path = "movieid.csv"
 
 start = int(input("Start at which row? "))
 end = int(input("End at which row? "))
