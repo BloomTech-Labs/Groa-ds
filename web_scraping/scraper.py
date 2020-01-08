@@ -32,7 +32,7 @@ class Scraper():
         self.range = 0
         self.pickup = 0
         self.max_iter_count = max_iter
-        self.scraper_instance = instance
+        self.scraper_instance = scraper_instance
 
     def get_ids(self,path):
         '''
@@ -303,8 +303,8 @@ path = "movieid.csv"
 start = int(input("Start at which row? "))
 end = int(input("End at which row? "))
 max_iter = int(input("Maximum iterations? "))
-instance = int(input("Which scraper instance is this? "))
-s = Scraper(start,end,max_iter)
+scraper_instance = int(input("Which scraper instance is this? "))
+s = Scraper(start,end,max_iter, scraper_instance)
 ids = s.get_ids(path)
 #s.show(ids)
 df = s.scrape(ids)
