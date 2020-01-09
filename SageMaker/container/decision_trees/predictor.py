@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import json
 import gensim
+import numpy as np
 import pickle
 import StringIO
 import sys
@@ -46,8 +47,27 @@ class ScoringService(object):
         Args:
             input (a pandas dataframe): The data on which to do the predictions. There will be
                 one prediction per row in the dataframe"""
+
         clf = cls.get_model()
-        return clf.predict(input)
+
+        def _aggregate_vectors(movies):
+            # get the vector average of the movies in the input
+            movie_vec = []
+            for i in movies:
+                try:
+                    movie_vec.append(clf[i])
+                except KeyError:
+                    continue
+
+            return np.mean(movie_vec, axis=0)
+
+        def _similar_movies(v, n = 6):
+            # extract most similar movies for the input vector
+            return clf.similar_by_vector(v, topn= n+1)[1:]
+
+        input = [x[0].lstrip("0")] for x in input] # remove leading zeroes
+        recs = _similar_movies(_aggregate_vectors(input))
+        return recs
 
 # The flask app for serving predictions
 app = flask.Flask(__name__)
