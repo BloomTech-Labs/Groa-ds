@@ -1,4 +1,0 @@
-Movie Title: El lobo de la sierra
-This movie has 0 reviews
-Out of 0 reviews there were 0 with NaN ratings
-Finished Screaping El lobo de la sierra in 0.77 seconds

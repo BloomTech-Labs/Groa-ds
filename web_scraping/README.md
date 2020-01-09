@@ -89,12 +89,12 @@ python -V
 
 Clone the repo which holds the scraper
 ```
-git clone https://github.com/Lambda-School-Labs/movie-recommender.git
+git clone https://github.com/Lambda-School-Labs/Groa.git
 ```
 
 CD into the repo
 ```
-cd movie-recommender
+cd Groa/web_scraping
 ```
 
 CD into the scraper folder
