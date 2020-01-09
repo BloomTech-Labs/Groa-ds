@@ -61,7 +61,7 @@ def imdb_upload():
         return render_template('public/imdb_upload_result.html')'''
         
 
-@application.route('/recommendations', methods=['GET', 'POST'])
+@application.route('/recommendation', methods=['GET', 'POST'])
 def recommend():
     if request.method == 'POST':
         username = request.form['username']
