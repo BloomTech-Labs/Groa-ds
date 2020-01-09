@@ -25,6 +25,7 @@ for the postgres database.
 TODO: change pw and path to environment variables
 Make a scraper that will only grab reviews that the database does not already
 have.
+Make the scraper automatically restart itself.
 """
     def __init__(self,start,end,max_iter, scraper_instance, pw):
         self.start = start
@@ -270,7 +271,7 @@ have.
 
     def pick_up(self):
         """
-        TODO DOCSTRING
+        Currently unused.
         """
         with open(f"pickup{self.scraper_instance}.txt",'r') as file:
             lines = file.readlines()
