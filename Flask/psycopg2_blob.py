@@ -22,7 +22,7 @@ def query(username):
 
 def query2(username):
     '''
-    accepting a username, this function will return all their reviewed movies as a list
+    accepting a username, this function will return all their reviewed movies as a nested list
     '''
     name = username
     sql = f"SELECT movie_id FROM reviews WHERE username = '{name}'"
@@ -35,9 +35,10 @@ def query2(username):
     port      = '5432')
     cursor = connection.cursor()
     cursor.execute(sql)
-    result = list(cursor.fetchall())
+    result = cursor.fetchall()
+    rows=[[i[0]] for i in result]
     connection = None
-    return result
+    return rows
 
 def query3(list):
     '''

@@ -6,7 +6,8 @@ import psycopg2
 #from getpass import getpass
 
 #self import
-from psycopg2_blob import query
+from psycopg2_blob import query,query2,query3
+from model_functions import ScoringService
 
 
 application = Flask(__name__)
@@ -65,11 +66,14 @@ def imdb_upload():
 def recommend():
     if request.method == 'POST':
         username = request.form['username']
-
-        #query userid from username on sql database
-        #Do I put the reviews into the model or does the model take a name and handle it?
-        #put something into the model and get a df, hopefully?
-        return render_template('public/recommendations.html')
+        movie_list = query2(username)
+        model = ScoringService()
+        model.get_model()
+        
+        predictions = model.predict(movie_list)
+        df = pd.DataFrame(predictions, columns = ['Movie_id','Percent_match'])
+        
+        return render_template('public/recommendations.html', df=df)
     return render_template('public/recommendation_form.html')
         
 
