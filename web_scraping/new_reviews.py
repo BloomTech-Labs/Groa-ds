@@ -8,6 +8,7 @@ import os
 import psycopg2
 from getpass import getpass
 from datetime import datetime
+from decouple import config
 import pandas as pd
 from random import randint
 import datetime
@@ -25,7 +26,7 @@ class Update():
         - if the first revie ID isnt in the data base go on to the next review
         - once theres a review that is in the database, stop and go to the next movie ID
 
-    
+
                             ########################## Methods ############################
 
     __init__:
@@ -40,16 +41,16 @@ class Update():
         Takes in a dictionary {'review_id': review text} and checks if the review ID exist in the database. If it does it'll ignore the
         review and go to the next one, otherwise it'll add the review to the database.
 
-    
-    
+
+
     '''
 
     def __init__(self,pw):
         self.database = "postgres"
         self.user = "postgres"
-        self.password = pw
-        self.host = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com"
-        self.port = "5432"
+        self.password = config("PASSWORD")
+        self.host = config("HOST")
+        self.port = config("PORT")
 
     def set_date_cutoff(self,day,month,year):
 
@@ -70,7 +71,7 @@ class Update():
             'November':11,
             'December':12
         }
-        
+
     def connect_to_database(self):
         """
         Connects to the database and returns a cursor.
@@ -98,12 +99,12 @@ class Update():
             # put all of the review/movie ids into a list (a list of tuples)
             self.ids = cursor.fetchall()
             cursor.close()
-         
-            
-        
+
+
+
         except Exception as e:
             print(e)
-        
+
         elapsed = self.end_timer()
         elapsed = self.convert_time(elapsed)
 
@@ -125,12 +126,12 @@ class Update():
             self.load_path = os.path.join(os.getcwd(),filename)
             print(f"File saved to {self.load_path} and was saved in {finish}")
 
-           
+
 
         print(f"Retrieved {cursor.rowcount} review/movie ID's in {elapsed}")
         print(f"The ID's are stored as {type(self.ids)}")
         print(f"The first 10 entries are:\n{self.ids[:10]}")
-        print()        
+        print()
 
         return self.ids
 
@@ -148,20 +149,20 @@ class Update():
 
     def update(self,ids = None):
         '''
-        This function takes in the list of review/movie ids and splits them into their 
-        own lists. 
-        
+        This function takes in the list of review/movie ids and splits them into their
+        own lists.
+
         Process:
 
-        1) Each unique movie ID is used to search IMBd for its movie, and the reviews 
+        1) Each unique movie ID is used to search IMBd for its movie, and the reviews
         are sorted by recency.
-        
+
         2) The top review will have its ID checked against review IDs in the
-        database to see if there is a match. 
-        
+        database to see if there is a match.
+
         3) If there isn't a match (meaning that the review ID is not yet
         in the list of review IDs) that review will be saved and step 2 will be repeated with the next
-        review on the page. 
+        review on the page.
 
         4) Once the function comes across a review with its review ID already in the database, it will
         be the last review scraped for that movie ID and the whole process is repeated with the next unique
@@ -169,7 +170,7 @@ class Update():
 
         '''
 
-        
+
         ids = self.ids if ids is None else ids
         review_ids = []
         movie_ids = []
@@ -178,8 +179,8 @@ class Update():
         for rid,mid in ids:
             review_ids.append(str(rid))
             movie_ids.append(str(mid))
-        
-        
+
+
         # only unique movie ids
         unique_movie_ids = set(movie_ids)
         unique_movie_ids = list(unique_movie_ids)
@@ -219,11 +220,11 @@ class Update():
                 soup = BeautifulSoup(response.text, 'html.parser')
                 items = soup.find_all(class_='lister-item-content')
                 #print(id)
-                
+
 
                 while True:
                     for item in items:
-                    
+
                         # get the review ID
                         raw_revid = (item.find(class_="title").get("href"))
                         match = re.search(r'rw\d+', raw_revid)
@@ -272,9 +273,9 @@ class Update():
                     soup = BeautifulSoup(response.text, 'html.parser')
                     items = soup.find_all(class_='lister-item-content')
                     # while loop ends here
-                
 
-                
+
+
 
             except Exception as e:
                 print(e)
@@ -287,10 +288,10 @@ class Update():
         #self.insert_rows(df)
 
         elapsed = self.end_timer()
-        elapsed = self.convert_time(elapsed) 
-        print(f"finished in {elapsed}") 
-        return df 
-        
+        elapsed = self.convert_time(elapsed)
+        print(f"finished in {elapsed}")
+        return df
+
     def show(self,lst):
         '''
         Outputs any list in a formatted output.
@@ -366,7 +367,7 @@ class Update():
         cursor_boi.close()
         connection.close()
         print("Insertion Complete")
-              
+
 
 # setup
 
@@ -388,7 +389,7 @@ if pull == "y" or pull == "yes":
 
     # no means that the IDs are stored in a list and the class will use the list instead
     # unless a file already exist with the IDs on it
-    else: 
+    else:
         load = input("Is there a file that already exist with the IDs (y/n)? \n")
         load = load.lower()
         ids = u.pull_ids(save = False)
@@ -403,7 +404,7 @@ if pull == "y" or pull == "yes":
         df = u.update(ids = ids)
     elif load == "n" or load == "no":
         print("Moving on with the ID's stored in memory")
-        df = u.update(ids = ids) 
+        df = u.update(ids = ids)
 
 else:
     load = input("Is there a file that already exist with the IDs (y/n)? \n")
@@ -413,7 +414,7 @@ else:
         df = u.update(ids = ids)
     else:
         print("There are no review/movie IDs in memory or saved to a file.")
-    
+
 print(df.head())
 #ids = u.load_ids(path = "D:\\Documents\\Atom\\review_ids.csv")
 #u.update(ids = ids)
