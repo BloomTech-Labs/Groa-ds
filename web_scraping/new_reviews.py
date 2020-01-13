@@ -196,13 +196,16 @@ class Update():
         found_useful_num = []
         found_useful_den = []
         date = []
-        review_id = []
+        new_review_id = []
         iteration_counter = 0
         broken = []
-
-        for id in unique_movie_ids[:10]:
+        self.start_timer()
+        for id in unique_movie_ids[:1000]:
             try:
-                self.start_timer()
+                Nan_count = 0
+                review_count = 0
+                movie_title = ''
+                num = id
                 id = "tt" + id
 
                 url_short = f'http://www.imdb.com/title/{id}/'
@@ -215,7 +218,7 @@ class Update():
                         continue
                 soup = BeautifulSoup(response.text, 'html.parser')
                 items = soup.find_all(class_='lister-item-content')
-                print(id)
+                #print(id)
                 
 
                 while True:
@@ -225,17 +228,34 @@ class Update():
                         raw_revid = (item.find(class_="title").get("href"))
                         match = re.search(r'rw\d+', raw_revid)
                         review_id = match.group()
-                        print(f"review ID from IMBd: {review_id}")
+                        #print(f"review ID from IMBd: {review_id}")
 
                         # check whether or not the review ID is in the database
-                        #if review_id not in review_ids:
-
-                            
-                        
-                    
-                    print("---------------------\n")
-
-
+                        if review_id not in review_ids:
+                            print(f"Updating {id} at index {unique_movie_ids.index(num)} in the database for review ID {review_id}")
+                            review_count += 1
+                            reviews.append(item.find(class_="text show-more__control").get_text())
+                            titles.append(item.find(class_="title").get_text())
+                            username.append(item.find(class_="display-name-link").get_text())
+                            date.append(item.find(class_="review-date").get_text())
+                            movie_id.append(id.replace("tt", ""))
+                            found_useful = item.find(class_="actions text-muted").get_text()
+                            found_useful = found_useful.replace(",", "")
+                            usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
+                            found_useful_num.append(usefuls[0])
+                            found_useful_den.append(usefuls[1])
+                            raw_revid = (item.find(class_="title").get("href"))
+                            match = re.search(r'rw\d+', raw_revid)
+                            try:
+                                new_review_id.append(match.group())
+                            except:
+                                new_review_id.append('')
+                            try:
+                                rating.append(item.find(class_="rating-other-user-rating").find('span').text)
+                            except:
+                                rating.append(11)
+                                Nan_count += 1
+                            # for loop ends here
 
                     # loading more data if there are more than 25 reviews
                     load = soup.find(class_='load-more-data')
@@ -254,8 +274,22 @@ class Update():
                     # while loop ends here
                 
 
-            except:
-                pass
+                
+
+            except Exception as e:
+                print(e)
+                continue
+
+         # create DataFrame
+        df = self.make_dataframe(movie_id, reviews, rating, titles, username,
+                            found_useful_num, found_useful_den, date, review_id)
+
+        #self.insert_rows(df)
+
+        elapsed = self.end_timer()
+        elapsed = self.convert_time(elapsed) 
+        print(f"finished in {elapsed}") 
+        return df 
         
     def show(self,lst):
         '''
@@ -272,9 +306,66 @@ class Update():
         self.ids = df.values.tolist()
         return self.ids
 
+    def make_dataframe(self,movie_id, reviews, rating, titles, username,
+                   found_useful_num, found_useful_den, date, review_id):
+        df = pd.DataFrame(
+            {
+                'movie_id': movie_id,
+                'reviews': reviews,
+                'rating': rating,
+                'titles': titles,
+                'username': username,
+                'helpful_num': found_useful_num,
+                'helpful_denom': found_useful_den,
+                'date': date,
+                'review_id': review_id
+                })
+        df['date'] = pd.to_datetime(df['date'])
+        df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
+        return df
 
+    def insert_rows(self, df):
+        """
+        Connects to the database and inserts reviews as new rows.
 
+        Takes a dataframe and formats it into a very long string to convert to
+        SQL. Connects to the database, executes the query, and closes the cursor
+        and connection.
+        """
+        # convert rows into tuples
+        row_insertions = ""
+        for i in list(df.itertuples(index=False)):
+            row_insertions += str((str(i.username.replace("'", "").replace('"', '')),
+                                i.movie_id,
+                                i.date,
+                                str(i.reviews.replace("'", "").replace('"', '')),
+                                str(i.titles.replace("'", "").replace('"', '')),
+                                int(i.rating),
+                                i.helpful_num,
+                                i.helpful_denom,
+                                i.review_id)) + ", "
 
+        # remove hanging comma
+        row_insertions = row_insertions[:-2]
+        cursor_boi, connection = self.connect_to_database()
+        # create SQL INSERT query
+        query = """INSERT INTO reviews(username,
+                                    movie_id,
+                                    review_date,
+                                    review_text,
+                                    review_title,
+                                    user_rating,
+                                    helpful_num,
+                                    helpful_denom,
+                                    review_id)
+                                    VALUES """ + row_insertions + ";"
+
+        # execute query
+        cursor_boi.execute(query)
+        connection.commit()
+        cursor_boi.close()
+        connection.close()
+        print("Insertion Complete")
               
 
 # setup
@@ -305,24 +396,24 @@ if pull == "y" or pull == "yes":
     # if the IDs were saved to a file before the program was termintated, load the IDs and start updating the database
     if load == True:
         u.load_ids()
-        u.update()
+        df = u.update()
     elif load == "y" or load == "yes":
         path = input("Enter the filename or file path: \n")
         ids = u.load_ids(path = path)
-        u.update(ids = ids)
+        df = u.update(ids = ids)
     elif load == "n" or load == "no":
         print("Moving on with the ID's stored in memory")
-        u.update(ids = ids) 
+        df = u.update(ids = ids) 
 
 else:
     load = input("Is there a file that already exist with the IDs (y/n)? \n")
     if load == "y" or load == "yes":
         path = input("Enter the filename or file path: \n")
         ids = u.load_ids(path = path)
-        u.update(ids = ids)
+        df = u.update(ids = ids)
     else:
         print("There are no review/movie IDs in memory or saved to a file.")
     
-
+print(df.head())
 #ids = u.load_ids(path = "D:\\Documents\\Atom\\review_ids.csv")
 #u.update(ids = ids)
