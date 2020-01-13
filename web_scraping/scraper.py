@@ -11,20 +11,23 @@ from datetime import datetime
 import pandas as pd
 from random import randint
 
-connection = psycopg2.connect(
-    database = "postgres",
-    user     = "postgres",
-    password = getpass(),
-    host     = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
-    port     = "5432"
-    )
-
-# cursor object
-cursor_boi = connection.cursor()
 
 class Scraper():
+"""
+Scrapes IMDB and contains utility and logging functions.
 
-    def __init__(self,start,end,max_iter, scraper_instance):
+Start and end parameters are inclusive. max_iter controls how many loops
+can be run before the program inserts into the database. scraper_instance must
+be different for each instance of the program to ensure their log files do not
+mess each other up. pw is currently taken from getpass and is the password
+for the postgres database.
+
+TODO: change pw and path to environment variables
+Make a scraper that will only grab reviews that the database does not already
+have.
+Make the scraper automatically restart itself.
+"""
+    def __init__(self,start,end,max_iter, scraper_instance, pw):
         self.start = start
         self.end = end
         self.current_ids = []
@@ -33,12 +36,29 @@ class Scraper():
         self.pickup = 0
         self.max_iter_count = max_iter
         self.scraper_instance = scraper_instance
+        self.database = "postgres"
+        self.user = "postgres"
+        self.password = pw
+        self.host = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com"
+        self.port = "5432"
+
+    def connect_to_database(self):
+        """
+        Connects to the database.
+        """
+        connection = psycopg2.connect(
+            database = self.database,
+            user     = self.user,
+            password = self.password,
+            host     = self.host,
+            port     = self.port
+            )
+        return connection.cursor(), connection
 
     def get_ids(self,path):
         '''
-        takes in the names of a file or path to a file to read into a dataframe
+        Takes in the names of a file or path to a file to read into a dataframe.
         '''
-
         df = pd.read_csv(path,encoding = 'ascii',header = None)
 
         # get all the rows from the second column and then select only the ones from the start and end positions
@@ -57,7 +77,7 @@ class Scraper():
 
     def show(self,lst):
         '''
-        outputs any list in a formatted output
+        Outputs any list in a formatted output.
         '''
         for count,index in enumerate(lst):
             print(f"{count+1}) {index}")
@@ -218,9 +238,7 @@ class Scraper():
             # catches any error and lets you know which ID was the last one scraped
             except Exception as e:
                 broken.append(id)
-                self.locate(broken[0])
-                print(e)
-                break
+                continue
 
         # create DataFrame
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
@@ -233,7 +251,7 @@ class Scraper():
         print(f"Scraped {count + 1} movies in {round(total,2)} seconds")
 
         print('All done!\n')
-        print(f"This ID was the last one scraped")
+        print("The following IDs were not scraped succcessfully:")
         self.show(broken)
         return df
 
@@ -252,6 +270,9 @@ class Scraper():
             file.write(str(self.end))
 
     def pick_up(self):
+        """
+        Currently unused.
+        """
         with open(f"pickup{self.scraper_instance}.txt",'r') as file:
             lines = file.readlines()
             self.pickup = lines[0]
@@ -260,6 +281,13 @@ class Scraper():
             self.end = int(self.end)
 
     def insert_rows(self, df):
+        """
+        Connects to the database and inserts reviews as new rows.
+
+        Takes a dataframe and formats it into a very long string to convert to
+        SQL. Connects to the database, executes the query, and closes the cursor
+        and connection.
+        """
         # convert rows into tuples
         row_insertions = ""
         for i in list(df.itertuples(index=False)):
@@ -275,7 +303,7 @@ class Scraper():
 
         # remove hanging comma
         row_insertions = row_insertions[:-2]
-
+        cursor_boi, connection = self.connect_to_database()
         # create SQL INSERT query
         query = """INSERT INTO reviews(username,
                                     movie_id,
@@ -291,20 +319,18 @@ class Scraper():
         # execute query
         cursor_boi.execute(query)
         connection.commit()
+        cursor_boi.close()
+        connection.close()
         print("Insertion Complete")
 
-
-
-
-
-
-path = "movieid.csv"
-
-start = int(input("Start at which row? "))
-end = int(input("End at which row? "))
-max_iter = int(input("Maximum iterations? "))
-scraper_instance = int(input("Which scraper instance is this? "))
-s = Scraper(start,end,max_iter, scraper_instance)
-ids = s.get_ids(path)
-#s.show(ids)
-df = s.scrape(ids)
+if __name__ = "__main__":
+    path = "movieid.csv"
+    pw = getpass()
+    start = int(input("Start at which row? "))
+    end = int(input("End at which row? ")) + 1
+    max_iter = int(input("Maximum iterations? "))
+    scraper_instance = int(input("Which scraper instance is this? "))
+    s = Scraper(start,end,max_iter, scraper_instance, pw)
+    ids = s.get_ids(path)
+    #s.show(ids)
+    df = s.scrape(ids)
