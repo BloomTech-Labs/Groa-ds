@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from decouple import config
 import pandas as pd
 import re
 import time
@@ -13,21 +14,22 @@ from random import randint
 
 
 class Scraper():
-"""
-Scrapes IMDB and contains utility and logging functions.
+    """
+    Scrapes IMDB and contains utility and logging functions.
 
-Start and end parameters are inclusive. max_iter controls how many loops
-can be run before the program inserts into the database. scraper_instance must
-be different for each instance of the program to ensure their log files do not
-mess each other up. pw is currently taken from getpass and is the password
-for the postgres database.
+    Start and end parameters are inclusive. max_iter controls how many loops
+    can be run before the program inserts into the database. scraper_instance must
+    be different for each instance of the program to ensure their log files do not
+    mess each other up. pw is currently taken from getpass and is the password
+    for the postgres database.
 
-TODO: change pw and path to environment variables
-Make a scraper that will only grab reviews that the database does not already
-have.
-Make the scraper automatically restart itself.
-"""
-    def __init__(self,start,end,max_iter, scraper_instance, pw):
+    TODO: change pw and path to environment variables
+    Make a scraper that will only grab reviews that the database does not already
+    have.
+    Make the scraper automatically restart itself.
+    """
+
+    def __init__(self,start,end,max_iter, scraper_instance):
         self.start = start
         self.end = end
         self.current_ids = []
@@ -38,9 +40,10 @@ Make the scraper automatically restart itself.
         self.scraper_instance = scraper_instance
         self.database = "postgres"
         self.user = "postgres"
-        self.password = pw
-        self.host = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com"
-        self.port = "5432"
+        self.password = config("PASSWORD")
+        self.host = config("HOST")
+        self.port = config("PORT")
+        self.filename = config("FILENAME")
 
     def connect_to_database(self):
         """
@@ -55,11 +58,11 @@ Make the scraper automatically restart itself.
             )
         return connection.cursor(), connection
 
-    def get_ids(self,path):
+    def get_ids(self):
         '''
         Takes in the names of a file or path to a file to read into a dataframe.
         '''
-        df = pd.read_csv(path,encoding = 'ascii',header = None)
+        df = pd.read_csv(self.filename,encoding = 'ascii',header = None)
 
         # get all the rows from the second column and then select only the ones from the start and end positions
         id_list = [row for row in df.iloc[:,1]]
@@ -89,8 +92,8 @@ Make the scraper automatically restart itself.
         Takes info generated within imdb_scraper to produce a log file to return
         a log of the movie name, the number of reviews, and the time taken
         """
-        path = os.getcwd()
-        os.chdir(path)
+        directory = os.getcwd()
+        os.chdir(directory)
 
         with open(f'Logfile{self.scraper_instance}.txt', 'a+') as file:
             file.write("---------------------------------------------------------------------\n")
@@ -237,7 +240,7 @@ Make the scraper automatically restart itself.
 
             # catches any error and lets you know which ID was the last one scraped
             except Exception as e:
-                broken.append(id) 
+                broken.append(id)
                 continue
 
         # create DataFrame
@@ -323,14 +326,11 @@ Make the scraper automatically restart itself.
         connection.close()
         print("Insertion Complete")
 
-if __name__ = "__main__":
-    path = "movieid.csv"
-    pw = getpass()
+if __name__ == "__main__":
     start = int(input("Start at which row? "))
     end = int(input("End at which row? ")) + 1
     max_iter = int(input("Maximum iterations? "))
     scraper_instance = int(input("Which scraper instance is this? "))
-    s = Scraper(start,end,max_iter, scraper_instance, pw)
-    ids = s.get_ids(path)
-    #s.show(ids)
+    s = Scraper(start,end,max_iter, scraper_instance)
+    ids = s.get_ids()
     df = s.scrape(ids)
