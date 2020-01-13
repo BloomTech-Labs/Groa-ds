@@ -83,7 +83,7 @@ def ping():
 
     for f in folders:
         print(f)
-    return flask.Response(response='\n', status=status, mimetype='application/json')
+    return flask.Response(response='\n', status=status, mimetype='application/csv')
 
 @app.route('/invocations', methods=['POST'])
 def transformation():
