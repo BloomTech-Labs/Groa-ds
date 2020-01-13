@@ -12,6 +12,7 @@ import StringIO
 import sys
 import signal
 import traceback
+import glob
 
 import flask
 
@@ -69,7 +70,7 @@ class ScoringService(object):
         recs = _similar_movies(_aggregate_vectors(input))
         return recs
 
-The flask app for serving predictions
+# The flask app for serving predictions
 app = flask.Flask(__name__)
 
 @app.route('/ping', methods=['GET'])
