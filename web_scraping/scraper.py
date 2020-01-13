@@ -228,8 +228,8 @@ Make the scraper automatically restart itself.
                 # if the logfile exist already within the first iteration
                 # it will be deleted and recreated which fixes the issue of
                 # duplicating info when ran several times
-                if count == 0 and os.path.exists("logfile.txt"):
-                    os.remove("Logfile.txt")
+                if count == 0 and os.path.exists(f"Logfile{self.scraper_instance}.txt"):
+                    os.remove(f"Logfile{self.scraper_instance}.txt")
 
                 # log the movie
                 self.create_log(id, review_count, Nan_count, finish)
@@ -237,7 +237,7 @@ Make the scraper automatically restart itself.
 
             # catches any error and lets you know which ID was the last one scraped
             except Exception as e:
-                broken.append(id)
+                broken.append(id) 
                 continue
 
         # create DataFrame
