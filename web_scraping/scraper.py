@@ -200,11 +200,11 @@ class Scraper():
                         match = re.search('rw\d+', raw_revid)
                         try:
                             review_id.append(match.group())
-                        except:
+                        except Exception:
                             review_id.append('')
                         try:
                             rating.append(item.find(class_="rating-other-user-rating").find('span').text)
-                        except:
+                        except Exception:
                             rating.append(11)
                             Nan_count += 1
                         # for loop ends here
@@ -215,7 +215,7 @@ class Scraper():
                     try:
                         key = load['data-key']
                         # exists only if there is a "load More" button
-                    except:
+                    except Exception:
                         break  # End the while loop and go to next movie id
                     url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
                     time.sleep(randint(3, 6))
@@ -509,11 +509,11 @@ class Scraper():
                             match = re.search(r'rw\d+', raw_revid)
                             try:
                                 new_review_id.append(match.group())
-                            except:
+                            except Exception:
                                 new_review_id.append('')
                             try:
                                 rating.append(item.find(class_="rating-other-user-rating").find('span').text)
-                            except:
+                            except Exception:
                                 rating.append(11)
                                 Nan_count += 1
                             # for loop ends here
@@ -525,7 +525,7 @@ class Scraper():
                     try:
                         key = load['data-key']
                         # exists only if there is a "load More" button
-                    except:
+                    except Exception:
                         break  # End the while loop and go to next movie id
                     url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
                     #time.sleep(randint(3, 6))
@@ -566,11 +566,25 @@ class Scraper():
 
 
 
-
+def checker(str):
+    valid_inputs = ['y', 'yes', 'n', 'no']
+    var = input(str).lower()
+    while var in valid_inputs == False:
+        print("That's not a valid input!")
+        var = input(str).lower()
+    return var
 
 if __name__ == "__main__":
-    mode = input("Are you starting a new database? (y/n): \n")
-    mode = mode.lower()
+    try:
+        start = int(input("Start at which row? "))
+        end = int(input("End at which row? ")) + 1
+        max_iter = int(input("Maximum iterations? "))
+        scraper_instance = int(input("Which scraper instance is this? "))
+        s = Scraper(start,end,max_iter, scraper_instance)
+    except Exception:
+        raise ValueError('Use numbers for these variables')
+
+    mode = checker("Are you starting a new database (y/n): \n")
     if mode == "y" or mode == "yes":
         start = int(input("Start at which row? "))
         end = int(input("End at which row? ")) + 1
@@ -580,40 +594,42 @@ if __name__ == "__main__":
         ids = s.get_ids()
         df = s.scrape(ids)
     elif mode == "n" or mode == "no":
-        pull = input("Are you pulling new IDs (y/n): \n")
-        pull = pull.lower()
+        pull = checker("Are you pulling new IDs (y/n): \n")
         # Asks if you would like to pull review/movie IDs from the data base
         if pull == "y" or pull == "yes":
             # if you are pulling, would you like to save them to a file for faster retrieval (debugging purposes)
-            saved = input("Do you want to save this pull to a file (y/n)? \n")
+            saved = checker("Do you want to save this pull to a file (y/n)? \n")
             # yes means that the IDs will be saved to a file and the file will be automatically read to load the IDs
             if saved == "y" or saved == "yes":
                 load = True
-                u.pull_ids()
+                s.pull_ids()
             # no means that the IDs are stored in a list and the class will use the list instead
             # unless a file already exist with the IDs on it
-            else:
-                load = input("Is there a file that already exist with the IDs (y/n)? \n")
-                load = load.lower()
-                ids = u.pull_ids(save = False)
-
+            elif saved == 'n' or saved == 'no':
+                load = checker("Is there a file that already exist with the IDs (y/n)? \n")
+                ids = s.pull_ids(save = False)
             # if the IDs were saved to a file before the program was termintated, load the IDs and start updating the database
             if load == True:
-                u.load_ids()
-                df = u.update()
+                s.load_ids()
+                df = s.update()
             elif load == "y" or load == "yes":
                 path = input("Enter the filename or file path: \n")
-                ids = u.load_ids(path = path)
-                df = u.update(ids = ids)
+                try:
+                    ids = s.load_ids(path = path)
+                    df = s.update(ids = ids)
+                except Exception:
+                    raise ValueError("File Not Found")
             elif load == "n" or load == "no":
                 print("Moving on with the ID's stored in memory")
-                df = u.update(ids = ids)
-
+                df = s.update(ids = ids)
         else:
-            load = input("Is there a file that already exist with the IDs (y/n)? \n")
+            load = checker("Is there a file that already exist with the IDs (y/n)? \n")
             if load == "y" or load == "yes":
                 path = input("Enter the filename or file path: \n")
-                ids = u.load_ids(path = path)
-                df = u.update(ids = ids)
+                try:
+                    ids = s.load_ids(path = path)
+                    df = s.update(ids = ids)
+                except Exception:
+                    raise ValueError("File Not Found")
             else:
                 print("There are no review/movie IDs in memory or saved to a file.")
