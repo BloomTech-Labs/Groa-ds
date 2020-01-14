@@ -369,6 +369,7 @@ class Scraper():
         elapsed = self.convert_time(elapsed)
 
         self.start_timer()
+
         # save the IDs to a file
         if save:
             # if you pass in a filename, use that otherwise use the default
@@ -383,6 +384,8 @@ class Scraper():
 
             finished = self.end_timer()
             finish = self.convert_time(finished)
+
+            # class variable used to load the file before program is terminated
             self.load_path = os.path.join(os.getcwd(),filename)
             print(f"File saved to {self.load_path} and was saved in {finish}")
 
@@ -396,14 +399,25 @@ class Scraper():
         return self.ids
 
     def start_timer(self):
+        """
+        starts a timer
+        """
         self.start = time.perf_counter()
 
     def end_timer(self):
+        '''
+        ends the timer started by start_timer()
+
+        '''
         self.end = time.perf_counter()
         self.elapsed = self.end - self.start
         return self.elapsed
 
     def convert_time(self,elapsed):
+        '''
+        converts seconds in to 
+        HH:MM:SS format
+        '''
         e = str(datetime.timedelta(seconds=elapsed))
         return e
 
@@ -442,7 +456,7 @@ class Scraper():
 
 
         # only unique movie
-        unique_movie_ = set(movie_ids)
+        unique_movie_ids = set(movie_ids)
         unique_movie_ids = list(unique_movie_ids)
         unique_movie_ids.sort()
 
@@ -461,6 +475,8 @@ class Scraper():
         iteration_counter = 0
         broken = []
         self.start_timer()
+
+        # Start the process described
         for id in unique_movie_ids[:1000]:
             try:
                 Nan_count = 0
@@ -479,8 +495,10 @@ class Scraper():
                 if response.status_code != 200:
                         continue
                 soup = BeautifulSoup(response.text, 'html.parser')
+
+                # items holds all the HTML for the webpage
                 items = soup.find_all(class_='lister-item-content')
-                #print(id)
+                
 
 
                 while True:
@@ -492,10 +510,12 @@ class Scraper():
                         review_id = match.group()
                         #print(f"review ID from IMBd: {review_id}")
 
-                        # check whether or not the review ID is in the database
+                        # check whether or not the review ID is in the database (steps 2 and 3)
                         if review_id not in review_ids:
                             print(f"Updating {id} at index {unique_movie_ids.index(num)} in the database for review ID {review_id}")
                             review_count += 1
+
+                            # populate lists
                             reviews.append(item.find(class_="text show-more__control").get_text())
                             titles.append(item.find(class_="title").get_text())
                             username.append(item.find(class_="display-name-link").get_text())
@@ -552,6 +572,12 @@ class Scraper():
         return df
 
     def load_ids(self,path = None):
+        '''
+        This function can only be ran before the program is terminated.
+        It uses the class variable self.load_path to locate the saved file with the 
+        review/movie IDs and automatically loads the data from that file back into 
+        the class variable self.ids.
+        '''
 
         path = self.load_path if path is None else path
 
@@ -571,43 +597,49 @@ def checker(str):
     return var
 
 if __name__ == "__main__":
-    try:
-        start = int(input("Start at which row? "))
-        end = int(input("End at which row? ")) + 1
-        max_iter = int(input("Maximum iterations? "))
-        scraper_instance = int(input("Which scraper instance is this? "))
-        s = Scraper(start,end,max_iter,scraper_instance)
-    except Exception:
-        raise ValueError('Use numbers for these variables')
+    
+    start = int(input("Start at which row? "))
+    end = int(input("End at which row? ")) + 1
+    if start > end:
+        raise ValueError("The starting position needs to be less than or equal to end position.")
 
+    max_iter = int(input("Maximum iterations? "))
+    if max_iter < 1:
+        raise ValueError("Maximum iterations must be positive.")
+    
+    scraper_instance = input("Which scraper instance is this? ")
+    s = Scraper(start,end,max_iter,scraper_instance)
+    
     mode = checker("Are you starting a new database (y/n): \n")
     if mode == "y" or mode == "yes":
-        start = int(input("Start at which row? "))
-        end = int(input("End at which row? ")) + 1
-        max_iter = int(input("Maximum iterations? "))
-        scraper_instance = int(input("Which scraper instance is this? "))
-        s = Scraper(start,end,max_iter, scraper_instance)
         ids = s.get_ids()
         df = s.scrape(ids)
     elif mode == "n" or mode == "no":
         pull = checker("Are you pulling new IDs (y/n): \n")
+
         # Asks if you would like to pull review/movie IDs from the data base
         if pull == "y" or pull == "yes":
+
             # if you are pulling, would you like to save them to a file for faster retrieval (debugging purposes)
             saved = checker("Do you want to save this pull to a file (y/n)? \n")
+
             # yes means that the IDs will be saved to a file and the file will be automatically read to load the IDs
             if saved == "y" or saved == "yes":
                 load = True
                 s.pull_ids()
+
             # no means that the IDs are stored in a list and the class will use the list instead
             # unless a file already exist with the IDs on it
             elif saved == 'n' or saved == 'no':
                 load = checker("Is there a file that already exist with the IDs (y/n)? \n")
                 ids = s.pull_ids(save = False)
+
             # if the IDs were saved to a file before the program was termintated, load the IDs and start updating the database
             if load == True:
                 s.load_ids()
                 df = s.update()
+
+                # if there is already a file that exist, use that file
             elif load == "y" or load == "yes":
                 path = input("Enter the filename or file path: \n")
                 try:
@@ -615,10 +647,15 @@ if __name__ == "__main__":
                     df = s.update(ids = ids)
                 except Exception:
                     raise ValueError("File Not Found")
+
+                # if a file doesn't exist it will use the IDs already in memory
             elif load == "n" or load == "no":
                 print("Moving on with the ID's stored in memory")
                 df = s.update(ids = ids)
+
+        # you don't want to pull new reviews
         else:
+            # but there is a file that already contains the IDs needed 
             load = checker("Is there a file that already exist with the IDs (y/n)? \n")
             if load == "y" or load == "yes":
                 path = input("Enter the filename or file path: \n")
