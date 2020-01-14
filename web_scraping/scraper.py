@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from decouple import config
 import pandas as pd
 import re
 import time
@@ -13,21 +14,22 @@ from random import randint
 
 
 class Scraper():
-"""
-Scrapes IMDB and contains utility and logging functions.
+    """
+    Scrapes IMDB and contains utility and logging functions.
 
-Start and end parameters are inclusive. max_iter controls how many loops
-can be run before the program inserts into the database. scraper_instance must
-be different for each instance of the program to ensure their log files do not
-mess each other up. pw is currently taken from getpass and is the password
-for the postgres database.
+    Start and end parameters are inclusive. max_iter controls how many loops
+    can be run before the program inserts into the database. scraper_instance must
+    be different for each instance of the program to ensure their log files do not
+    mess each other up. pw is currently taken from getpass and is the password
+    for the postgres database.
 
-TODO: change pw and path to environment variables
-Make a scraper that will only grab reviews that the database does not already
-have.
-Make the scraper automatically restart itself.
-"""
-    def __init__(self,start,end,max_iter, scraper_instance, pw):
+    TODO: change pw and path to environment variables
+    Make a scraper that will only grab reviews that the database does not already
+    have.
+    Make the scraper automatically restart itself.
+    """
+
+    def __init__(self,start,end,max_iter, scraper_instance):
         self.start = start
         self.end = end
         self.current_ids = []
@@ -38,9 +40,10 @@ Make the scraper automatically restart itself.
         self.scraper_instance = scraper_instance
         self.database = "postgres"
         self.user = "postgres"
-        self.password = pw
-        self.host = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com"
-        self.port = "5432"
+        self.password = config("PASSWORD")
+        self.host = config("HOST")
+        self.port = config("PORT")
+        self.filename = config("FILENAME")
 
     def connect_to_database(self):
         """
@@ -55,11 +58,11 @@ Make the scraper automatically restart itself.
             )
         return connection.cursor(), connection
 
-    def get_ids(self,path):
+    def get_ids(self):
         '''
         Takes in the names of a file or path to a file to read into a dataframe.
         '''
-        df = pd.read_csv(path,encoding = 'ascii',header = None)
+        df = pd.read_csv(self.filename,encoding = 'ascii',header = None)
 
         # get all the rows from the second column and then select only the ones from the start and end positions
         id_list = [row for row in df.iloc[:,1]]
@@ -89,8 +92,8 @@ Make the scraper automatically restart itself.
         Takes info generated within imdb_scraper to produce a log file to return
         a log of the movie name, the number of reviews, and the time taken
         """
-        path = os.getcwd()
-        os.chdir(path)
+        directory = os.getcwd()
+        os.chdir(directory)
 
         with open(f'Logfile{self.scraper_instance}.txt', 'a+') as file:
             file.write("---------------------------------------------------------------------\n")
@@ -197,11 +200,11 @@ Make the scraper automatically restart itself.
                         match = re.search('rw\d+', raw_revid)
                         try:
                             review_id.append(match.group())
-                        except:
+                        except Exception:
                             review_id.append('')
                         try:
                             rating.append(item.find(class_="rating-other-user-rating").find('span').text)
-                        except:
+                        except Exception:
                             rating.append(11)
                             Nan_count += 1
                         # for loop ends here
@@ -212,7 +215,7 @@ Make the scraper automatically restart itself.
                     try:
                         key = load['data-key']
                         # exists only if there is a "load More" button
-                    except:
+                    except Exception:
                         break  # End the while loop and go to next movie id
                     url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
                     time.sleep(randint(3, 6))
@@ -237,7 +240,7 @@ Make the scraper automatically restart itself.
 
             # catches any error and lets you know which ID was the last one scraped
             except Exception as e:
-                broken.append(id) 
+                broken.append(id)
                 continue
 
         # create DataFrame
@@ -323,14 +326,343 @@ Make the scraper automatically restart itself.
         connection.close()
         print("Insertion Complete")
 
-if __name__ = "__main__":
-    path = "movieid.csv"
-    pw = getpass()
+    def set_date_cutoff(self,day,month,year):
+        self.day = day
+        self.month = month
+        self.year = year
+        self.decode = {
+            'January':1,
+            'February':2,
+            'March':3,
+            'April':4,
+            'May':5,
+            'June':6,
+            'July':7,
+            'August':8,
+            'September':9,
+            'October':10,
+            'November':11,
+            'December':12
+            }
+
+    def pull_ids(self,save = True,filename = False):
+        '''
+        Connects to the database and retrieves the all of the review ids and returns it as a list
+        '''
+        self.start_timer()
+        try:
+            # connect to the database and qurey the data base for the review/movie id
+            cursor = self.connect_to_database()
+            query = "SELECT review_id, movie_id FROM reviews"
+            cursor.execute(query)
+
+            # put all of the review/movie ids into a list (a list of tuples)
+            self.ids = cursor.fetchall()
+            cursor.close()
+
+
+
+        except Exception as e:
+            print(e)
+
+        elapsed = self.end_timer()
+        elapsed = self.convert_time(elapsed)
+
+        self.start_timer()
+
+        # save the IDs to a file
+        if save:
+            # if you pass in a filename, use that otherwise use the default
+            filename = input("Enter a filename: ") if filename else "review_ids.csv"
+
+            with open(filename,'w') as file:
+                for rev,mov in self.ids:
+                    #print(type(rev))
+                    #print(rev[:5])
+                    #print(mov[:5])
+                    file.write(str(rev + "," + mov) + "\n")
+
+            finished = self.end_timer()
+            finish = self.convert_time(finished)
+
+            # class variable used to load the file before program is terminated
+            self.load_path = os.path.join(os.getcwd(),filename)
+            print(f"File saved to {self.load_path} and was saved in {finish}")
+
+
+
+        print(f"Retrieved {cursor.rowcount} review/movie ID's in {elapsed}")
+        print(f"The ID's are stored as {type(self.ids)}")
+        print(f"The first 10 entries are:\n{self.ids[:10]}")
+        print()
+
+        return self.ids
+
+    def start_timer(self):
+        """
+        starts a timer
+        """
+        self.start = time.perf_counter()
+
+    def end_timer(self):
+        '''
+        ends the timer started by start_timer()
+
+        '''
+        self.end = time.perf_counter()
+        self.elapsed = self.end - self.start
+        return self.elapsed
+
+    def convert_time(self,elapsed):
+        '''
+        converts seconds in to 
+        HH:MM:SS format
+        '''
+        e = str(datetime.timedelta(seconds=elapsed))
+        return e
+
+    def update(self,ids = None):
+        '''
+        This function takes in the list of review/movie ids and splits them into their
+        own lists.
+
+        Process:
+
+        1) Each unique movie ID is used to search IMBd for its movie, and the reviews
+        are sorted by recency.
+
+        2) The top review will have its ID checked against review IDs in the
+        database to see if there is a match.
+
+        3) If there isn't a match (meaning that the review ID is not yet
+        in the list of review IDs) that review will be saved and step 2 will be repeated with the next
+        review on the page.
+
+        4) Once the function comes across a review with its review ID already in the database, it will
+        be the last review scraped for that movie ID and the whole process is repeated with the next unique
+        movie ID.
+
+        '''
+
+
+        ids = self.ids if ids is None else ids
+        review_ids = []
+        movie_ids = []
+
+        # seperate reviews and movies
+        for rid,mid in ids:
+            review_ids.append(str(rid))
+            movie_ids.append(str(mid))
+
+
+        # only unique movie
+        unique_movie_ids = set(movie_ids)
+        unique_movie_ids = list(unique_movie_ids)
+        unique_movie_ids.sort()
+
+        print(f"There are {len(unique_movie_ids)} unique movie IDs")
+        print(f"The first 10 unique IDs are: \n{unique_movie_ids[:10]}\n")
+
+        movie_id = []
+        rating = []
+        reviews = []
+        titles = []
+        username = []
+        found_useful_num = []
+        found_useful_den = []
+        date = []
+        new_review_id = []
+        iteration_counter = 0
+        broken = []
+        self.start_timer()
+
+        # Start the process described
+        for id in unique_movie_ids[:1000]:
+            try:
+                Nan_count = 0
+                review_count = 0
+                movie_title = ''
+                num = id
+                id = "tt" + id
+
+                url_short = f'http://www.imdb.com/title/{id}/'
+
+                # sort the reviews by date
+                url_reviews = url_short + 'reviews?sort=submissionDate&dir=desc&ratingFilter=0'
+# PUT THIS BACK IN
+                #time.sleep(randint(3, 6))
+                response = requests.get(url_reviews)
+                if response.status_code != 200:
+                        continue
+                soup = BeautifulSoup(response.text, 'html.parser')
+
+                # items holds all the HTML for the webpage
+                items = soup.find_all(class_='lister-item-content')
+                
+
+
+                while True:
+                    for item in items:
+
+                        # get the review ID
+                        raw_revid = (item.find(class_="title").get("href"))
+                        match = re.search(r'rw\d+', raw_revid)
+                        review_id = match.group()
+                        #print(f"review ID from IMBd: {review_id}")
+
+                        # check whether or not the review ID is in the database (steps 2 and 3)
+                        if review_id not in review_ids:
+                            print(f"Updating {id} at index {unique_movie_ids.index(num)} in the database for review ID {review_id}")
+                            review_count += 1
+
+                            # populate lists
+                            reviews.append(item.find(class_="text show-more__control").get_text())
+                            titles.append(item.find(class_="title").get_text())
+                            username.append(item.find(class_="display-name-link").get_text())
+                            date.append(item.find(class_="review-date").get_text())
+                            movie_id.append(id.replace("tt", ""))
+                            found_useful = item.find(class_="actions text-muted").get_text()
+                            found_useful = found_useful.replace(",", "")
+                            usefuls = [int(i) for i in found_useful.split() if i.isdigit()]
+                            found_useful_num.append(usefuls[0])
+                            found_useful_den.append(usefuls[1])
+                            raw_revid = (item.find(class_="title").get("href"))
+                            match = re.search(r'rw\d+', raw_revid)
+                            try:
+                                new_review_id.append(match.group())
+                            except Exception:
+                                new_review_id.append('')
+                            try:
+                                rating.append(item.find(class_="rating-other-user-rating").find('span').text)
+                            except Exception:
+                                rating.append(11)
+                                Nan_count += 1
+                            # for loop ends here
+
+                    # loading more data if there are more than 25 reviews
+                    load = soup.find(class_='load-more-data')
+                    if items:
+                        iteration_counter += 1
+                    try:
+                        key = load['data-key']
+                        # exists only if there is a "load More" button
+                    except Exception:
+                        break  # End the while loop and go to next movie id
+                    url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
+# PUT THIS BACK IN
+                    #time.sleep(randint(3, 6))
+                    response = requests.get(url_reviews)
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    items = soup.find_all(class_='lister-item-content')
+                    # while loop ends here
+
+            except Exception as e:
+                print(e)
+                continue
+
+         # create DataFrame
+        df = self.make_dataframe(movie_id, reviews, rating, titles, username,
+                            found_useful_num, found_useful_den, date, review_id)
+# PUT THIS BACK IN
+        #self.insert_rows(df)
+
+        elapsed = self.end_timer()
+        elapsed = self.convert_time(elapsed)
+        print(f"finished in {elapsed}")
+        return df
+
+    def load_ids(self,path = None):
+        '''
+        This function can only be ran before the program is terminated.
+        It uses the class variable self.load_path to locate the saved file with the 
+        review/movie IDs and automatically loads the data from that file back into 
+        the class variable self.ids.
+        '''
+
+        path = self.load_path if path is None else path
+
+        df = pd.read_csv(path,header = None)
+        self.ids = df.values.tolist()
+        return self.ids
+
+def checker(str):
+    """
+    Quick utility function to help with our input Q&A
+    """
+    valid_inputs = ['y', 'yes', 'n', 'no']
+    var = input(str).lower()
+    while var in valid_inputs == False:
+        print("That's not a valid input!")
+        var = input(str).lower()
+    return var
+
+if __name__ == "__main__":
+    
     start = int(input("Start at which row? "))
     end = int(input("End at which row? ")) + 1
+    if start > end:
+        raise ValueError("The starting position needs to be less than or equal to end position.")
+
     max_iter = int(input("Maximum iterations? "))
-    scraper_instance = int(input("Which scraper instance is this? "))
-    s = Scraper(start,end,max_iter, scraper_instance, pw)
-    ids = s.get_ids(path)
-    #s.show(ids)
-    df = s.scrape(ids)
+    if max_iter < 1:
+        raise ValueError("Maximum iterations must be positive.")
+    
+    scraper_instance = input("Which scraper instance is this? ")
+    s = Scraper(start,end,max_iter,scraper_instance)
+    
+    mode = checker("Are you starting a new database (y/n): \n")
+    if mode == "y" or mode == "yes":
+        ids = s.get_ids()
+        df = s.scrape(ids)
+    elif mode == "n" or mode == "no":
+        pull = checker("Are you pulling new IDs (y/n): \n")
+
+        # Asks if you would like to pull review/movie IDs from the data base
+        if pull == "y" or pull == "yes":
+
+            # if you are pulling, would you like to save them to a file for faster retrieval (debugging purposes)
+            saved = checker("Do you want to save this pull to a file (y/n)? \n")
+
+            # yes means that the IDs will be saved to a file and the file will be automatically read to load the IDs
+            if saved == "y" or saved == "yes":
+                load = True
+                s.pull_ids()
+
+            # no means that the IDs are stored in a list and the class will use the list instead
+            # unless a file already exist with the IDs on it
+            elif saved == 'n' or saved == 'no':
+                load = checker("Is there a file that already exist with the IDs (y/n)? \n")
+                ids = s.pull_ids(save = False)
+
+            # if the IDs were saved to a file before the program was termintated, load the IDs and start updating the database
+            if load == True:
+                s.load_ids()
+                df = s.update()
+
+                # if there is already a file that exist, use that file
+            elif load == "y" or load == "yes":
+                path = input("Enter the filename or file path: \n")
+                try:
+                    ids = s.load_ids(path = path)
+                    df = s.update(ids = ids)
+                except Exception:
+                    raise ValueError("File Not Found")
+
+                # if a file doesn't exist it will use the IDs already in memory
+            elif load == "n" or load == "no":
+                print("Moving on with the ID's stored in memory")
+                df = s.update(ids = ids)
+
+        # you don't want to pull new reviews
+        else:
+            # but there is a file that already contains the IDs needed 
+            load = checker("Is there a file that already exist with the IDs (y/n)? \n")
+            if load == "y" or load == "yes":
+                path = input("Enter the filename or file path: \n")
+                try:
+                    ids = s.load_ids(path = path)
+                    df = s.update(ids = ids)
+                except Exception:
+                    raise ValueError("File Not Found")
+            else:
+                print("There are no review/movie IDs in memory or saved to a file.")
