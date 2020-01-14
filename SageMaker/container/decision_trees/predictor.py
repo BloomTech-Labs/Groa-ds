@@ -70,7 +70,7 @@ class ScoringService(object):
             # extract most similar movies for the input vector
             return clf.similar_by_vector(v, topn= n+1)[1:]
 
-        new_input = [[x[0].lstrip("0")] for x in input[input.columns[0]] # remove leading zeroes
+        new_input = [[x[0].lstrip("0")] for x in input[input.columns[0]]] # remove leading zeroes
         recs = _similar_movies(_aggregate_vectors(new_input))
         return recs
 
