@@ -473,6 +473,7 @@ class Scraper():
 
                 # sort the reviews by date
                 url_reviews = url_short + 'reviews?sort=submissionDate&dir=desc&ratingFilter=0'
+# PUT THIS BACK IN
                 #time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
@@ -528,14 +529,12 @@ class Scraper():
                     except Exception:
                         break  # End the while loop and go to next movie id
                     url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
+# PUT THIS BACK IN
                     #time.sleep(randint(3, 6))
                     response = requests.get(url_reviews)
                     soup = BeautifulSoup(response.text, 'html.parser')
                     items = soup.find_all(class_='lister-item-content')
                     # while loop ends here
-
-
-
 
             except Exception as e:
                 print(e)
@@ -544,7 +543,7 @@ class Scraper():
          # create DataFrame
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
                             found_useful_num, found_useful_den, date, review_id)
-
+# PUT THIS BACK IN
         #self.insert_rows(df)
 
         elapsed = self.end_timer()
@@ -560,13 +559,10 @@ class Scraper():
         self.ids = df.values.tolist()
         return self.ids
 
-
-
-
-
-
-
 def checker(str):
+    """
+    Quick utility function to help with our input Q&A
+    """
     valid_inputs = ['y', 'yes', 'n', 'no']
     var = input(str).lower()
     while var in valid_inputs == False:
@@ -580,7 +576,7 @@ if __name__ == "__main__":
         end = int(input("End at which row? ")) + 1
         max_iter = int(input("Maximum iterations? "))
         scraper_instance = int(input("Which scraper instance is this? "))
-        s = Scraper(start,end,max_iter, scraper_instance)
+        s = Scraper(start,end,max_iter,scraper_instance)
     except Exception:
         raise ValueError('Use numbers for these variables')
 
