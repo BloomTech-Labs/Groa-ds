@@ -11,6 +11,7 @@ from getpass import getpass
 from datetime import datetime
 import pandas as pd
 from random import randint
+from datetime import timedelta
 
 
 class Scraper():
@@ -350,15 +351,19 @@ class Scraper():
         Connects to the database and retrieves the all of the review ids and returns it as a list
         '''
         self.start_timer()
+        print("Connecting to database...")
         try:
             # connect to the database and qurey the data base for the review/movie id
-            cursor = self.connect_to_database()
+            cursor,_ = self.connect_to_database()
+            print("Connected.")
             query = "SELECT review_id, movie_id FROM reviews"
             cursor.execute(query)
 
             # put all of the review/movie ids into a list (a list of tuples)
+            print("Fetching IDs...")
             self.ids = cursor.fetchall()
             cursor.close()
+            print("Done.")
 
 
 
@@ -418,7 +423,7 @@ class Scraper():
         converts seconds in to 
         HH:MM:SS format
         '''
-        e = str(datetime.timedelta(seconds=elapsed))
+        e = str(timedelta(seconds=elapsed))
         return e
 
     def update(self,ids = None):
@@ -477,6 +482,7 @@ class Scraper():
         self.start_timer()
 
         # Start the process described
+        print("Updating...")
         for id in unique_movie_ids[:1000]:
             try:
                 Nan_count = 0
@@ -502,6 +508,23 @@ class Scraper():
 
 
                 while True:
+                    if iteration_counter >= self.max_iter_count:
+                        df = self.make_dataframe(movie_id, reviews, rating, titles,
+                                                 username, found_useful_num,
+                                                 found_useful_den, date, new_review_id)
+                        #self.insert_rows(df)
+                        movie_id.clear()
+                        rating.clear()
+                        reviews.clear()
+                        titles.clear()
+                        username.clear()
+                        found_useful_num.clear()
+                        found_useful_den.clear()
+                        date.clear()
+                        new_review_id.clear()
+                        iteration_counter = 0
+                        df = df.iloc[0:0]
+
                     for item in items:
 
                         # get the review ID
@@ -557,12 +580,14 @@ class Scraper():
                     # while loop ends here
 
             except Exception as e:
-                print(e)
+                print(e,"In update function")
                 continue
-
+            
+        print("Updated.")
          # create DataFrame
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
                             found_useful_num, found_useful_den, date, review_id)
+        df.drop_duplicates(inplace = True)
 # PUT THIS BACK IN
         #self.insert_rows(df)
 
