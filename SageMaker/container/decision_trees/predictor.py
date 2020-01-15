@@ -17,7 +17,7 @@ import glob
 
 import flask
 
-import pandas as pd
+
 
 prefix = '/opt/ml/'
 model_path = os.path.join(prefix, 'model')
@@ -34,8 +34,8 @@ class ScoringService(object):
         if cls.model == None:
             # load the gensim model
             with open(os.path.join(model_path, 'word2vec_2.model'), 'r') as inp:
-                gensim.models.Word2Vec.load(inp)
-            w2v_model = gensim.models.Word2Vec.load("word2vec_2.model")
+                gensim.models.KeyedVectors.load_word2vec_format(inp)
+            w2v_model = gensim.models.KeyedVectors.load_word2vec_format("word2vec_2.model")
             # keep only the normalized vectors.
             # This saves memory but makes the model untrainable (read-only).
             w2v_model = w2v_model.init_sims(replace=True)
@@ -52,8 +52,8 @@ class ScoringService(object):
         # get the model
         clf = cls.get_model()
 
-        # convert csv
-        input = pd.read_csv(input)
+        ## convert a csv input
+        # input = pd.read_csv(input)
 
         def _aggregate_vectors(movies):
             # get the vector average of the movies in the input
