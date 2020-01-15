@@ -157,10 +157,14 @@ class Scraper():
 
                 url_short = f'http://www.imdb.com/title/{id}/'
                 url_reviews = url_short + 'reviews?ref_=tt_urv'
-                time.sleep(randint(3, 6))
+# PUT THIS BACK IN
+                # time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
-                        continue
+                        response = requests.get(url_reviews)
+                        if response.status_code != 200:
+                            print(f"call to {url_reviews} failed with status code {response.status_code}!")
+                            continue
                 soup = BeautifulSoup(response.text, 'html.parser')
                 items = soup.find_all(class_='lister-item-content')
                 print(f"ID: {id} at index {self.all_ids.index(id)}")
@@ -415,7 +419,7 @@ class Scraper():
 
     def convert_time(self,elapsed):
         '''
-        converts seconds in to 
+        converts seconds in to
         HH:MM:SS format
         '''
         e = str(datetime.timedelta(seconds=elapsed))
@@ -493,12 +497,15 @@ class Scraper():
                 #time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
-                        continue
+                        response = requests.get(url_reviews)
+                        if response.status_code != 200:
+                            print(f"call to {url_reviews} failed with status code {response.status_code}!")
+                            continue
                 soup = BeautifulSoup(response.text, 'html.parser')
 
                 # items holds all the HTML for the webpage
                 items = soup.find_all(class_='lister-item-content')
-                
+
 
 
                 while True:
@@ -574,8 +581,8 @@ class Scraper():
     def load_ids(self,path = None):
         '''
         This function can only be ran before the program is terminated.
-        It uses the class variable self.load_path to locate the saved file with the 
-        review/movie IDs and automatically loads the data from that file back into 
+        It uses the class variable self.load_path to locate the saved file with the
+        review/movie IDs and automatically loads the data from that file back into
         the class variable self.ids.
         '''
 
@@ -597,7 +604,7 @@ def checker(str):
     return var
 
 if __name__ == "__main__":
-    
+
     start = int(input("Start at which row? "))
     end = int(input("End at which row? ")) + 1
     if start > end:
@@ -606,10 +613,10 @@ if __name__ == "__main__":
     max_iter = int(input("Maximum iterations? "))
     if max_iter < 1:
         raise ValueError("Maximum iterations must be positive.")
-    
+
     scraper_instance = input("Which scraper instance is this? ")
     s = Scraper(start,end,max_iter,scraper_instance)
-    
+
     mode = checker("Are you starting a new database (y/n): \n")
     if mode == "y" or mode == "yes":
         ids = s.get_ids()
@@ -655,7 +662,7 @@ if __name__ == "__main__":
 
         # you don't want to pull new reviews
         else:
-            # but there is a file that already contains the IDs needed 
+            # but there is a file that already contains the IDs needed
             load = checker("Is there a file that already exist with the IDs (y/n)? \n")
             if load == "y" or load == "yes":
                 path = input("Enter the filename or file path: \n")
