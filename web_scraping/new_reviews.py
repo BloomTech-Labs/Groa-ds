@@ -45,7 +45,7 @@ class Update():
 
     '''
 
-    def __init__(self,pw):
+    def __init__(self):
         self.database = "postgres"
         self.user = "postgres"
         self.password = config("PASSWORD")
@@ -370,9 +370,6 @@ class Update():
 
 
 # setup
-
-pw = input("Enter the password: ")
-u = Update(pw)
 pull = input("Are you pulling new IDs (y/n): \n")
 pull = pull.lower()
 

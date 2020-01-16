@@ -153,6 +153,7 @@ class Scraper():
                 t1 = time.perf_counter()
                 Nan_count = 0
                 review_count = 0
+                movie_title = ''
                 self.locate(id)
 
                 url_short = f'http://www.imdb.com/title/{id}/'
@@ -490,6 +491,7 @@ class Scraper():
             try:
                 Nan_count = 0
                 review_count = 0
+                movie_title = ''
                 num = id
                 id = "tt" + id
 
@@ -614,6 +616,50 @@ class Scraper():
         df = pd.read_csv(path,header = None)
         self.ids = df.values.tolist()
         return self.ids
+
+    def scrape_letterboxd(self, id_list = None):
+        """
+        Scrapes letterboxd.com for review pages.
+        """
+        id_list = self.current_ids if id_list is None else id_list
+        t = time.perf_counter()
+        movie_id = []
+        rating = []
+        reviews = []
+        username =[]
+        likes = []
+        date = []
+        review_id = []
+        iteration_counter = 0
+        broken = []
+
+        for count,id in enumerate(id_list):
+            try:
+                t1 = time.perf_counter()
+                Nan_count = 0
+                review_count = 0
+                self.locate(id)
+                url_initial = f"https://www.letterboxd.com/imdb/{id}"
+                initial_response = requests.get(url_initial)
+                # Get title here
+                url_reviews = f"https://www.letterboxd.com/film/{title}/reviews/by/added/"
+                time.sleep(randint(3,6))
+                response = requests.get(url_reviews)
+                if response.status_code != 200:
+                        response = requests.get(url_reviews)
+                        if response.status_code != 200:
+                            print(f"call to {url_reviews} failed with status code {response.status_code}!")
+                            continue
+                soup = BeautifulSoup(response.text, 'html.parser')
+                items = soup.find_all(class_='film-detail')
+                print(f"ID: {id} at index {self.all_ids.index(id)}")
+                while True:
+                    
+
+
+
+
+
 
 def checker(str):
     """
