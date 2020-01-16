@@ -642,7 +642,10 @@ class Scraper():
                 url_initial = f"https://www.letterboxd.com/imdb/{id}"
                 initial_response = requests.get(url_initial)
                 # Get title here
-                url_reviews = f"https://www.letterboxd.com/film/{title}/reviews/by/added/"
+                url_reviews = f"https://www.letterboxd.com/film/{title}/reviews/by/activity/"
+                # initially, I wanted to make this sorted by recency, but if
+                # there are fewer than 12 reviews only sorting by popular is
+                # available
                 time.sleep(randint(3,6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
@@ -654,12 +657,55 @@ class Scraper():
                 items = soup.find_all(class_='film-detail')
                 print(f"ID: {id} at index {self.all_ids.index(id)}")
                 while True:
-                    
+                    if iteration_counter >= self.max_iter_count:
+                        df = self.letterboxd_dataframe()
+                        self.letterboxd_insert(df)
+                        movie_id.clear()
+                        rating.clear()
+                        reviews.clear()
+                        username.clear()
+                        likes.clear()
+                        date.clear()
+                        review_id.clear()
+                        df = df.iloc[0:0]
+                        iteration_counter = 0
 
+                    for item in items:
+                        review_count += 1
+                        movie_id.append(id.replace("tt", ""))
+                        if item.find("reveal js-reveal"):
+                            pass
+                            # TODO get extra text url
+                        else:
+                            reviews.append(item.find(class_="body-text -prose collapsible-text").get_text())
 
+                        # TODO review_id
+                        # TODO rating
+                        date.append(item.find(class_="_nobr").get_text())
+                        username.append(item.find(class_="name").get_text())
+                        likes.append(item.find(class_="svg-action -like cannot-like ").get_text())
 
+                    # TODO looping over multiple pages
+                t2 = time.perf_counter()
+                finish = t2-t1
 
+                if count == 0 and os.path.exists(f"Logfile{self.scraper_instance}.txt"):
+                    os.remove(f"Logfile{self.scraper_instance}.txt")
+                self.create_log(id, review_count, Nan_count, finish)
+            except Exception as e:
+                broken.append(id)
+                continue
+        df = self.letterboxd_dataframe()
+        self.letterboxd_insert()
 
+        t3 = time.perf_counter()
+        total = t3 - t
+        print(f"Scraped {count + 1} movies in {round(total,2)} seconds")
+
+        print('All done!\n')
+        print("The following IDs were not scraped succcessfully:")
+        self.show(broken)
+        return df
 
 def checker(str):
     """
