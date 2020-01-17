@@ -1,0 +1,32 @@
+{% extends "public/templates/public_template.html" %}
+
+{% block title %}Recommendation Time!{% endblock %}
+
+{% block main %}
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+
+            <h1>Groa Recommender!</h1>
+            <hr>
+            
+            <form action="/upload" method="POST" enctype="multipart/form-data">
+            
+                <div class="form-group">
+                    <label>Select file</label>
+                    <div class="imdb-name">
+                      <input type="text" class="custom-name-input" name="name" id="name">
+                      <label class="custom-name-label" for="name">Enter Imdb username...</label>
+                    </div>
+                </div>
+          
+                <button type="submit" class="btn btn-primary">Submit username</button>
+                  
+                  
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

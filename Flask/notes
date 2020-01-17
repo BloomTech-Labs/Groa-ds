@@ -1,0 +1,3 @@
+IMDB:give imdb username, search database for reviews with that username. Then do the modeling on those reviews.
+
+Letterboxd: upload zip file, unzip, retrieve reviews and ratings files
