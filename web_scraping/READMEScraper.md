@@ -126,7 +126,7 @@ pip3 install psycopg2-binary
 
 Run:
 ```
-python scraper[].py
+python scraper.py
 ```
 
 ## Built With
