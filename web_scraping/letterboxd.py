@@ -12,6 +12,7 @@ from datetime import datetime
 import pandas as pd
 from random import randint
 from datetime import timedelta
+import sys
 
 
 class Scraper():
@@ -642,6 +643,15 @@ class Scraper():
                 url_initial = f"https://www.letterboxd.com/imdb/{id}"
                 initial_response = requests.get(url_initial)
                 # Get title here
+                title = ""
+                try:
+                    soup = BeautifulSoup(initial_response.text, 'html.parser')
+                    title = soup.find(class_="headline-1 js-widont prettify").get_text()
+                    title = title.replace(" ","-").lower()
+                    
+                except:
+                    print(f"Unable to scrape this ID {id}")
+
                 url_reviews = f"https://www.letterboxd.com/film/{title}/reviews/by/activity/"
                 # initially, I wanted to make this sorted by recency, but if
                 # there are fewer than 12 reviews only sorting by popular is
@@ -653,6 +663,7 @@ class Scraper():
                         if response.status_code != 200:
                             print(f"call to {url_reviews} failed with status code {response.status_code}!")
                             continue
+
                 soup = BeautifulSoup(response.text, 'html.parser')
                 items = soup.find_all(class_='film-detail')
                 print(f"ID: {id} at index {self.all_ids.index(id)}")
@@ -673,6 +684,9 @@ class Scraper():
                     for item in items:
                         review_count += 1
                         movie_id.append(id.replace("tt", ""))
+                        # test
+                        print(item.find(class_="body-text -prose collapsible-text"))
+                        
                         if item.find("reveal js-reveal"):
                             pass
                             # TODO get extra text url
@@ -686,6 +700,7 @@ class Scraper():
                         likes.append(item.find(class_="svg-action -like cannot-like ").get_text())
 
                     # TODO looping over multiple pages
+
                 t2 = time.perf_counter()
                 finish = t2-t1
 
@@ -694,9 +709,10 @@ class Scraper():
                 self.create_log(id, review_count, Nan_count, finish)
             except Exception as e:
                 broken.append(id)
+                print(sys.exc_info()[1])
                 continue
-        df = self.letterboxd_dataframe()
-        self.letterboxd_insert()
+        #df = self.letterboxd_dataframe()
+        #self.letterboxd_insert()
 
         t3 = time.perf_counter()
         total = t3 - t
@@ -718,7 +734,7 @@ def checker(str):
         var = input(str).lower()
     return var
 
-if __name__ == "__main__":
+'''if __name__ == "__main__":
 
     start = int(input("Start at which row? "))
     end = int(input("End at which row? ")) + 1
@@ -787,4 +803,8 @@ if __name__ == "__main__":
                 except Exception:
                     raise ValueError("File Not Found")
             else:
-                print("There are no review/movie IDs in memory or saved to a file.")
+                print("There are no review/movie IDs in memory or saved to a file.")'''
+
+s = Scraper(0,10,5,1)
+ids = s.get_ids()
+s.scrape_letterboxd(id_list=ids)
