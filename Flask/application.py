@@ -45,7 +45,7 @@ def letterboxd_upload():
 
     return render_template("public/letterboxd_upload.html")'''
 
-'''@application.route('/imdb_upload', methods=['GET', 'POST'])
+@application.route('/imdb_upload', methods=['GET', 'POST'])
 def imdb_upload():
     if request.method == 'GET':
         return render_template('public/imdb_upload.html')
@@ -59,13 +59,13 @@ def imdb_upload():
         #what if username isn't there? scrape it from imdb?
 
 
-        return render_template('public/imdb_upload_result.html')'''
+        return render_template('public/imdb_upload_result.html')
         
 
-@application.route('/recommendation', methods=['GET', 'POST'])
+@application.route('/recommendations', methods=['GET', 'POST'])
 def recommend():
     if request.method == 'POST':
-        username = request.form['username']
+        username = request.form['name']
         movie_list = query2(username)
         model = ScoringService()
         model.get_model()
@@ -74,7 +74,8 @@ def recommend():
         df = pd.DataFrame(predictions, columns = ['Movie_id','Percent_match'])
         
         return render_template('public/recommendations.html', df=df)
-    return render_template('public/recommendation_form.html')
+    elif request.method == 'GET':
+        return render_template('public/recommendation_form.html')
         
 
 if __name__ == "__main__":

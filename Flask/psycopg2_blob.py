@@ -1,6 +1,6 @@
 import psycopg2
 import pandas as pd
-from decouple import config
+
 
 
 def query(username):
@@ -13,7 +13,7 @@ def query(username):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = config('DB_PASSWORD'),
+    password  = 'lambdaschoolgroa',
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     dat = pd.read_sql_query(sql, connection)
@@ -30,7 +30,7 @@ def query2(username):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = config('DB_PASSWORD'),
+    password  = 'lambdaschoolgroa',
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
@@ -49,7 +49,7 @@ def query3(list):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = config('DB_PASSWORD'),
+    password  = 'lambdaschoolgroa',
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
