@@ -33,32 +33,50 @@ class ScoringService(object):
         return cls.model
 
     @classmethod
-    def predict(cls, input, n=20):
-        """For the input, do the predictions and return them.
+    def predict(cls, input, bad_movies=[], n=20, harshness=1):
+        """Returns a list of recommendations and useful metadata, given a pretrained
+        word2vec model and a list of movies.
 
         Args:
-            input (a pandas dataframe): The data on which to do the predictions. There will be
-                one prediction per row in the dataframe"""
+            cls (.model object): The pretrained word2vec model.
 
+            input (list of strings): The list of movies that the user likes.
+
+            bad_movies (list of strings): The list of movies that the user dislikes.
+
+            n (int): The number of recommendations to return.
+
+        Output: A list of tuples: Title, Year, IMDb URL, Similarity score.
+        """
+
+        # get pretrained model
         clf = cls.get_model()
 
         def _aggregate_vectors(movies):
-            # get the vector average of the movies in the input
+            """Gets the vector average of a list of movies."""
             movie_vec = []
             for i in movies:
                 try:
-                    movie_vec.append(clf[i])
+                    movie_vec.append(clf[i]) # get the vector for each movie
                 except KeyError:
                     continue
             return np.mean(movie_vec, axis=0)
 
-        def _similar_movies(v, n = 6):
-            # extract most similar movies for the input vector
+        def _similar_movies(v, bad_movies=[], n = 10):
+            """Takes aggregated vector of good movies,
+            and optionally, a list of disliked movies.
+            Subtracts disliked movies.
+            Returns most similar movies for the input vector
+
+            n: number of recommendations to return."""
+            if bad_movies:
+                v = _remove_dislikes(bad_movies, v, input=input, harshness=harshness)
             return clf.similar_by_vector(v, topn= n+1)[1:]
 
-        def _remove_dupes(recs):
-            # remove any recommendations that were in the input
-            return [x for x in recs if x not in input]
+        def _remove_dupes(recs, input, bad_movies):
+            """remove any recommended IDs that were in the input list"""
+            all_seen = input + bad_movies
+            return [x for x in recs if x[0] not in all_seen]
 
         def _get_info(id):
             """Takes an id string and returns the movie info with a url."""
@@ -71,10 +89,19 @@ class ScoringService(object):
                 return f"Movie title unknown. ID:{id}"
 
             t = c.fetchone()
-            title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id[0]}/"])
+            title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id[0]}/", id[1]])
             return title
 
-        input = [x for x in input] # remove leading zeroes
-        recs = _remove_dupes(_similar_movies(_aggregate_vectors(input), n=n))
+        def _remove_dislikes(bad_movies, good_movies_vec, input=1, harshness=1):
+            """Takes a list of movies that the user dislikes.
+            Their embeddings are averaged,
+            and subtracted from the input."""
+            bad_vec = _aggregate_vectors(bad_movies)
+            bad_vec = bad_vec / harshness
+            return good_movies_vec - bad_vec
+
+        recs = _aggregate_vectors(input)
+        recs = _similar_movies(recs, bad_movies, n=n)
+        recs = _remove_dupes(recs, input, bad_movies)
         recs = [_get_info(x) for x in recs]
         return recs
