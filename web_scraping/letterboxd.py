@@ -648,7 +648,7 @@ class Scraper():
                     soup = BeautifulSoup(initial_response.text, 'html.parser')
                     title = soup.find(class_="headline-1 js-widont prettify").get_text()
                     title = title.replace(" ","-").lower()
-                    
+
                 except:
                     print(f"Unable to scrape this ID {id}")
 
@@ -684,12 +684,12 @@ class Scraper():
                     for item in items:
                         review_count += 1
                         movie_id.append(id.replace("tt", ""))
-                        # test
-                        print(item.find(class_="body-text -prose collapsible-text"))
-                        
                         if item.find("reveal js-reveal"):
-                            pass
-                            # TODO get extra text url
+                            body = item.find(class_="body-text -prose collapsible-text")
+                            append = body['data-full-text-url']
+                            fulltext = requests.get('https://www.letterboxd.com' + append)
+                            fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
+                            reviews.append(fulltext)
                         else:
                             reviews.append(item.find(class_="body-text -prose collapsible-text").get_text())
 
