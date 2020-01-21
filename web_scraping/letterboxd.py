@@ -651,6 +651,7 @@ class Scraper():
                     
                 except:
                     print(f"Unable to scrape this ID {id}")
+                    continue
 
                 url_reviews = f"https://www.letterboxd.com/film/{title}/reviews/by/activity/"
                 # initially, I wanted to make this sorted by recency, but if
@@ -684,8 +685,9 @@ class Scraper():
                     for item in items:
                         review_count += 1
                         movie_id.append(id.replace("tt", ""))
+
                         # test
-                        print(item.find(class_="body-text -prose collapsible-text"))
+                        # print(item.find(class_="body-text -prose collapsible-text"))
                         
                         if item.find("reveal js-reveal"):
                             pass
@@ -695,6 +697,16 @@ class Scraper():
 
                         # TODO review_id
                         # TODO rating
+                        rating1 = str(item.find(class_ ="attribution"))
+                        rating1 = rating.split(">")
+                        span = rating1[1]
+                        span = span.split("-")
+                        span = span[2].replace('"','')
+                        rate = int(span)
+                        rating.append(rate)
+                        
+                        
+
                         date.append(item.find(class_="_nobr").get_text())
                         username.append(item.find(class_="name").get_text())
                         likes.append(item.find(class_="svg-action -like cannot-like ").get_text())
