@@ -683,16 +683,22 @@ class Scraper():
                         iteration_counter = 0
 
                     for item in items:
-                        review_count += 1
-                        movie_id.append(id.replace("tt", ""))
                         body = item.find(class_="body-text -prose collapsible-text")
                         append = body['data-full-text-url']
                         if item.find(class_="reveal js-reveal") or item.find(class_="collapsed-text"):
-                            fulltext = requests.get('https://www.letterboxd.com' + append)
+                            text_url = 'https://www.letterboxd.com' + append
+                            fulltext = requests.get(text_url)
+                                if fulltext.status_code != 200:
+                                    fulltext = requests.get(text_url)
+                                    if fulltext.status_code != 200:
+                                        print(f"call to {text_url} failed with status code {fulltext.status_code}!")
+                                        continue  
                             fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
                             reviews.append(fulltext)
                         else:
                             reviews.append(body.get_text())
+                        review_count += 1
+                        movie_id.append(id.replace("tt", ""))
                         review_id.append(append)
                         # TODO strip down to number only
 
@@ -705,15 +711,24 @@ class Scraper():
                         span = span[2].replace('"','')
                         rate = int(span)
                         rating.append(rate)
-                        
-                        
+
+
 
                         date.append(item.find(class_="_nobr").get_text())
                         username.append(item.find(class_="name").get_text())
                         likes.append(item.find(class_="svg-action -like cannot-like ").get_text())
 
                     # TODO looping over multiple pages
+                    page_count = 1
+                    page_count += 1
+                    if soup.find('a', class_="next"):
+                        url_more = url_reviews + 'page/' + page_count + '/'
+                        reply = requests.get(url_more)
 
+
+                        pass
+                    else:
+                        break
                 t2 = time.perf_counter()
                 finish = t2-t1
 
