@@ -685,22 +685,12 @@ class Scraper():
                     for item in items:
                         review_count += 1
                         movie_id.append(id.replace("tt", ""))
-<<<<<<< HEAD
-
-                        # test
-                        # print(item.find(class_="body-text -prose collapsible-text"))
-                        
-                        if item.find("reveal js-reveal"):
-                            pass
-                            # TODO get extra text url
-=======
                         body = item.find(class_="body-text -prose collapsible-text")
                         append = body['data-full-text-url']
                         if item.find(class_="reveal js-reveal") or item.find(class_="collapsed-text"):
                             fulltext = requests.get('https://www.letterboxd.com' + append)
                             fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
                             reviews.append(fulltext)
->>>>>>> 6bfc17910272b995376c8396e07b73187600065b
                         else:
                             reviews.append(body.get_text())
                         review_id.append(append)
