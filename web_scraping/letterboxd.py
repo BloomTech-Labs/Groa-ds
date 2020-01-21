@@ -692,7 +692,7 @@ class Scraper():
                                     fulltext = requests.get(text_url)
                                     if fulltext.status_code != 200:
                                         print(f"call to {text_url} failed with status code {fulltext.status_code}!")
-                                        continue  
+                                        continue
                             fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
                             reviews.append(fulltext)
                         else:
@@ -723,12 +723,17 @@ class Scraper():
                     page_count += 1
                     if soup.find('a', class_="next"):
                         url_more = url_reviews + 'page/' + page_count + '/'
-                        reply = requests.get(url_more)
+                        response = requests.get(url_more)
+                        if response.status_code != 200:
+                            response = requests.get(url_more)
+                            if response.status_code != 200:
+                                print(f"call to {url_more} failed with status code {response.status_code}!")
+                                continue
+                                # Unsure of proper handling here
 
-
-                        pass
                     else:
                         break
+                    # While loop ends here
                 t2 = time.perf_counter()
                 finish = t2-t1
 
