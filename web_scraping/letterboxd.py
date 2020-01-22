@@ -159,8 +159,8 @@ class Scraper():
 
                 url_short = f'http://www.imdb.com/title/{id}/'
                 url_reviews = url_short + 'reviews?ref_=tt_urv'
-# PUT THIS BACK IN
-                # time.sleep(randint(3, 6))
+
+                time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
                         response = requests.get(url_reviews)
@@ -500,8 +500,8 @@ class Scraper():
 
                 # sort the reviews by date
                 url_reviews = url_short + 'reviews?sort=submissionDate&dir=desc&ratingFilter=0'
-# PUT THIS BACK IN
-                #time.sleep(randint(3, 6))
+
+                time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
                         response = requests.get(url_reviews)
@@ -580,8 +580,8 @@ class Scraper():
                     except Exception:
                         break  # End the while loop and go to next movie id
                     url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
-# PUT THIS BACK IN
-                    #time.sleep(randint(3, 6))
+
+                    time.sleep(randint(3, 6))
                     response = requests.get(url_reviews)
                     soup = BeautifulSoup(response.text, 'html.parser')
                     items = soup.find_all(class_='lister-item-content')
@@ -596,8 +596,8 @@ class Scraper():
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
                             found_useful_num, found_useful_den, date, review_id)
         df.drop_duplicates(inplace = True)
-# PUT THIS BACK IN
-        #self.insert_rows(df)
+
+        self.insert_rows(df)
 
         elapsed = self.end_timer()
         elapsed = self.convert_time(elapsed)
@@ -675,7 +675,7 @@ class Scraper():
                 print(f"ID: {id} at index {self.all_ids.index(id)}")
                 while True:
                     if iteration_counter >= self.max_iter_count:
-                        df = self.letterboxd_dataframe()
+                        df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username,likes)
                         self.letterboxd_insert(df)
                         movie_id.clear()
                         rating.clear()
@@ -694,38 +694,32 @@ class Scraper():
                             text_url = 'https://www.letterboxd.com' + append
                             time.sleep(randint(3,6))
                             fulltext = requests.get(text_url)
+                            if fulltext.status_code != 200:
+                                time.sleep(randint(3,6))
+                                fulltext = requests.get(text_url)
                                 if fulltext.status_code != 200:
-                                    time.sleep(randint(3,6))
-                                    fulltext = requests.get(text_url)
-                                    if fulltext.status_code != 200:
-                                        print(f"call to {text_url} failed with status code {fulltext.status_code}!")
-                                        continue
+                                    print(f"call to {text_url} failed with status code {fulltext.status_code}!")
+                                    continue
                             fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
                             reviews.append(fulltext)
                         else:
                             reviews.append(body.get_text())
                         review_count += 1
                         movie_id.append(id.replace("tt", ""))
+                        append = append.split(":", 1)[1].replace("/", "")
                         review_id.append(append)
-                        # TODO strip down to number only
 
-
-                        # TODO rating
+                       
                         rating1 = str(item.find(class_ ="attribution"))
-                        rating1 = rating.split(">")
+                        rating1 = rating1.split(">")
                         span = rating1[1]
                         span = span.split("-")
                         span = span[2].replace('"','')
                         rate = int(span)
                         rating.append(rate)
-
-
-
                         date.append(item.find(class_="_nobr").get_text())
                         username.append(item.find(class_="name").get_text())
                         likes.append(item.find(class_="svg-action -like cannot-like ").get_text())
-
-                    # TODO looping over multiple pages
                     page_count = 1
                     page_count += 1
                     if soup.find('a', class_="next"):
@@ -738,14 +732,11 @@ class Scraper():
                             if response.status_code != 200:
                                 print(f"call to {url_more} failed with status code {response.status_code}!")
                                 continue
-                                # Unsure of proper handling here
-
                     else:
                         break
                     # While loop ends here
                 t2 = time.perf_counter()
                 finish = t2-t1
-
                 if count == 0 and os.path.exists(f"Logfile{self.scraper_instance}.txt"):
                     os.remove(f"Logfile{self.scraper_instance}.txt")
                 self.create_log(id, review_count, Nan_count, finish)
@@ -753,13 +744,11 @@ class Scraper():
                 broken.append(id)
                 print(sys.exc_info()[1])
                 continue
-        #df = self.letterboxd_dataframe()
-        #self.letterboxd_insert()
-
+        df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username,likes)
+        self.letterboxd_insert(df)
         t3 = time.perf_counter()
         total = t3 - t
         print(f"Scraped {count + 1} movies in {round(total,2)} seconds")
-
         print('All done!\n')
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
@@ -769,15 +758,16 @@ class Scraper():
         df = pd.DataFrame(
             {
                 'movie_id': movie_id,
-                'reviews': reviews,
-                'rating': rating,
+                'review_text': reviews,
+                'user_rating': ratings,
                 'likes': likes,
                 'username': username,
-                'date': date,
+                'review_date': date,
                 'review_id': review_id
                 })
         df['date'] = pd.to_datetime(df['date'])
         df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
+        print(df.head(10))
         return df
 
 
@@ -792,25 +782,27 @@ class Scraper():
         # convert rows into tuples
         row_insertions = ""
         for i in list(df.itertuples(index=False)):
-            row_insertions += str((str(i.username.replace("'", "").replace('"', '')),
-                                       i.movie_id,
-                                       i.date,
-                                   str(i.reviews.replace("'", "").replace('"', '')),
-                                   int(i.rating),
-                                       i.likes,
-                                       i.review_id)) + ", "
+            row_insertions += str(i.movie_id,
+                                  i.review_date,
+                              int(i.user_rating),
+                              str(i.review_text.replace("'", "").replace('"', '')),
+                              int(i.likes),
+                                  i.review_id,
+                              str(i.username.replace("'", "").replace('"', ''))) + ", "
+
+
 
         # remove hanging comma
         row_insertions = row_insertions[:-2]
         cursor_boi, connection = self.connect_to_database()
         # create SQL INSERT query
-        query = """INSERT INTO letterboxd_reviews(username,
-                                                  movie_id,
+        query = """INSERT INTO letterboxd_reviews(movie_id,
                                                   review_date,
-                                                  review_text,
                                                   user_rating,
+                                                  review_text,
                                                   likes,
-                                                  review_id)
+                                                  review_id,
+                                                  username)
                                                   VALUES """ + row_insertions + ";"
 
         # execute query
