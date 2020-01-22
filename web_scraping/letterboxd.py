@@ -756,6 +756,22 @@ class Scraper():
         self.show(broken)
         return df
 
+    def letterboxd_dataframe(self,movie_id,review_id,ratings,reviews,date,username,likes):
+        df = pd.DataFrame(
+            {
+                'movie_id': movie_id,
+                'reviews': reviews,
+                'rating': rating,
+                'likes': likes,
+                'username': username,
+                'date': date,
+                'review_id': review_id
+                })
+        df['date'] = pd.to_datetime(df['date'])
+        df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
+        return df
+
+
     def letterboxd_insert(self, df):
         """
         Connects to the database and inserts reviews as new rows.
