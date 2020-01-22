@@ -681,7 +681,7 @@ class Scraper():
                         review_id.clear()
                         df = df.iloc[0:0]
                         iteration_counter = 0
-
+                    iteration_counter += 1
                     for item in items:
                         body = item.find(class_="body-text -prose collapsible-text")
                         append = body['data-full-text-url']
