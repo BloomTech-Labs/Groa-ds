@@ -756,6 +756,45 @@ class Scraper():
         self.show(broken)
         return df
 
+    def letterboxd_insert(self, df):
+        """
+        Connects to the database and inserts reviews as new rows.
+
+        Takes a dataframe and formats it into a very long string to convert to
+        SQL. Connects to the database, executes the query, and closes the cursor
+        and connection.
+        """
+        # convert rows into tuples
+        row_insertions = ""
+        for i in list(df.itertuples(index=False)):
+            row_insertions += str((str(i.username.replace("'", "").replace('"', '')),
+                                       i.movie_id,
+                                       i.date,
+                                   str(i.reviews.replace("'", "").replace('"', '')),
+                                   int(i.rating),
+                                       i.likes,
+                                       i.review_id)) + ", "
+
+        # remove hanging comma
+        row_insertions = row_insertions[:-2]
+        cursor_boi, connection = self.connect_to_database()
+        # create SQL INSERT query
+        query = """INSERT INTO letterboxd_reviews(username,
+                                                  movie_id,
+                                                  review_date,
+                                                  review_text,
+                                                  user_rating,
+                                                  likes,
+                                                  review_id)
+                                                  VALUES """ + row_insertions + ";"
+
+        # execute query
+        cursor_boi.execute(query)
+        connection.commit()
+        cursor_boi.close()
+        connection.close()
+        print("Insertion Complete")
+
 def checker(str):
     """
     Quick utility function to help with our input Q&A
