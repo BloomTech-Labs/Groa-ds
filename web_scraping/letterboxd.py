@@ -759,7 +759,7 @@ class Scraper():
             {
                 'movie_id': movie_id,
                 'review_text': reviews,
-                'user_rating': rating,
+                'user_rating': ratings,
                 'likes': likes,
                 'username': username,
                 'review_date': date,
@@ -767,6 +767,7 @@ class Scraper():
                 })
         df['date'] = pd.to_datetime(df['date'])
         df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
+        print(df.head(10))
         return df
 
 
