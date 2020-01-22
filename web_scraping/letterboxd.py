@@ -159,8 +159,8 @@ class Scraper():
 
                 url_short = f'http://www.imdb.com/title/{id}/'
                 url_reviews = url_short + 'reviews?ref_=tt_urv'
-# PUT THIS BACK IN
-                # time.sleep(randint(3, 6))
+
+                time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
                         response = requests.get(url_reviews)
@@ -500,8 +500,8 @@ class Scraper():
 
                 # sort the reviews by date
                 url_reviews = url_short + 'reviews?sort=submissionDate&dir=desc&ratingFilter=0'
-# PUT THIS BACK IN
-                #time.sleep(randint(3, 6))
+
+                time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
                         response = requests.get(url_reviews)
@@ -580,8 +580,8 @@ class Scraper():
                     except Exception:
                         break  # End the while loop and go to next movie id
                     url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
-# PUT THIS BACK IN
-                    #time.sleep(randint(3, 6))
+
+                    time.sleep(randint(3, 6))
                     response = requests.get(url_reviews)
                     soup = BeautifulSoup(response.text, 'html.parser')
                     items = soup.find_all(class_='lister-item-content')
@@ -596,8 +596,8 @@ class Scraper():
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
                             found_useful_num, found_useful_den, date, review_id)
         df.drop_duplicates(inplace = True)
-# PUT THIS BACK IN
-        #self.insert_rows(df)
+
+        self.insert_rows(df)
 
         elapsed = self.end_timer()
         elapsed = self.convert_time(elapsed)
@@ -675,7 +675,7 @@ class Scraper():
                 print(f"ID: {id} at index {self.all_ids.index(id)}")
                 while True:
                     if iteration_counter >= self.max_iter_count:
-                        df = self.letterboxd_dataframe()
+                        df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username,likes)
                         self.letterboxd_insert(df)
                         movie_id.clear()
                         rating.clear()
@@ -694,12 +694,12 @@ class Scraper():
                             text_url = 'https://www.letterboxd.com' + append
                             time.sleep(randint(3,6))
                             fulltext = requests.get(text_url)
+                            if fulltext.status_code != 200:
+                                time.sleep(randint(3,6))
+                                fulltext = requests.get(text_url)
                                 if fulltext.status_code != 200:
-                                    time.sleep(randint(3,6))
-                                    fulltext = requests.get(text_url)
-                                    if fulltext.status_code != 200:
-                                        print(f"call to {text_url} failed with status code {fulltext.status_code}!")
-                                        continue
+                                    print(f"call to {text_url} failed with status code {fulltext.status_code}!")
+                                    continue
                             fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
                             reviews.append(fulltext)
                         else:
@@ -709,9 +709,9 @@ class Scraper():
                         append = append.split(":", 1)[1].replace("/", "")
                         review_id.append(append)
 
-                        # TODO strip down to number only
+                       
                         rating1 = str(item.find(class_ ="attribution"))
-                        rating1 = rating.split(">")
+                        rating1 = rating1.split(">")
                         span = rating1[1]
                         span = span.split("-")
                         span = span[2].replace('"','')
@@ -744,7 +744,7 @@ class Scraper():
                 broken.append(id)
                 print(sys.exc_info()[1])
                 continue
-        df = self.letterboxd_dataframe()
+        df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username,likes)
         self.letterboxd_insert(df)
         t3 = time.perf_counter()
         total = t3 - t
