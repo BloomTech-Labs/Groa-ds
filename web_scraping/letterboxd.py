@@ -635,24 +635,26 @@ class Scraper():
         broken = []
 
         for count,id in enumerate(id_list):
+            print("----------------------------------------")
             try:
                 t1 = time.perf_counter()
-                Nan_count = 0
+                #Nan_count = 0
                 review_count = 0
                 self.locate(id)
                 url_initial = f"https://www.letterboxd.com/imdb/{id}"
                 time.sleep(randint(3,6))
                 initial_response = requests.get(url_initial)
-                # Get title here
                 title = ""
                 try:
                     soup = BeautifulSoup(initial_response.text, 'html.parser')
                     title = soup.find(class_="headline-1 js-widont prettify").get_text()
                     title = title.replace(" ","-").lower()
+                    #print(title)
 
-                except:
-                    print(f"Unable to scrape this ID {id}")
-                    continue
+                except Exception as e:
+                    print(f"Unable to find a title for this movie at index: {self.all_ids.index(id)}")
+                    raise Exception(e)
+                    
 
                 url_reviews = f"https://www.letterboxd.com/film/{title}/reviews/by/activity/"
                 # initially, I wanted to make this sorted by recency, but if
@@ -675,7 +677,7 @@ class Scraper():
                 print(f"ID: {id} at index {self.all_ids.index(id)}")
                 while True:
                     if iteration_counter >= self.max_iter_count:
-                        df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username,likes)
+                        df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
                         self.letterboxd_insert(df)
                         movie_id.clear()
                         rating.clear()
@@ -709,21 +711,26 @@ class Scraper():
                         append = append.split(":", 1)[1].replace("/", "")
                         review_id.append(append)
 
-                       
-                        rating1 = str(item.find(class_ ="attribution"))
-                        rating1 = rating1.split(">")
-                        span = rating1[1]
-                        span = span.split("-")
-                        span = span[2].replace('"','')
-                        rate = int(span)
-                        rating.append(rate)
+                        try:
+                            rating1 = str(item.find(class_ ="attribution"))
+                            found = re.search(r'rating -green rated-\d+',rating1)
+                            found = found.group() 
+                            text = found.split("-")
+                            rate = int(text[-1])
+                            #print(rate,type(rate))
+                            print(f"Rating found for this review ID: {append}")
+                            rating.append(rate)
+                        except Exception:
+                            print(f"Unable to find ratings for this review ID: {append}")
+                            rating.append(11)
+
                         date.append(item.find(class_="_nobr").get_text())
                         username.append(item.find(class_="name").get_text())
-                        likes.append(item.find(class_="svg-action -like cannot-like ").get_text())
+                        #likes.append(item.find(class_="svg-action -like cannot-like ").get_text())
                     page_count = 1
                     page_count += 1
                     if soup.find('a', class_="next"):
-                        url_more = url_reviews + 'page/' + page_count + '/'
+                        url_more = url_reviews + 'page/' + str(page_count) + '/'
                         time.sleep(randint(3,6))
                         response = requests.get(url_more)
                         if response.status_code != 200:
@@ -735,34 +742,47 @@ class Scraper():
                     else:
                         break
                     # While loop ends here
+                    
                 t2 = time.perf_counter()
                 finish = t2-t1
                 if count == 0 and os.path.exists(f"Logfile{self.scraper_instance}.txt"):
                     os.remove(f"Logfile{self.scraper_instance}.txt")
-                self.create_log(id, review_count, Nan_count, finish)
+                #self.create_log(id, review_count, Nan_count, finish)
             except Exception as e:
                 broken.append(id)
                 print(sys.exc_info()[1])
                 continue
-        df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username,likes)
-        self.letterboxd_insert(df)
+        
+        try:    
+            df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
+            self.letterboxd_insert(df)
+        except Exception as e:
+            print("The lists have uneven lengths and the dataframe wasnt created")
+            print(f"Movie ID: {len(movie_id)}")
+            print(f"Reviews: {len(reviews)}")
+            print(f"Review ID: {len(review_id)}")
+            print(f"date: {len(date)}")
+            print(f"Username: {len(username)}")
+            print(f"Ratings: {len(rating)}")
+            raise Exception(e)
+            
+        
         t3 = time.perf_counter()
         total = t3 - t
         print(f"Scraped {count + 1} movies in {round(total,2)} seconds")
         print('All done!\n')
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
-        return df
+        
 
-    def letterboxd_dataframe(self,movie_id,review_id,ratings,reviews,date,username,likes):
+    def letterboxd_dataframe(self,movie_id,review_id,ratings,reviews,date,username):
         df = pd.DataFrame(
             {
                 'movie_id': movie_id,
                 'review_text': reviews,
                 'user_rating': ratings,
-                'likes': likes,
                 'username': username,
-                'review_date': date,
+                'date': date,
                 'review_id': review_id
                 })
         df['date'] = pd.to_datetime(df['date'])
@@ -786,7 +806,6 @@ class Scraper():
                                   i.review_date,
                               int(i.user_rating),
                               str(i.review_text.replace("'", "").replace('"', '')),
-                              int(i.likes),
                                   i.review_id,
                               str(i.username.replace("'", "").replace('"', ''))) + ", "
 
@@ -800,7 +819,6 @@ class Scraper():
                                                   review_date,
                                                   user_rating,
                                                   review_text,
-                                                  likes,
                                                   review_id,
                                                   username)
                                                   VALUES """ + row_insertions + ";"
@@ -894,6 +912,6 @@ def checker(str):
             else:
                 print("There are no review/movie IDs in memory or saved to a file.")'''
 
-s = Scraper(0,10,5,1)
+s = Scraper(7,8,5,1)
 ids = s.get_ids()
 s.scrape_letterboxd(id_list=ids)
