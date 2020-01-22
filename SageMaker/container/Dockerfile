@@ -6,10 +6,25 @@ FROM ubuntu:16.04
 
 MAINTAINER Amazon AI <sage-learner@amazon.com>
 
+#Removed apt-get python \ from below and inserted this block instead
+RUN apt-get update -y
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository -y ppa:deadsnakes/ppa
+RUN apt-get update -y
+RUN apt-get install -y python3.6
+
+# Remove old version of python
+# Commented out due to an error "Can't find path"
+# RUN rm /usr/bin/python
+
+# Move the version of python you just downloaded into the default path
+RUN ln -s /usr/bin/python3.6 /usr/bin/python
+
+# Check to see if you have the correct version of python
+RUN python3 -V
 
 RUN apt-get -y update && apt-get install -y --no-install-recommends \
          wget \
-         python \
          nginx \
          ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -19,10 +34,11 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
 # linking them together. Likewise, pip leaves the install caches populated which uses
 # a significant amount of space. These optimizations save a fair amount of space in the
 # image, which reduces start up time.
-RUN wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py && \
-    pip install numpy==1.16.2 scipy==1.2.1 scikit-learn==0.20.2 pandas flask gevent gunicorn gensim && \
-        (cd /usr/local/lib/python2.7/dist-packages/scipy/.libs; rm *; ln ../../numpy/.libs/* .) && \
-        rm -rf /root/.cache
+RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && \
+    pip3 install numpy==1.16.2 scipy==1.2.1 scikit-learn==0.20.2 gensim==3.8.1 pandas flask gevent gunicorn 
+    # && \
+       # (cd /usr/local/lib/python3.7/dist-packages/scipy/.libs; rm *; ln ../../numpy/.libs/* .) && \
+      #  rm -rf /root/.cache
 
 # Set some environment variables. PYTHONUNBUFFERED keeps Python from buffering our standard
 # output stream, which means that logs can be delivered to the user quickly. PYTHONDONTWRITEBYTECODE

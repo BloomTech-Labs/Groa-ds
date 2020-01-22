@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.6
 
 # A sample training component that trains a simple scikit-learn decision tree model.
 # This implementation works in File mode and makes no assumptions about the input file names.
