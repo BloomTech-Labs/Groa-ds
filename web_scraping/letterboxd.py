@@ -641,6 +641,7 @@ class Scraper():
                 review_count = 0
                 self.locate(id)
                 url_initial = f"https://www.letterboxd.com/imdb/{id}"
+                time.sleep(randint(3,6))
                 initial_response = requests.get(url_initial)
                 # Get title here
                 title = ""
@@ -660,6 +661,7 @@ class Scraper():
                 time.sleep(randint(3,6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
+                        time.sleep(randint(3,6))
                         response = requests.get(url_reviews)
                         if response.status_code != 200:
                             print(f"call to {url_reviews} failed with status code {response.status_code}!")
@@ -667,6 +669,9 @@ class Scraper():
 
                 soup = BeautifulSoup(response.text, 'html.parser')
                 items = soup.find_all(class_='film-detail')
+                if len(items) == 0:
+                    print(f"No reviews for {id} {title}")
+                    continue
                 print(f"ID: {id} at index {self.all_ids.index(id)}")
                 while True:
                     if iteration_counter >= self.max_iter_count:
@@ -687,8 +692,10 @@ class Scraper():
                         append = body['data-full-text-url']
                         if item.find(class_="reveal js-reveal") or item.find(class_="collapsed-text"):
                             text_url = 'https://www.letterboxd.com' + append
+                            time.sleep(randint(3,6))
                             fulltext = requests.get(text_url)
                                 if fulltext.status_code != 200:
+                                    time.sleep(randint(3,6))
                                     fulltext = requests.get(text_url)
                                     if fulltext.status_code != 200:
                                         print(f"call to {text_url} failed with status code {fulltext.status_code}!")
@@ -723,8 +730,10 @@ class Scraper():
                     page_count += 1
                     if soup.find('a', class_="next"):
                         url_more = url_reviews + 'page/' + page_count + '/'
+                        time.sleep(randint(3,6))
                         response = requests.get(url_more)
                         if response.status_code != 200:
+                            time.sleep(randint(3,6))
                             response = requests.get(url_more)
                             if response.status_code != 200:
                                 print(f"call to {url_more} failed with status code {response.status_code}!")
