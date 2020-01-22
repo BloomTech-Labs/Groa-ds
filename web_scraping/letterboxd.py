@@ -654,7 +654,7 @@ class Scraper():
                 except Exception as e:
                     print(f"Unable to find a title for this movie at index: {self.all_ids.index(id)}")
                     raise Exception(e)
-                    
+
 
                 url_reviews = f"https://www.letterboxd.com/film/{title}/reviews/by/activity/"
                 # initially, I wanted to make this sorted by recency, but if
@@ -714,7 +714,7 @@ class Scraper():
                         try:
                             rating1 = str(item.find(class_ ="attribution"))
                             found = re.search(r'rating -green rated-\d+',rating1)
-                            found = found.group() 
+                            found = found.group()
                             text = found.split("-")
                             rate = int(text[-1])
                             #print(rate,type(rate))
@@ -724,9 +724,12 @@ class Scraper():
                             print(f"Unable to find ratings for this review ID: {append}")
                             rating.append(11)
 
-                        date.append(item.find(class_="_nobr").get_text())
+                        try:
+                            date.append(1)
+                        except:
+                            date.append(item.find(class_="localtime-dd-mmm-yyyy")['datetime'])
+
                         username.append(item.find(class_="name").get_text())
-                        #likes.append(item.find(class_="svg-action -like cannot-like ").get_text())
                     page_count = 1
                     page_count += 1
                     if soup.find('a', class_="next"):
@@ -742,7 +745,7 @@ class Scraper():
                     else:
                         break
                     # While loop ends here
-                    
+
                 t2 = time.perf_counter()
                 finish = t2-t1
                 if count == 0 and os.path.exists(f"Logfile{self.scraper_instance}.txt"):
@@ -752,8 +755,8 @@ class Scraper():
                 broken.append(id)
                 print(sys.exc_info()[1])
                 continue
-        
-        try:    
+
+        try:
             df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
             self.letterboxd_insert(df)
         except Exception as e:
@@ -765,15 +768,15 @@ class Scraper():
             print(f"Username: {len(username)}")
             print(f"Ratings: {len(rating)}")
             raise Exception(e)
-            
-        
+
+
         t3 = time.perf_counter()
         total = t3 - t
         print(f"Scraped {count + 1} movies in {round(total,2)} seconds")
         print('All done!\n')
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
-        
+
 
     def letterboxd_dataframe(self,movie_id,review_id,ratings,reviews,date,username):
         df = pd.DataFrame(
@@ -782,11 +785,11 @@ class Scraper():
                 'review_text': reviews,
                 'user_rating': ratings,
                 'username': username,
-                'date': date,
+                'review_date': date,
                 'review_id': review_id
                 })
-        df['date'] = pd.to_datetime(df['date'])
-        df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
+        df['review_date'] = pd.to_datetime(df['review_date'])
+        df['review_date'] = df['review_date'].dt.strftime('%Y-%m-%d').astype(str)
         print(df.head(10))
         return df
 
@@ -802,12 +805,12 @@ class Scraper():
         # convert rows into tuples
         row_insertions = ""
         for i in list(df.itertuples(index=False)):
-            row_insertions += str(i.movie_id,
+            row_insertions += str((i.movie_id,
                                   i.review_date,
                               int(i.user_rating),
                               str(i.review_text.replace("'", "").replace('"', '')),
                                   i.review_id,
-                              str(i.username.replace("'", "").replace('"', ''))) + ", "
+                              str(i.username.replace("'", "").replace('"', '')))) + ", "
 
 
 
