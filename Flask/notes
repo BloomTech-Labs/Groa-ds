@@ -17,3 +17,5 @@ Things we need from front end:
     - make it clickable so you can mix and match which movies they want to server to the model
     - feature it as thumbnails
 - Serve users their previous reviews (show them what they've already reviewed from other places.)
+- import ratings and use 7-10 as stuff for preliminary recommendation
+    -then give list and give options for serving to recommender

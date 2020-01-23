@@ -1,0 +1,15 @@
+{% extends "public/templates/public_template.html" %}
+
+{% block title %}IMDB Upload{% endblock %}
+
+{% block main %}
+
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+<div class=page>
+  <h1>Movies you've rated!</h1>
+  {% block content %}a
+    {{ data|safe }}
+  {% endblock %}
+</div>
+<input type='submit' name='submit_to_model' value='Submit to the model!'>
+{% endblock %}

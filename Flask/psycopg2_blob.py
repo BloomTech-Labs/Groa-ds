@@ -3,12 +3,14 @@ import pandas as pd
 
 
 
-def query(username):
+def seventoten(username):
     '''
-    accepting a username, this function returns user ratings and reviews of the user
+    accepting a username, this function returns user ratings greater than seven
+    and movie_ids of the user 
     '''
     name = username
-    sql = f"SELECT user_rating, review_text FROM reviews WHERE username = '{name}'"
+    sql = f'''SELECT user_rating, movie_id FROM reviews WHERE username = '{name}' 
+              AND user_rating BETWEEN 7 AND 10'''
 
     connection = psycopg2.connect(
     database  = "postgres",
@@ -40,7 +42,7 @@ def query2(username):
     connection = None
     return rows
 
-def query3(list):
+def id_to_title(list):
     '''
     accepting a list of movie ids outputted from the model, this function 
     will change those ids to titles
