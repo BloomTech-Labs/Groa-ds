@@ -76,10 +76,10 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
             Used in val_list for scoring the model's performance.
 
         good_threshold : int
-            Minimum star rating (10pt scale) for a movie to be considered "enjoyed" by the user.
+            Minimum star rating (5pt scale) for a movie to be considered "enjoyed" by the user.
 
         bad_threshold : int
-            Maximum star rating (10pt scale) for a movie to be considered "disliked" by the user.
+            Maximum star rating (5pt scale) for a movie to be considered "disliked" by the user.
         """
         try:
             ratings_df = ratings_df.dropna(axis=0, subset=['Rating', 'Name', 'Year'])
