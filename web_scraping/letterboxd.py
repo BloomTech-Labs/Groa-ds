@@ -634,8 +634,10 @@ class Scraper():
         iteration_counter = 0
         broken = []
 
+
         for count,id in enumerate(id_list):
             print("----------------------------------------")
+            page_count = 2
             try:
                 t1 = time.perf_counter()
                 #Nan_count = 0
@@ -678,7 +680,7 @@ class Scraper():
                 while True:
                     if iteration_counter >= self.max_iter_count:
                         df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
-                        self.letterboxd_insert(df)
+                        #self.letterboxd_insert(df)
                         movie_id.clear()
                         rating.clear()
                         reviews.clear()
@@ -724,13 +726,19 @@ class Scraper():
                             print(f"Unable to find ratings for this review ID: {append}")
                             rating.append(11)
 
-                        try:
-                            date.append(1)
-                        except:
-                            date.append(item.find(class_="localtime-dd-mmm-yyyy")['datetime'])
+                        if item.find(class_ = "_nobr").get_text():
+                            dates = item.find(class_ = "_nobr").get_text()
+                            #print(date)
+                            date.append(dates)
+                        else:
+                            dates = str(item.find('time', class_="localtime-dd-mmm-yyyy"))
+                            extract = dates.split('"')
+                            dates = str(extract[3])
+                            #print(date)
+                            date.append(dates[:10])
 
                         username.append(item.find(class_="name").get_text())
-                    page_count = 1
+                    
                     page_count += 1
                     if soup.find('a', class_="next"):
                         url_more = url_reviews + 'page/' + str(page_count) + '/'
@@ -758,9 +766,9 @@ class Scraper():
 
         try:
             df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
-            self.letterboxd_insert(df)
+            #self.letterboxd_insert(df)
         except Exception as e:
-            print("The lists have uneven lengths and the dataframe wasnt created")
+            print("An error occured that may be caused by arrays with uneven lengths.")
             print(f"Movie ID: {len(movie_id)}")
             print(f"Reviews: {len(reviews)}")
             print(f"Review ID: {len(review_id)}")
@@ -915,6 +923,6 @@ def checker(str):
             else:
                 print("There are no review/movie IDs in memory or saved to a file.")'''
 
-s = Scraper(7,8,5,1)
+s = Scraper(6,8,5,1)
 ids = s.get_ids()
 s.scrape_letterboxd(id_list=ids)
