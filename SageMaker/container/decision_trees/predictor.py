@@ -35,7 +35,7 @@ class ScoringService(object):
         if cls.model == None:
             # load the gensim model
             w2v_model = Word2Vec.load(os.path.join(model_path, 'word2vec_2.model'))
-            print(w2v_model.vector_size)
+            print("Model vector_size:", w2v_model.vector_size)
             #w2v_model = w2v_model.init_sims(replace=True)
             cls.model = w2v_model
         return cls.model
@@ -48,12 +48,13 @@ class ScoringService(object):
                 one prediction per row in the dataframe"""
 
         clf = cls.get_model()
-        print(clf)
-        
+        print("Model load:", clf)
 
         def _similar_movies(v, n = 6):
             # extract most similar movies for the input vector
-            #v = v.reshape(-1)
+            print("V load shape:", v.shape)
+            v = v.reshape(-1)
+            print("V shape after reshape: ", v.shape)
             ms = clf.similar_by_vector(v, topn= n+1)#[1:]
             
             return ms
@@ -61,17 +62,19 @@ class ScoringService(object):
         def _aggregate_vectors(movies):
             # get the vector average of the movies in the input
             movie_vec = []
+            print("Movies: ", movies)
+            movies = movies
+            print("Movies Datatype: ", movies.dtypes)
             for i in movies.values:
                 try:
                     movie_vec.append(clf[i])
                 except KeyError:
                     continue
-            
+            print("Movie_vec: ", movie_vec)
             return np.mean(movie_vec, axis=0)
 
-        #input = [[str(x) for x in lst] for lst in input] # remove leading zeroes
-        #print(input)
-        print("Printing I guess")
+        
+        print("Right before aggregate_vectors")
         new = _aggregate_vectors(input)
         #print(new)
         recs = _similar_movies(new)
@@ -89,7 +92,7 @@ def ping():
     folders = [f for f in glob.glob(model_path+'/*')]
 
     for f in folders:
-        print(f)
+        print("Folders:", f)
     return flask.Response(response='\n', status=status, mimetype='application/csv')
 
 @app.route('/invocations', methods=['POST'])
@@ -102,10 +105,16 @@ def transformation():
 
     # Convert from CSV to pandas
     if flask.request.content_type == 'text/csv':
+        print("Flask Request: ", flask.request)
         data = flask.request.data.decode('utf-8')
+        print("Flask data ingest", data)
         s = StringIO(data)
-        data = pd.read_csv(s, header=None)
-        print(data)
+        print("String IO", s)
+        #the s is required and doesn't seem to be breaking it
+        data = pd.read_csv(s, sep=",").T
+        data[0] = data.index
+        data = data.reset_index(drop=True)
+        print("Pandas df", data)
     else:
         return flask.Response(response='This predictor only supports CSV data', status=415, mimetype='text/plain')
 
