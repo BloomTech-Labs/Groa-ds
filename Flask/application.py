@@ -15,6 +15,9 @@ application = Flask(__name__)
 
 @application.route("/")
 def index():
+    '''
+    Main Page, has no real function as of now
+    '''
     return render_template("public/index.html")
 
 '''@application.route("/letterboxd_upload", methods=["GET", "POST"])
@@ -48,10 +51,17 @@ def letterboxd_upload():
 
 @application.route('/imdb_upload')
 def imdb_upload():
+    '''
+    allows you to upload your ratings csv that you got from imdb
+    '''
     return render_template('public/imdb_upload.html')
 
 @application.route('/uploader',methods = ['GET','POST'])
 def upload_file():
+    '''
+    the result of the imdb upload, you can see a table of your rated movies and adjust them according to 
+    year released and personal rating
+    '''
     if request.method == "POST":
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -79,6 +89,9 @@ def upload_file():
             
 @application.route('/updated',methods='POST')
 def update():
+    '''
+    updated table from imdb uploader, you can view your revised table and submit your choices to the model
+    '''
     if request.method=='POST':
         rate_min=request.form['rate_min']
         rate_max=request.form['rate_max']
@@ -88,11 +101,25 @@ def update():
         df=df[(df['Year']>year_min) & (df['Year']<year_max)]
         df=df[(df['Your Rating']>rate_min) & (df['Your Rating']<rate_max)]
 
-        return render_template('public/update.html')
+        return render_template('public/updated.html')
         
+@application.route('/submission',methods='POST')
+def submit():
+    '''
+    Shows recommendations from your IMDB choices
+    '''
+    model = ScoringService()
+    model.get_model()
+    #need to configure input for current model but ulitmately may not need to for updated model
+    predictions = model.predict(df)
+    df2 = pd.DataFrame(predictions, columns = ['Movie_id', 'Percent_match'])
+    return render_template('public/recommendations.html', df=df2)
 
 @application.route('/recommendations', methods=['GET', 'POST'])
 def recommend():
+    '''
+    gives recommendations based on reviews in our db given an username
+    '''
     if request.method == 'POST':
         username = request.form['name']
         movie_list = query2(username)
@@ -109,6 +136,9 @@ def recommend():
 
 @application.route('/manualreview', methods=['GET', 'POST'])
 def review():
+    '''
+    Unfinished, lets a user input a review manually
+    '''
     if request.method == 'POST':
         #gets these things from user
         title = request.form['title']
