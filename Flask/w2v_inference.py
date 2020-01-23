@@ -60,7 +60,7 @@ def df_to_id_list(df):
         return ids
 
 def prep_data(ratings_df, watched_df=None, watchlist_df=None,
-                   good_threshold=7, bad_threshold=6):
+                   good_threshold=4, bad_threshold=3):
         """Converts dataframes of exported Letterboxd data to lists of movie_ids.
 
         Parameters
