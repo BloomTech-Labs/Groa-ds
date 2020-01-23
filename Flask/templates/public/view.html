@@ -11,7 +11,7 @@
     {{ data|safe }}
   {% endblock %}
 </div>
-<form action='/updated'>
+<form action='/updated' method='post'>
   <div class="slidecontainer">
     <input type="range" min="1" max="10" value="1" class="slider" id="myRange" name="rate_min">
     <p>Minimum Rating Value: <span id="demo"></span></p>
@@ -30,7 +30,9 @@
   </div>
   <input type="submit" value="Update">
 </form>
-<input type='submit' value='Submit to the model!'>
+<form action='/submission'>
+  <input type='submit' value='Submit to the model!'>
+</form>
 <script>
   var slider = document.getElementById("myRange");
   var output = document.getElementById("demo");

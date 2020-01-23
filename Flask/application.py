@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, redirect
+from flask import Flask, session, render_template, request, flash, redirect
 import pandas as pd
 #from zipfile import ZipFile
 
@@ -11,6 +11,7 @@ from model_functions import ScoringService
 
 
 application = Flask(__name__)
+application.secret_key = 'I would have been your daddy'
 
 
 @application.route("/")
@@ -84,26 +85,30 @@ def upload_file():
             df = df.drop(columns=['Title Type','Num Votes','Directors','Genres','URL','Release Date'])
             #get stuff better than 7
             df = df[df['Your Rating'] >= 7]
+            session['df']=df.to_json()
             #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.        
             return render_template('public/view.html', name='Watched List',data = df.to_html())
             
-@application.route('/updated',methods='POST')
+@application.route('/updated',methods=['GET','POST'])
 def update():
     '''
     updated table from imdb uploader, you can view your revised table and submit your choices to the model
     '''
-    if request.method=='POST':
-        rate_min=request.form['rate_min']
-        rate_max=request.form['rate_max']
-        year_min=request.form['year_min']
-        year_max=request.form['year_max']
-        
-        df=df[(df['Year']>year_min) & (df['Year']<year_max)]
-        df=df[(df['Your Rating']>rate_min) & (df['Your Rating']<rate_max)]
+    #if request.method=='POST':
+    df=pd.read_json(session['df'])
+    print(df)
+    rate_min=int(request.form['rate_min'])
+    rate_max=int(request.form['rate_max'])
+    year_min=int(request.form['year_min'])
+    year_max=int(request.form['year_max'])
+    
+    df=df[(df['Year']>year_min) & (df['Year']<year_max)]
+    df=df[(df['Your Rating']>rate_min) & (df['Your Rating']<rate_max)]
+    session['df']=df.to_json()
 
-        return render_template('public/updated.html')
+    return render_template('public/updated.html', data = df.to_html())
         
-@application.route('/submission',methods='POST')
+@application.route('/submission',methods=['POST'])
 def submit():
     '''
     Shows recommendations from your IMDB choices
@@ -111,6 +116,7 @@ def submit():
     model = ScoringService()
     model.get_model()
     #need to configure input for current model but ulitmately may not need to for updated model
+    df=pd.read_json(session['df'])
     predictions = model.predict(df)
     df2 = pd.DataFrame(predictions, columns = ['Movie_id', 'Percent_match'])
     return render_template('public/recommendations.html', df=df2)
