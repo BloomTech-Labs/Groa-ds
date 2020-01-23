@@ -76,10 +76,16 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
             Used in val_list for scoring the model's performance.
 
         good_threshold : int
-            Minimum star rating (5pt scale) for a movie to be considered "enjoyed" by the user.
+            Minimum star rating (10pt scale) for a movie to be considered "enjoyed" by the user.
 
         bad_threshold : int
-            Maximum star rating (5pt scale) for a movie to be considered "disliked" by the user.
+            Maximum star rating (10pt scale) for a movie to be considered "disliked" by the user.
+
+
+        Returns
+        -------
+        tuple of lists of ids.
+            (good_list, bad_list, hist_list, val_list)
         """
         try:
             ratings_df = ratings_df.dropna(axis=0, subset=['Rating', 'Name', 'Year'])
@@ -96,10 +102,14 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
             rated_names = good_df.Name.tolist() + bad_df.Name.tolist()
             full_history = watched_df.dropna(axis=0, subset=['Name', 'Year'])
             hist_list = df_to_id_list(full_history[~full_history['Name'].isin(rated_names)])
+        else: hist_list = []
 
         if watchlist_df is not None:
             watchlist_df = watchlist_df.dropna(axis=0, subset=['Name', 'Year'])
             val_list = df_to_id_list(watchlist_df)
+        else: val_list = []
+
+        return (good_list, bad_list, hist_list, val_list)
 
 class Recommender(object):
 
@@ -120,7 +130,7 @@ class Recommender(object):
             self.model = w2v_model
         return self.model
 
-    def predict(self, input, bad_movies=[],
+    def predict(self, input, bad_movies=[], hist_list=[], val_list=[],
                 n=50, harshness=1, rec_movies=True,
                 show_vibes=False, scoring=False):
         """Returns a list of recommendations and useful metadata, given a pretrained
@@ -134,6 +144,12 @@ class Recommender(object):
 
             bad_movies : iterable
                 List of movies that the user dislikes.
+
+            hist_list : iterable
+                List of movies the user has seen.
+
+            val_list : iterable
+                List of movies the user has already indicated interest in.
 
             n : int
                 Number of recommendations to return.
