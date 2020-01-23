@@ -1,5 +1,26 @@
 import gensim
+import numpy as np
 import pandas as pd
+import psycopg2
+from getpass import getpass
+
+def connect():
+    """connect to database, create cursor"""
+    # connect to database
+    connection = psycopg2.connect(
+        database  = "postgres",
+        user      = "postgres",
+        password  = getpass(),
+        host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
+        port      = '5432'
+    )
+    # create cursor that is used throughout
+    try:
+        c = connection.cursor()
+        print("Connected!")
+    except:
+        print("Connection problem chief!")
+    # Enter database password and press Enter.
 
 def df_to_id_list(df):
         """Converts dataframe of movies to a list of the IDs for those movies,
