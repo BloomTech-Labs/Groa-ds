@@ -12,6 +12,7 @@ from datetime import datetime
 import pandas as pd
 from random import randint
 from datetime import timedelta
+import sys
 
 
 class Scraper():
@@ -153,12 +154,13 @@ class Scraper():
                 t1 = time.perf_counter()
                 Nan_count = 0
                 review_count = 0
+                movie_title = ''
                 self.locate(id)
 
                 url_short = f'http://www.imdb.com/title/{id}/'
                 url_reviews = url_short + 'reviews?ref_=tt_urv'
-# PUT THIS BACK IN
-                # time.sleep(randint(3, 6))
+
+                time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
                         response = requests.get(url_reviews)
@@ -490,6 +492,7 @@ class Scraper():
             try:
                 Nan_count = 0
                 review_count = 0
+                movie_title = ''
                 num = id
                 id = "tt" + id
 
@@ -497,8 +500,8 @@ class Scraper():
 
                 # sort the reviews by date
                 url_reviews = url_short + 'reviews?sort=submissionDate&dir=desc&ratingFilter=0'
-# PUT THIS BACK IN
-                #time.sleep(randint(3, 6))
+
+                time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
                         response = requests.get(url_reviews)
@@ -577,8 +580,8 @@ class Scraper():
                     except Exception:
                         break  # End the while loop and go to next movie id
                     url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
-# PUT THIS BACK IN
-                    #time.sleep(randint(3, 6))
+
+                    time.sleep(randint(3, 6))
                     response = requests.get(url_reviews)
                     soup = BeautifulSoup(response.text, 'html.parser')
                     items = soup.find_all(class_='lister-item-content')
@@ -593,13 +596,12 @@ class Scraper():
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
                             found_useful_num, found_useful_den, date, review_id)
         df.drop_duplicates(inplace = True)
-# PUT THIS BACK IN
-        #self.insert_rows(df)
+
+        self.insert_rows(df)
 
         elapsed = self.end_timer()
         elapsed = self.convert_time(elapsed)
         print(f"finished in {elapsed}")
-        return df
 
     def load_ids(self,path = None):
         '''
@@ -615,6 +617,233 @@ class Scraper():
         self.ids = df.values.tolist()
         return self.ids
 
+    def scrape_letterboxd(self, id_list = None):
+        """
+        Scrapes letterboxd.com for review pages.
+        """
+        id_list = self.current_ids if id_list is None else id_list
+        t = time.perf_counter()
+        movie_id = []
+        rating = []
+        reviews = []
+        username =[]
+        likes = []
+        date = []
+        review_id = []
+        iteration_counter = 0
+        broken = []
+        page_count = 0
+
+        for count,id in enumerate(id_list):
+            print("----------------------------------------")
+            try:
+                t1 = time.perf_counter()
+                #Nan_count = 0
+                review_count = 0
+                self.locate(id)
+                url_initial = f"https://www.letterboxd.com/imdb/{id}"
+                time.sleep(randint(3,6))
+                initial_response = requests.get(url_initial)
+                title = ""
+                try:
+                    soup = BeautifulSoup(initial_response.text, 'html.parser')
+                    title = soup.find(class_="headline-1 js-widont prettify").get_text()
+                    title = title.replace(" ","-").lower()
+                    #print(title)
+
+                except Exception as e:
+                    print(f"Unable to find a title for this movie at index: {self.all_ids.index(id)}")
+                    print("This is normal and expected behavior")
+                    raise Exception(e)
+
+
+                url_reviews = initial_response.url + 'reviews/by/activity/'
+                print(url_reviews)
+                # initially, I wanted to make this sorted by recency, but if
+                # there are fewer than 12 reviews only sorting by popular is
+                # available
+                time.sleep(randint(3,6))
+                response = requests.get(url_reviews)
+                if response.status_code != 200:
+                        time.sleep(randint(3,6))
+                        response = requests.get(url_reviews)
+                        if response.status_code != 200:
+                            print(f"call to {url_reviews} failed with status code {response.status_code}!")
+                            continue
+
+                soup = BeautifulSoup(response.text, 'html.parser')
+                items = soup.find_all(class_='film-detail')
+                if len(items) == 0:
+                    print(f"No reviews for {id} {title}")
+                    continue
+                print(f"ID: {id} at index {self.all_ids.index(id)}")
+                while True:
+                    if iteration_counter >= self.max_iter_count:
+                        df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
+                        self.letterboxd_insert(df)
+                        movie_id.clear()
+                        rating.clear()
+                        reviews.clear()
+                        username.clear()
+                        likes.clear()
+                        date.clear()
+                        review_id.clear()
+                        df = df.iloc[0:0]
+                        iteration_counter = 0
+                    iteration_counter += 1
+                    for item in items:
+                        body = item.find(class_="body-text -prose collapsible-text")
+                        append = body['data-full-text-url']
+                        if item.find(class_="reveal js-reveal") or item.find(class_="collapsed-text"):
+                            text_url = 'https://www.letterboxd.com' + append
+                            time.sleep(randint(3,6))
+                            fulltext = requests.get(text_url)
+                            if fulltext.status_code != 200:
+                                time.sleep(randint(3,6))
+                                fulltext = requests.get(text_url)
+                                if fulltext.status_code != 200:
+                                    print(f"call to {text_url} failed with status code {fulltext.status_code}!")
+                                    continue
+                            fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
+                            reviews.append(fulltext)
+                        else:
+                            reviews.append(body.get_text())
+                        review_count += 1
+                        movie_id.append(id.replace("tt", ""))
+                        append = append.split(":", 1)[1].replace("/", "")
+                        review_id.append(append)
+
+                        try:
+                            rating1 = str(item.find(class_ ="attribution"))
+                            found = re.search(r'rating -green rated-\d+',rating1)
+                            found = found.group()
+                            text = found.split("-")
+                            rate = int(text[-1])
+                            #print(rate,type(rate))
+                            print(f"Rating found for this review ID: {append}")
+                            rating.append(rate)
+                        except Exception:
+                            print(f"Unable to find ratings for this review ID: {append}")
+                            rating.append(11)
+                        username.append(item.find(class_="name").get_text())
+                        if item.find('span', '_nobr').get_text():
+                            dates = item.find('span', '_nobr').get_text()
+                            date.append(dates)
+                        else:
+                            datetime = str(item.find('time', class_="localtime-dd-mmm-yyyy"))
+                            extract = datetime.split('"')
+                            dates = str(extract[3])
+                            date.append(dates[:10])
+
+
+                    if soup.find('a', class_="next"):
+                        print('yep, more reviews')
+                        page_count += 1
+                        url_more = url_reviews + 'page/' + str(page_count+1) + '/'
+                        print(url_more)
+                        time.sleep(randint(3,6))
+                        response = requests.get(url_more)
+                        if response.status_code != 200:
+                            time.sleep(randint(3,6))
+                            response = requests.get(url_more)
+                            if response.status_code != 200:
+                                print(f"call to {url_more} failed with status code {response.status_code}!")
+                                continue
+                        soup = BeautifulSoup(response.text, 'html.parser')
+                        items = soup.find_all(class_='film-detail')
+                    else:
+                        print('end of this movie')
+                        page_count = 0
+                        break
+                    # While loop ends here
+
+                t2 = time.perf_counter()
+                finish = t2-t1
+                if count == 0 and os.path.exists(f"Logfile{self.scraper_instance}.txt"):
+                    os.remove(f"Logfile{self.scraper_instance}.txt")
+                #self.create_log(id, review_count, Nan_count, finish)
+            except Exception as e:
+                broken.append(id)
+                print(sys.exc_info()[1])
+                continue
+
+        try:
+            df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
+            self.letterboxd_insert(df)
+        except Exception as e:
+            print("An error occured that may be caused by arrays with uneven lengths.")
+            print(f"Movie ID: {len(movie_id)}")
+            print(f"Reviews: {len(reviews)}")
+            print(f"Review ID: {len(review_id)}")
+            print(f"date: {len(date)}")
+            print(f"Username: {len(username)}")
+            print(f"Ratings: {len(rating)}")
+            raise Exception(e)
+
+
+        t3 = time.perf_counter()
+        total = t3 - t
+        print(f"Scraped {count + 1} movies in {round(total,2)} seconds")
+        print('All done!\n')
+        print("The following IDs were not scraped succcessfully:")
+        self.show(broken)
+
+
+    def letterboxd_dataframe(self,movie_id,review_id,ratings,reviews,date,username):
+        df = pd.DataFrame(
+            {
+                'movie_id': movie_id,
+                'review_text': reviews,
+                'user_rating': ratings,
+                'username': username,
+                'review_date': date,
+                'review_id': review_id
+                })
+        df['review_date'] = pd.to_datetime(df['review_date'])
+        df['review_date'] = df['review_date'].dt.strftime('%Y-%m-%d').astype(str)
+        print(df.head(10))
+        return df
+
+
+    def letterboxd_insert(self, df):
+        """
+        Connects to the database and inserts reviews as new rows.
+
+        Takes a dataframe and formats it into a very long string to convert to
+        SQL. Connects to the database, executes the query, and closes the cursor
+        and connection.
+        """
+        # convert rows into tuples
+        row_insertions = ""
+        for i in list(df.itertuples(index=False)):
+            row_insertions += str((i.movie_id,
+                                  i.review_date,
+                              int(i.user_rating),
+                              str(i.review_text.replace("'", "").replace('"', '')),
+                                  i.review_id,
+                              str(i.username.replace("'", "").replace('"', '')))) + ", "
+
+
+
+        # remove hanging comma
+        row_insertions = row_insertions[:-2]
+        cursor_boi, connection = self.connect_to_database()
+        # create SQL INSERT query
+        query = """INSERT INTO letterboxd_reviews(movie_id,
+                                                  review_date,
+                                                  user_rating,
+                                                  review_text,
+                                                  review_id,
+                                                  username)
+                                                  VALUES """ + row_insertions + ";"
+
+        # execute query
+        cursor_boi.execute(query)
+        connection.commit()
+        cursor_boi.close()
+        connection.close()
+        print("Insertion Complete")
+
 def checker(str):
     """
     Quick utility function to help with our input Q&A
@@ -627,9 +856,8 @@ def checker(str):
     return var
 
 if __name__ == "__main__":
-
     start = int(input("Start at which row? "))
-    end = int(input("End at which row? ")) + 1
+    end = int(input("End at which row? (Inclusive)")) + 1
     if start > end:
         raise ValueError("The starting position needs to be less than or equal to end position.")
 
@@ -639,11 +867,14 @@ if __name__ == "__main__":
 
     scraper_instance = input("Which scraper instance is this? ")
     s = Scraper(start,end,max_iter,scraper_instance)
-
+    website = checker("Are you scraping IMDB?")
     mode = checker("Are you starting a new database (y/n): \n")
     if mode == "y" or mode == "yes":
         ids = s.get_ids()
-        df = s.scrape(ids)
+        if website == "y" or website == "yes":
+            s.scrape(ids)
+        elif website == "n" or website == "no":
+            s.scrape_letterboxd(ids)
     elif mode == "n" or mode == "no":
         pull = checker("Are you pulling new IDs (y/n): \n")
 
@@ -667,22 +898,29 @@ if __name__ == "__main__":
             # if the IDs were saved to a file before the program was termintated, load the IDs and start updating the database
             if load == True:
                 s.load_ids()
-                df = s.update()
-
+                if website == "y" or website =="yes":
+                    s.update()
+                elif website == "n" or website =="no":
+                    print("This feature is not yet implemented")
                 # if there is already a file that exist, use that file
             elif load == "y" or load == "yes":
                 path = input("Enter the filename or file path: \n")
                 try:
                     ids = s.load_ids(path = path)
-                    df = s.update(ids = ids)
+                    if website == "y" or website =="yes":
+                        s.update(ids=ids)
+                    elif website == "n" or website =="no":
+                        print("This feature is not yet implemented")
                 except Exception:
                     raise ValueError("File Not Found")
 
                 # if a file doesn't exist it will use the IDs already in memory
             elif load == "n" or load == "no":
                 print("Moving on with the ID's stored in memory")
-                df = s.update(ids = ids)
-
+                if website == "y" or website =="yes":
+                    s.update(ids=ids)
+                elif website == "n" or website =="no":
+                    print("This feature is not yet implemented")
         # you don't want to pull new reviews
         else:
             # but there is a file that already contains the IDs needed
@@ -691,7 +929,10 @@ if __name__ == "__main__":
                 path = input("Enter the filename or file path: \n")
                 try:
                     ids = s.load_ids(path = path)
-                    df = s.update(ids = ids)
+                    if website == "y" or website =="yes":
+                        s.update(ids=ids)
+                    elif website == "n" or website =="no":
+                        print("This feature is not yet implemented")
                 except Exception:
                     raise ValueError("File Not Found")
             else:
