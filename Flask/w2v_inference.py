@@ -27,7 +27,7 @@ def df_to_id_list(df):
         ready for inferencing."""
 
         ids = []
-        names = [x.replace("'", "") for x in df.Name.tolist()]
+        names = df.Name.tolist()
         years = [int(year) for year in df.Year.tolist()]
         info = list(zip(names, years))
         for i, j in info:
