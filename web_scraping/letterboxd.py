@@ -633,11 +633,10 @@ class Scraper():
         review_id = []
         iteration_counter = 0
         broken = []
-
+        page_count = 0
 
         for count,id in enumerate(id_list):
             print("----------------------------------------")
-            page_count = 2
             try:
                 t1 = time.perf_counter()
                 #Nan_count = 0
@@ -659,6 +658,8 @@ class Scraper():
 
 
                 url_reviews = f"https://www.letterboxd.com/film/{title}/reviews/by/activity/"
+                print(url_reviews)
+                print('honk')
                 # initially, I wanted to make this sorted by recency, but if
                 # there are fewer than 12 reviews only sorting by popular is
                 # available
@@ -695,6 +696,7 @@ class Scraper():
                         body = item.find(class_="body-text -prose collapsible-text")
                         append = body['data-full-text-url']
                         if item.find(class_="reveal js-reveal") or item.find(class_="collapsed-text"):
+                            print('Additional call')
                             text_url = 'https://www.letterboxd.com' + append
                             time.sleep(randint(3,6))
                             fulltext = requests.get(text_url)
@@ -738,10 +740,12 @@ class Scraper():
                             date.append(dates[:10])
 
                         username.append(item.find(class_="name").get_text())
-                    
-                    page_count += 1
+
                     if soup.find('a', class_="next"):
-                        url_more = url_reviews + 'page/' + str(page_count) + '/'
+                        print('yep, more reviews')
+                        page_count += 1
+                        url_more = url_reviews + 'page/' + str(page_count+1) + '/'
+                        print(url_more)
                         time.sleep(randint(3,6))
                         response = requests.get(url_more)
                         if response.status_code != 200:
@@ -750,7 +754,11 @@ class Scraper():
                             if response.status_code != 200:
                                 print(f"call to {url_more} failed with status code {response.status_code}!")
                                 continue
+                        soup = BeautifulSoup(response.text, 'html.parser')
+                        items = soup.find_all(class_='film-detail')
                     else:
+                        print('end of this movie')
+                        page_count = 0
                         break
                     # While loop ends here
 
