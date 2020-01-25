@@ -1,13 +1,13 @@
 from flask import Flask, session, render_template, request, flash, redirect
 import pandas as pd
-#from zipfile import ZipFile
+from zipfile import ZipFile
 
 import psycopg2
 #from getpass import getpass
 
 #self import
 from psycopg2_blob import seventoten,query2,id_to_title
-from model_functions import ScoringService
+from w2v_inference import *
 
 
 application = Flask(__name__)
@@ -21,9 +21,15 @@ def index():
     '''
     return render_template("public/index.html")
 
-'''@application.route("/letterboxd_upload", methods=["GET", "POST"])
-def letterboxd_upload():
-
+@application.route("/letterboxd_upload", methods=["GET", "POST"])
+def letterboxd_upload():    
+    '''
+    allows you to upload your ratings csv that you got from imdb
+    '''
+    return render_template('public/letterboxd_upload.html')
+    
+@application.route('/letterboxd_uploaded', methods=['GET','POST'])
+def lb_uploaded():
     if request.method == "POST":
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -40,15 +46,18 @@ def letterboxd_upload():
 
             file = request.files["file"]
             with ZipFile(file, 'r') as zip:
-                zip.extractall(path='temp',members=['ratings.csv','reviews.csv'])
+                zip.extractall(path='temp',members=['ratings.csv','reviews.csv','watchlist.csv','watched.csv'])
             
             ratings = pd.read_csv('temp/ratings.csv', encoding='cp1252')
             reviews = pd.read_csv('temp/reviews.csv')
-            #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.
-            return render_template('public/upload.html', df=ratings.head())
+            watched = pd.read_csv('temp/watched.csv')
+            watchlist = pd.read_csv('temp/watchlist.csv')
 
-
-    return render_template("public/letterboxd_upload.html")'''
+            session['ratings'] = ratings.to_json()
+            session['reviews'] = reviews.to_json()
+            session['watched'] = watched.to_json()
+            session['watchlist'] = watchlist.to_json()
+            return render_template('public/letterboxd_uploaded.html', data=ratings)
 
 @application.route('/imdb_upload')
 def imdb_upload():
@@ -83,50 +92,67 @@ def upload_file():
             df['Const'] = df['Const'].str.strip('t')
             #dropping what I think to be extraneous 
             df = df.drop(columns=['Title Type','Num Votes','Directors','Genres','URL','Release Date'])
+            df = df.rename(columns={'Your Rating':'Rating','Title':'Name','Const':'Movie ID'})
             #get stuff better than 7
-            df = df[df['Your Rating'] >= 7]
+            #df = df[df['Your Rating'] >= 7]
             session['df']=df.to_json()
             #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.        
             return render_template('public/view.html', name='Watched List',data = df.to_html())
-            
-@application.route('/updated',methods=['GET','POST'])
-def update():
-    '''
-    updated table from imdb uploader, you can view your revised table and submit your choices to the model
-    '''
-    #if request.method=='POST':
-    df=pd.read_json(session['df'])
-    print(df)
-    rate_min=int(request.form['rate_min'])
-    rate_max=int(request.form['rate_max'])
-    year_min=int(request.form['year_min'])
-    year_max=int(request.form['year_max'])
-    
-    df=df[(df['Year']>year_min) & (df['Year']<year_max)]
-    df=df[(df['Your Rating']>rate_min) & (df['Your Rating']<rate_max)]
-    session['df']=df.to_json()
-
-    return render_template('public/updated.html', data = df.to_html())
-        
-@application.route('/submission',methods=['POST'])
+                    
+@application.route('/submission',methods=['GET','POST'])
 def submit():
     '''
     Shows recommendations from your IMDB choices
     '''
-    model = ScoringService()
-    model.get_model()
+ 
     #need to configure input for current model but ulitmately may not need to for updated model
     df=pd.read_json(session['df'])
-    predictions = model.predict(df)
-    df2 = pd.DataFrame(predictions, columns = ['Movie_id', 'Percent_match'])
-    return render_template('public/recommendations.html', df=df2)
+    bad_rate=int(request.form['bad_rate'])/2
+    good_rate=int(request.form['good_rate'])/2
+    #year_min=int(request.form['year_min'])
+    #year_max=int(request.form['year_max'])
+    #connect
+    connect_db()
+    # import user data
+    
+    
+    # prep user data
+    good_list, bad_list, hist_list, val_list = prep_data(
+                                        df, good_threshold=good_rate, bad_threshold=bad_rate)
+    
+    s = Recommender('w2v_limitingfactor_v1.model')
+    recs=s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False)
+    return render_template('public/recommendations.html', df=recs)
+
+@application.route('/letterboxd_submission', methods=['GET', 'POST'])
+def lb_submit():
+    '''
+    Shows recommendations from your Letterboxd choices
+    '''
+    ratings = pd.read_json(session['ratings'])
+    watched = pd.read_json(session['watched'])
+    watchlist = pd.read_json(session['watchlist'])
+    bad_rate=int(request.form['bad_rate'])/2
+    good_rate=int(request.form['good_rate'])/2
+    #connect
+    connect_db()
+    # import user data
+    
+    # prep user data
+    good_list, bad_list, hist_list, val_list = prep_data(
+                                        ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
+    
+    s = Recommender('w2v_limitingfactor_v1.model')
+    recs = s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False)
+    return render_template('public/recommendations.html', df=recs)
+
 
 @application.route('/recommendations', methods=['GET', 'POST'])
 def recommend():
     '''
     gives recommendations based on reviews in our db given an username
     '''
-    if request.method == 'POST':
+    ''' if request.method == 'POST':
         username = request.form['name']
         movie_list = query2(username)
         model = ScoringService()
@@ -137,7 +163,7 @@ def recommend():
         
         return render_template('public/recommendations.html', df=df)
     elif request.method == 'GET':
-        return render_template('public/recommendation_form.html')
+        return render_template('public/recommendation_form.html')'''
         
 
 @application.route('/manualreview', methods=['GET', 'POST'])

@@ -11,28 +11,26 @@
     {{ data|safe }}
   {% endblock %}
 </div>
-<form action='/updated' method='post'>
+<form action='/submission' method='post'>
   <div class="slidecontainer">
-    <input type="range" min="1" max="10" value="1" class="slider" id="myRange" name="rate_min">
-    <p>Minimum Rating Value: <span id="demo"></span></p>
+    <input type="range" min="1" max="10" value="1" class="slider" id="myRange" name="bad_rate">
+    <p>Minimum value to be considered a bad movie: <span id="demo"></span></p>
   </div>
   <div class="slidecontainer">
-    <input type="range" min="1" max="10" value="10" class="slider2" id="myRange2" name="rate_max">
-    <p>Maximum Rating Value: <span id="demo2"></span></p>
+    <input type="range" min="1" max="10" value="10" class="slider2" id="myRange2" name="good_rate">
+    <p>Minimum value to be considered a good movie: <span id="demo2"></span></p>
   </div>
-  <div class="slidecontainer">
+ <!-- <div class="slidecontainer">
     <input type="range" min="1920" max="2020" value="1920" class="slider3" id="myRange3" name="year_min">
     <p>Minimum Year Value: <span id="demo3"></span></p>
   </div>
   <div class="slidecontainer">
     <input type="range" min="1920" max="2020" value="2020" class="slider4" id="myRange4" name="year_max">
     <p>Maximum Year Value: <span id="demo4"></span></p>
-  </div>
-  <input type="submit" value="Update">
+  </div> -->
+  <input type="submit" value="Get Recommendations!">
 </form>
-<form action='/submission'>
-  <input type='submit' value='Submit to the model!'>
-</form>
+
 <script>
   var slider = document.getElementById("myRange");
   var output = document.getElementById("demo");
