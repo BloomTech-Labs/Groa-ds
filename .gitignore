@@ -2,3 +2,5 @@
 Pipfile.lock
 .vscode/
 .env
+bin/
+.lock
