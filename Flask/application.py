@@ -30,6 +30,10 @@ def letterboxd_upload():
     
 @application.route('/letterboxd_uploaded', methods=['GET','POST'])
 def lb_uploaded():
+    '''
+    next step for letterboxd, this page gets the zipfile from the previous page, extracts four csvs and commits them
+    to the session. HTML wise, this page presents two sliders that are used by the model
+    '''
     if request.method == "POST":
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -58,6 +62,29 @@ def lb_uploaded():
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
             return render_template('public/letterboxd_uploaded.html', data=ratings)
+
+@application.route('/letterboxd_submission', methods=['GET', 'POST'])
+def lb_submit():
+    '''
+    Shows recommendations from your Letterboxd choices
+    '''
+    ratings = pd.read_json(session['ratings'])
+    watched = pd.read_json(session['watched'])
+    watchlist = pd.read_json(session['watchlist'])
+    bad_rate=int(request.form['bad_rate'])/2
+    good_rate=int(request.form['good_rate'])/2
+    #connect
+    s = Recommender('w2v_limitingfactor_v1.model')
+    s.connect_db()
+    # import user data
+    
+    # prep user data
+    good_list, bad_list, hist_list, val_list = prep_data(
+                                        ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
+    
+    
+    recs = s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False)
+    return render_template('public/recommendations.html', df=recs)
 
 @application.route('/imdb_upload')
 def imdb_upload():
@@ -112,7 +139,8 @@ def submit():
     #year_min=int(request.form['year_min'])
     #year_max=int(request.form['year_max'])
     #connect
-    connect_db()
+    s = Recommender('w2v_limitingfactor_v1.model')
+    s.connect_db()
     # import user data
     
     
@@ -120,52 +148,10 @@ def submit():
     good_list, bad_list, hist_list, val_list = prep_data(
                                         df, good_threshold=good_rate, bad_threshold=bad_rate)
     
-    s = Recommender('w2v_limitingfactor_v1.model')
+    
     recs=s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False)
     return render_template('public/recommendations.html', df=recs)
-
-@application.route('/letterboxd_submission', methods=['GET', 'POST'])
-def lb_submit():
-    '''
-    Shows recommendations from your Letterboxd choices
-    '''
-    ratings = pd.read_json(session['ratings'])
-    watched = pd.read_json(session['watched'])
-    watchlist = pd.read_json(session['watchlist'])
-    bad_rate=int(request.form['bad_rate'])/2
-    good_rate=int(request.form['good_rate'])/2
-    #connect
-    connect_db()
-    # import user data
     
-    # prep user data
-    good_list, bad_list, hist_list, val_list = prep_data(
-                                        ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
-    
-    s = Recommender('w2v_limitingfactor_v1.model')
-    recs = s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False)
-    return render_template('public/recommendations.html', df=recs)
-
-
-@application.route('/recommendations', methods=['GET', 'POST'])
-def recommend():
-    '''
-    gives recommendations based on reviews in our db given an username
-    '''
-    ''' if request.method == 'POST':
-        username = request.form['name']
-        movie_list = query2(username)
-        model = ScoringService()
-        model.get_model()
-        
-        predictions = model.predict(movie_list)
-        df = pd.DataFrame(predictions, columns = ['Movie_id','Percent_match'])
-        
-        return render_template('public/recommendations.html', df=df)
-    elif request.method == 'GET':
-        return render_template('public/recommendation_form.html')'''
-        
-
 @application.route('/manualreview', methods=['GET', 'POST'])
 def review():
     '''

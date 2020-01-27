@@ -1,6 +1,7 @@
 import psycopg2
 import pandas as pd
-from decouple import config
+import os
+
 
 
 def seventoten(username):
@@ -32,7 +33,7 @@ def query2(username):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = app.config('DB_PASSWORD'),
+    password  = os.getenv('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
@@ -51,7 +52,7 @@ def id_to_title(list):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = app.config('DB_PASSWORD'),
+    password  = os.getenv('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()

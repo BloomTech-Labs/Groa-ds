@@ -3,25 +3,9 @@ import numpy as np
 import pandas as pd
 import psycopg2
 import re
-from decouple import config
+import os
 
-def connect_db():
-    """connect to database, create cursor"""
-    # connect to database
-    connection = psycopg2.connect(
-        database  = "postgres",
-        user      = "postgres",
-        password  = config('DB_PASSWORD'),
-        host      = "groalives.cvslmiksgnix.us-east-1.rds.amazonaws.com",
-        port      = '5432'
-    )
-    # create cursor that is used throughout
-    try:
-        c = connection.cursor()
-        print("Connected!")
-    except:
-        print("Connection problem chief!")
-    # Enter database password and press Enter.
+cursor_dog = None
 
 def fill_id(id):
     """Adds leading zeroes back if necessary. This makes the id match the database."""
@@ -42,6 +26,7 @@ def df_to_id_list(df):
     names = df.Name.tolist()
     years = [int(year) for year in df.Year.tolist()]
     info = list(zip(names, years))
+    id_book = pd.read_csv('title_basics_small.csv')
     matched = pd.merge(df, id_book,
                left_on=['Name', 'Year'], right_on=['primaryTitle', 'startYear'],
                how='inner')
@@ -50,7 +35,7 @@ def df_to_id_list(df):
     for i, j in missed:
         i = re.sub('[^\s0-9a-zA-Z\s]+', '%', i)
         try:
-            c.execute(f"""
+            cursor_dog.execute(f"""
                 SELECT movie_id, original_title, primary_title
                 FROM movies
                 WHERE primary_title ILIKE '{i}' AND start_year = {j}
@@ -153,6 +138,25 @@ class Recommender(object):
         self.model_name = model_name
         self.model = None
 
+    def connect_db(self):
+        """connect to database, create cursor"""
+        # connect to database
+        connection = psycopg2.connect(
+            database  = "postgres",
+            user      = "postgres",
+            password  = os.getenv('DB_PASSWORD'),
+            host      = "groalives.cvslmiksgnix.us-east-1.rds.amazonaws.com",
+            port      = '5432'
+        )
+        # create cursor that is used throughout
+        global cursor_dog
+        try:
+            cursor_dog = connection.cursor()
+            print("Connected!")
+        except:
+            print("Connection problem chief!")
+        # Enter database password and press Enter.
+
     def _get_model(self):
         """Get the model object for this instance, loading it if it's not already loaded."""
         if self.model == None:
@@ -240,7 +244,7 @@ class Recommender(object):
         def _get_info(id):
             """Takes an id string and returns the movie info with a url."""
             try:
-                c.execute(f"""
+                cursor_dog.execute(f"""
                 select m.primary_title, m.start_year, r.average_rating, r.num_votes
                 from movies m
                 join ratings r on m.movie_id = r.movie_id
@@ -248,7 +252,7 @@ class Recommender(object):
             except:
                 return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None])
 
-            t = c.fetchone()
+            t = cursor_dog.fetchone()
             if t:
                 title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id[0]}/", t[2], t[3], id[1]])
                 return title

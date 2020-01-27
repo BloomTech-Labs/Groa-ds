@@ -44,6 +44,6 @@ Thumbs.db
 # Folders #
 ###########
 .vscode/
-venv/
+groavirt/
 __pycache__/
 runapp.py
