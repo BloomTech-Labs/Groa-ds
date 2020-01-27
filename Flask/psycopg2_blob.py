@@ -15,7 +15,7 @@ def seventoten(username):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = app.config('DB_PASSWORD'),
+    password  = os.getenv('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     dat = pd.read_sql_query(sql, connection)

@@ -2,13 +2,8 @@ import gensim
 import numpy as np
 import pandas as pd
 import psycopg2
-<<<<<<< HEAD
-import os
-
-=======
 import re
 from decouple import config
->>>>>>> f5bfc884cfc2ac1f1f8fc5c7fa0389f5bf4a95d4
 
 def connect_db():
     """connect to database, create cursor"""
@@ -16,13 +11,8 @@ def connect_db():
     connection = psycopg2.connect(
         database  = "postgres",
         user      = "postgres",
-<<<<<<< HEAD
-        password  = os.getenv('DB_PASSWORD'),
-        host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
-=======
         password  = config('DB_PASSWORD'),
         host      = "groalives.cvslmiksgnix.us-east-1.rds.amazonaws.com",
->>>>>>> f5bfc884cfc2ac1f1f8fc5c7fa0389f5bf4a95d4
         port      = '5432'
     )
     # create cursor that is used throughout
