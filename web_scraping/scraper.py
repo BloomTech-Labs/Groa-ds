@@ -696,7 +696,7 @@ class Scraper():
                         append = body['data-full-text-url']
                         if item.find(class_="reveal js-reveal") or item.find(class_="collapsed-text"):
                             text_url = 'https://www.letterboxd.com' + append
-                            time.sleep(randint(2,4))
+                            time.sleep(randint(3,4))
                             fulltext = requests.get(text_url)
                             if fulltext.status_code != 200:
                                 time.sleep(randint(3,6))
