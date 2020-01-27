@@ -844,6 +844,30 @@ class Scraper():
         connection.close()
         print("Insertion Complete")
 
+    def scrape_finder():
+        url = f'https://www.finder.com/netflix-movies'
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        items = soup.find_all(class_='btn-success')
+        links = [item['href'] for item in items]
+        rows = soup.find_all(scope="row")
+        titles = []
+        for row in rows:
+            if row['data-title'] == 'title':
+                titles.append(row.get_text())
+        df = pd.DataFrame({'title': titles, 'url': links})
+        row_insertions = ""
+        for i in list(df.itertuples(index=False)):
+            row_insertions += str((i.title, i.url)) + ", "
+        row_insertions = row_insertions[:-2]
+        cursor_boi, connection = self.connect_to_database()
+        query = """INSERT INTO netflix_urls(title, url) VALUES """ + row_insertions + ";"
+        cursor_boi.execute(query)
+        connection.commit()
+        cursor_boi.close()
+        connection.close()
+        print("Insertion Complete")
+
 def checker(str):
     """
     Quick utility function to help with our input Q&A
@@ -868,13 +892,18 @@ if __name__ == "__main__":
     scraper_instance = input("Which scraper instance is this? ")
     s = Scraper(start,end,max_iter,scraper_instance)
     website = checker("Are you scraping IMDB?")
+    if website == "n" or website == "no":
+        website2 = checker("Are you scraping Letterboxd?")
     mode = checker("Are you starting a new database (y/n): \n")
     if mode == "y" or mode == "yes":
         ids = s.get_ids()
         if website == "y" or website == "yes":
             s.scrape(ids)
         elif website == "n" or website == "no":
-            s.scrape_letterboxd(ids)
+            if website2 == "y" or website2 == "yes":
+                s.scrape_letterboxd(ids)
+            elif website2 == "n" or website2 == "no":
+                s.scrape_finder()
     elif mode == "n" or mode == "no":
         pull = checker("Are you pulling new IDs (y/n): \n")
 
