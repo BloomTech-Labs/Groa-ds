@@ -92,28 +92,56 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
         (good_list, bad_list, hist_list, val_list)
     """
     try:
+        # try to read Letterboxd user data
+        # drop rows with nulls in the columns we use
         ratings_df = ratings_df.dropna(axis=0, subset=['Rating', 'Name', 'Year'])
-        ratings_df['Year'] = ratings_df['Year']
+        # split according to user rating
         good_df = ratings_df[ratings_df['Rating'] >= good_threshold]
         bad_df = ratings_df[ratings_df['Rating'] <= bad_threshold]
         neutral_df = ratings_df[(ratings_df['Rating'] > bad_threshold) & (ratings_df['Rating'] < good_threshold)]
+        # convert dataframes to lists
+        good_list = df_to_id_list(good_df)
+        bad_list = df_to_id_list(bad_df)
+        neutral_list = df_to_id_list(neutral_df)
+    except KeyError:
+        # Try to read IMDb user data
+        # strip ids of "tt" prefix
+        ratings_df['movie_id'] = ratings_df['Const'].str.lstrip("tt")
+        # drop rows with nulls in the columns we use
+        ratings_df = ratings_df.dropna(axis=0, subset=['Your Rating', 'Year'])
+        # split according to user rating
+        good_df = ratings_df[ratings_df['Your Rating'] >= good_threshold*2]
+        bad_df = ratings_df[ratings_df['Your Rating'] <= bad_threshold*2]
+        neutral_df = ratings_df[(ratings_df['Your Rating'] > bad_threshold*2) & (ratings_df['Your Rating'] < good_threshold*2)]
+        # convert dataframes to lists
+        good_list = good_df['movie_id'].to_list()
+        bad_list = bad_df['movie_id'].to_list()
+        neutral_list = neutral_df['movie_id'].to_list()
     except Exception as e:
+        # can't read the dataframe as Letterboxd or IMDb user data
+        print("This dataframe has columns:", ratings_df.columns)
         raise Exception(e)
 
-    good_list = df_to_id_list(good_df)
-    bad_list = df_to_id_list(bad_df)
-    neutral_list = df_to_id_list(neutral_df)
-
     if watched_df is not None:
-        # This will be used to prevent repeat queries when constructing hist_list
+        # Construct list of watched movies that aren't rated "good" or "bad"
+        # First, get a set of identified IDs.
         rated_names = set(good_df.Name.tolist() + bad_df.Name.tolist() + neutral_list)
+        # drop nulls from watched dataframe
         full_history = watched_df.dropna(axis=0, subset=['Name', 'Year'])
+        # get list of watched movies that haven't been rated
         hist_list = df_to_id_list(full_history[~full_history['Name'].isin(rated_names)])
-    else: hist_list = []
+        # add back list of "neutral" movies (whose IDs we already found before)
+        hist_list = hist_list + neutral_list
+    else: hist_list = neutral_list
 
     if watchlist_df is not None:
-        watchlist_df = watchlist_df.dropna(axis=0, subset=['Name', 'Year'])
-        val_list = df_to_id_list(watchlist_df)
+        try:
+            watchlist_df = watchlist_df.dropna(axis=0, subset=['Name', 'Year'])
+            val_list = df_to_id_list(watchlist_df)
+        except KeyError:
+            watchlist_df = watchlist_df.dropna(axis=0, subset=['Const', 'Year'])
+            watchlist_df['movie_id'] = watchlist_df['Const'].str.lstrip("tt")
+            val_list = watchlist_df['movie_id'].tolist()
     else: val_list = []
 
     return (good_list, bad_list, hist_list, val_list)
@@ -156,7 +184,7 @@ class Recommender(object):
 
             val_list : iterable
                 List of movies the user has already indicated interest in.
-            
+
             n : int
                 Number of recommendations to return.
 
