@@ -11,7 +11,7 @@ def connect_db():
         database  = "postgres",
         user      = "postgres",
         password  = config('DB_PASSWORD'),
-        host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
+        host      = "groalives.cvslmiksgnix.us-east-1.rds.amazonaws.com",
         port      = '5432'
     )
     # create cursor that is used throughout
