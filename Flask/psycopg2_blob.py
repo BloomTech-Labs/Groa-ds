@@ -15,7 +15,7 @@ def seventoten(username):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = config('DB_PASSWORD'),
+    password  = app.config('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     dat = pd.read_sql_query(sql, connection)
@@ -32,7 +32,7 @@ def query2(username):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = config('DB_PASSWORD'),
+    password  = app.config('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
@@ -51,7 +51,7 @@ def id_to_title(list):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = config('DB_PASSWORD'),
+    password  = app.config('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
