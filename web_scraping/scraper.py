@@ -892,13 +892,18 @@ if __name__ == "__main__":
     scraper_instance = input("Which scraper instance is this? ")
     s = Scraper(start,end,max_iter,scraper_instance)
     website = checker("Are you scraping IMDB?")
+    if website == "n" or website == "no":
+        website2 = checker("Are you scraping Letterboxd?")
     mode = checker("Are you starting a new database (y/n): \n")
     if mode == "y" or mode == "yes":
         ids = s.get_ids()
         if website == "y" or website == "yes":
             s.scrape(ids)
         elif website == "n" or website == "no":
-            s.scrape_letterboxd(ids)
+            if website2 == "y" or website2 == "yes":
+                s.scrape_letterboxd(ids)
+            elif website2 == "n" or website2 == "no":
+                s.scrape_finder()
     elif mode == "n" or mode == "no":
         pull = checker("Are you pulling new IDs (y/n): \n")
 
