@@ -861,7 +861,7 @@ class Scraper():
            row_insertions += str((i.title, i.url)) + ", "
        row_insertions = row_insertions[:-2]
        cursor_boi, connection = self.connect_to_database()
-       query = """INSERT INTO netflix urls(title, url) VALUES """ + row_insertions + ";"
+       query = """INSERT INTO netflix_urls(title, url) VALUES """ + row_insertions + ";"
        cursor_boi.execute(query)
        connection.commit()
        cursor_boi.close()
