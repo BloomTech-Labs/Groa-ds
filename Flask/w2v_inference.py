@@ -2,6 +2,7 @@ import gensim
 import numpy as np
 import pandas as pd
 import psycopg2
+import re
 from decouple import config
 
 def connect_db():
@@ -22,94 +23,100 @@ def connect_db():
         print("Connection problem chief!")
     # Enter database password and press Enter.
 
-def df_to_id_list(df):
-        """Converts dataframe of movies to a list of the IDs for those movies,
-        ready for inferencing."""
+def fill_id(id):
+    """Adds leading zeroes back if necessary. This makes the id match the database."""
+    if len(str(id)) < 7:
+        length = len(str(id))
+        id = "0"*(7 - length) + str(id)
+    return str(id)
 
-        ids = []
-        names = df.Name.tolist()
-        years = [int(year) for year in df.Year.tolist()]
-        info = list(zip(names, years))
-        for i, j in info:
-            i = i.replace("'", "''")
-            try:
-                c.execute(f"""
-                    SELECT movie_id
-                    FROM movies
-                    WHERE primary_title ILIKE '{i}' AND start_year = {j}
-                    ORDER BY runtime_minutes DESC
-                    LIMIT 1""")
-                id = c.fetchone()[0]
-                ids.append(id)
-            except TypeError:
-                c.execute(f"""
-                    SELECT movie_id,
-                        levenshtein(upper('{i}'),
-                        UPPER(primary_title)) as distance
-                    /* activate levenshtein function in your database with this query:
-                        "CREATE extension fuzzystrmatch"
-                        Only has to be done once.*/
-                    FROM movies
-                    ORDER BY distance ASC
-                    LIMIT 1
-                """)
-                id = c.fetchone()[0]
-                ids.append(id)
-            except:
-                continue
-        return ids
+def df_to_id_list(df):
+    """Converts dataframe of movies to a list of the IDs for those movies.
+
+    Every title in the input dataframe is checked against the local file, which
+    includes all the titles and IDs in our database. For anything without a match,
+    replace the non-alphanumeric characters with wildcards, and query the database
+    for matches.
+    """
+    df['Year'] = df['Year'].astype(int).astype(str)
+    names = df.Name.tolist()
+    years = [int(year) for year in df.Year.tolist()]
+    info = list(zip(names, years))
+    matched = pd.merge(df, id_book,
+               left_on=['Name', 'Year'], right_on=['primaryTitle', 'startYear'],
+               how='inner')
+    ids = matched['tconst'].astype(str).tolist()
+    missed = [x for x in info if x[0] not in matched['primaryTitle'].tolist()]
+    for i, j in missed:
+        i = re.sub('[^\s0-9a-zA-Z\s]+', '%', i)
+        try:
+            c.execute(f"""
+                SELECT movie_id, original_title, primary_title
+                FROM movies
+                WHERE primary_title ILIKE '{i}' AND start_year = {j}
+                  OR original_title ILIKE '{i}' AND start_year = {j}
+                ORDER BY runtime_minutes DESC
+                LIMIT 1""")
+            id = c.fetchone()[0]
+            ids.append(id)
+        except:
+            continue
+    return [fill_id(id) for id in ids]
 
 def prep_data(ratings_df, watched_df=None, watchlist_df=None,
                    good_threshold=4, bad_threshold=3):
-        """Converts dataframes of exported Letterboxd data to lists of movie_ids.
+    """Converts dataframes of exported Letterboxd data to lists of movie_ids.
 
-        Parameters
-        ----------
-        ratings_df : pd dataframe
-            Letterboxd ratings.
+    Parameters
+    ----------
+    ratings_df : pd dataframe
+        Letterboxd ratings.
 
-        watched_df : pd dataframe
-            Letterboxd watch history.
+    watched_df : pd dataframe
+        Letterboxd watch history.
 
-        watchlist_df : pd dataframe
-            Letterboxd list of movies the user wants to watch.
-            Used in val_list for scoring the model's performance.
+    watchlist_df : pd dataframe
+        Letterboxd list of movies the user wants to watch.
+        Used in val_list for scoring the model's performance.
 
-        good_threshold : int
-            Minimum star rating (10pt scale) for a movie to be considered "enjoyed" by the user.
+    good_threshold : int
+        Minimum star rating (10pt scale) for a movie to be considered "enjoyed" by the user.
 
-        bad_threshold : int
-            Maximum star rating (10pt scale) for a movie to be considered "disliked" by the user.
+    bad_threshold : int
+        Maximum star rating (10pt scale) for a movie to be considered "disliked" by the user.
 
 
-        Returns
-        -------
-        tuple of lists of ids.
-            (good_list, bad_list, hist_list, val_list)
-        """
-        try:
-            ratings_df = ratings_df.dropna(axis=0, subset=['Rating', 'Name', 'Year'])
-            good_df = ratings_df[ratings_df['Rating'] >= good_threshold]
-            bad_df = ratings_df[ratings_df['Rating'] <= bad_threshold]
-        except Exception as e:
-            raise Exception(e)
+    Returns
+    -------
+    tuple of lists of ids.
+        (good_list, bad_list, hist_list, val_list)
+    """
+    try:
+        ratings_df = ratings_df.dropna(axis=0, subset=['Rating', 'Name', 'Year'])
+        ratings_df['Year'] = ratings_df['Year']
+        good_df = ratings_df[ratings_df['Rating'] >= good_threshold]
+        bad_df = ratings_df[ratings_df['Rating'] <= bad_threshold]
+        neutral_df = ratings_df[(ratings_df['Rating'] > bad_threshold) & (ratings_df['Rating'] < good_threshold)]
+    except Exception as e:
+        raise Exception(e)
 
-        good_list = df_to_id_list(good_df)
-        bad_list = df_to_id_list(bad_df)
+    good_list = df_to_id_list(good_df)
+    bad_list = df_to_id_list(bad_df)
+    neutral_list = df_to_id_list(neutral_df)
 
-        if watched_df is not None:
-            # This will be used to prevent repeat queries when constructing hist_list
-            rated_names = good_df.Name.tolist() + bad_df.Name.tolist()
-            full_history = watched_df.dropna(axis=0, subset=['Name', 'Year'])
-            hist_list = df_to_id_list(full_history[~full_history['Name'].isin(rated_names)])
-        else: hist_list = []
+    if watched_df is not None:
+        # This will be used to prevent repeat queries when constructing hist_list
+        rated_names = set(good_df.Name.tolist() + bad_df.Name.tolist() + neutral_list)
+        full_history = watched_df.dropna(axis=0, subset=['Name', 'Year'])
+        hist_list = df_to_id_list(full_history[~full_history['Name'].isin(rated_names)])
+    else: hist_list = []
 
-        if watchlist_df is not None:
-            watchlist_df = watchlist_df.dropna(axis=0, subset=['Name', 'Year'])
-            val_list = df_to_id_list(watchlist_df)
-        else: val_list = []
+    if watchlist_df is not None:
+        watchlist_df = watchlist_df.dropna(axis=0, subset=['Name', 'Year'])
+        val_list = df_to_id_list(watchlist_df)
+    else: val_list = []
 
-        return (good_list, bad_list, hist_list, val_list)
+    return (good_list, bad_list, hist_list, val_list)
 
 class Recommender(object):
 
@@ -122,7 +129,6 @@ class Recommender(object):
         """Get the model object for this instance, loading it if it's not already loaded."""
         if self.model == None:
             model_name = self.model_name
-            print(model_name)
             w2v_model = gensim.models.Word2Vec.load(model_name)
             # Keep only the normalized vectors.
             # This saves memory but makes the model untrainable (read-only).
@@ -150,7 +156,7 @@ class Recommender(object):
 
             val_list : iterable
                 List of movies the user has already indicated interest in.
-
+            
             n : int
                 Number of recommendations to return.
 
@@ -196,12 +202,12 @@ class Recommender(object):
 
         def _remove_dupes(recs, input, bad_movies):
             """remove any recommended IDs that were in the input list"""
-            all_seen = input + bad_movies
+            all_rated = input + bad_movies
             if hist_list:
-                all_seen = list(set(all_seen+hist_list))
+                all_rated = list(set(all_rated+hist_list))
             nonlocal dupes
-            dupes = [x for x in recs if x[0] in all_seen]
-            return [x for x in recs if x[0] not in all_seen]
+            dupes = [x for x in recs if x[0] in all_rated]
+            return [x for x in recs if x[0] not in all_rated]
 
         def _get_info(id):
             """Takes an id string and returns the movie info with a url."""
@@ -220,7 +226,6 @@ class Recommender(object):
                 return title
             else:
                 return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None])
-
 
         def _remove_dislikes(bad_movies, good_movies_vec, input=1, harshness=1):
             """Takes a list of movies that the user dislikes.
