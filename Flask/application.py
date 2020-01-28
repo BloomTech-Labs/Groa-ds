@@ -64,7 +64,7 @@ def lb_uploaded():
             watched_global = pd.read_csv('temp/watched.csv')
             watchlist_global = pd.read_csv('temp/watchlist.csv')
 
-            return render_template('public/letterboxd_uploaded.html', data=ratings_global)
+            return render_template('public/letterboxd_uploaded.html', data=ratings_global.to_html())
 
 @application.route('/letterboxd_submission', methods=['GET', 'POST'])
 def lb_submit():
