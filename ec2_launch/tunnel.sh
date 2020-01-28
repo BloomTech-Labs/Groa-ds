@@ -13,24 +13,42 @@ imageid=ami-062f7200baf2fa504 # this is an Amazon Linux AMI, but you can change 
 instance_type=t2.micro
 key_name=$EC2_INSTANCE_KEY # your keypair name -- instantiated in the env file http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
 security_group=sg-0fb23b3d00c3d354a # your security group -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html
-wait_seconds=5 # seconds between polls for the public IP to populate (keeps it from hammering their API)
-port=22 # the SSH tunnel port you want
-key_location="~/lambda/ericscrape1.pem" # your private key -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair
-user=ec2-user # the EC2 linux user name
-user_data=scrape_movies.sh
+wait_seconds=30 # seconds between polls for the public IP to populate (keeps it from hammering their API)
+port=23453 # the SSH tunnel port you want
+key_location="ericscrape1.pem" # your private key -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair
+user="ec2-user" # the EC2 linux user name
+user_data=file://scrape_movies.sh
 # END SETTINGS
 
 # --------------------- you shouldn't have to change much below this ---------------------
 
+
+
+#allocate=$(aws ec2 allocate-address | grep PublicIp | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
+#assignment=$(aws ec2 associate-address -i )
+
+# public
+info ()
+{
+	instance_id=$(aws ec2 run-instances --image-id $imageid --count 1 --instance-type $instance_type --key-name $key_name --security-group-ids $security_group --user-data $user_data --output text --query 'Instances[*].InstanceId' )
+	echo "This is the instance_id $instance_id"
+
+
+}
+
 # private
 connect ()
 {
-	ssh -oStrictHostKeyChecking=no -ND $port -i $key_location $user@$ip
+	ldns=$(aws ec2 describe-instances --instance-ids $instance_id --output text --query 'Reservations[].Instances[].PublicDnsName')
+	echo "the dns is $ldns"
+
+	ssh -o StrictHostKeyChecking=no -i $key_location $user@$ldns
 }
 
 # private
 getip ()
 {
+	#allocate=
 	ip=$(aws ec2 describe-instances | grep PublicIpAddress | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
 }
 
@@ -38,24 +56,23 @@ getip ()
 start ()
 {
 	echo "Starting instance..."
-	aws ec2 run-instances --image-id $imageid --count 1 --instance-type $instance_type --key-name $key_name --security-group-ids $security_group --user-data $user_data > /dev/null 2>&1
+	instance_id=$(aws ec2 run-instances --image-id $imageid --count 1 --instance-type $instance_type --key-name $key_name --security-group-ids $security_group --user-data file://scrape_movies.txt --output text --query 'Instances[*].InstanceId' )
+	echo "the instance id is $instance_id"
 
-	# wait for a public ip
-	while true; do
+	#script I found on stack overflow  --NEEDS TO CHANGE
+	aws ec2 create-tags --resources $instance_id --tags "Key=Name, Value=$AMIname"
+	#delay until AWS says instance is running
+	echo "sleeping half a minute"
 
-		echo "Waiting $wait_seconds seconds for IP..."
-		sleep $wait_seconds
-		getip
-		if [ ! -z "$ip" ]; then
-			break
-		else
-			echo "Not found yet. Waiting for $wait_seconds more seconds."
-			sleep $wait_seconds
-		fi
+	sleep 30
+	echo "done sleeping"
 
-	done
-
-	echo "Found IP $ip - Starting tunnel on port $port"
+  ip_address=$(aws ec2 describe-instances --instance-ids $instance_id --output text --query 'Reservations[*].Instances[*].PrivateIpAddress')
+	echo "got the ip_address: $ip_address"
+	sleep 5
+	echo "gonna sleep for another half a minute"
+	sleep 30
+	echo "better try to connect now"
 
 	connect
 }
@@ -71,15 +88,17 @@ stop ()
 # public
 resume ()
 {
-	getip
+	#getip
 
 	connect
 }
 
+
+
 # public
 instruct ()
 {
-	echo "Please provide an argument: start, stop, resume"
+	echo "Please provide an argument: start, stop, resume, info"
 }
 
 
@@ -95,6 +114,9 @@ case "$1" in
 		;;
 	stop)
 		stop
+		;;
+	info)
+		info
 		;;
 	help|*)
 		instruct

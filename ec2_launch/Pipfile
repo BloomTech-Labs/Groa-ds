@@ -6,8 +6,9 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-awscli = "*"
+jq = "*"
 aws = "*"
+awscli = "*"
 
 [requires]
 python_version = "3.7"

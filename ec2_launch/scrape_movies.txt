@@ -3,9 +3,6 @@
 #Configure EC2 instance and begin web Scraping
 
 
-sudo su
-echo "Moved into root"
-
 yum update -y
 echo "Package manager updated"
 

@@ -11,7 +11,7 @@ IP_ADDRESS=$(cat ip_address)
 # using the default security group and a 8GB EBS datastore as /dev/sda1.
 # EC2_INSTANCE_KEY is an environment variable containing the name of the instance key.
 # --block-device-mapping ...:false to leave the disk image around after terminating instance (removed)
-EC2_RUN_RESULT=$(aws2 ec2 run-instances --instance-type t2.micro --region us-east-1 --security-group-ids default --key-name $EC2_INSTANCE_KEY --instance-initiated-shutdown-behavior stop --user-data instance_installs.sh --image-id ami-062f7200baf2fa504)
+EC2_RUN_RESULT=$(aws2 ec2 run-instances --instance-type t2.micro --region us-east-1 --security-group-ids default --key-name $EC2_INSTANCE_KEY --instance-initiated-shutdown-behavior stop --user-data-file scrape_movies.sh --image-id ami-062f7200baf2fa504)
 
 INSTANCE_NAME=$(echo ${EC2_RUN_RESULT} | sed 's/RESERVATION.*INSTANCE //' | sed 's/ .*//')
 
