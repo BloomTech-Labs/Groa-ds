@@ -4,6 +4,9 @@ import pandas as pd
 import psycopg2
 import re
 import os
+import warnings;
+
+warnings.filterwarnings('ignore')
 
 cursor_dog = None
 
@@ -273,11 +276,8 @@ class Recommender(object):
 
         aggregated = _aggregate_vectors(input)
         recs = _similar_movies(aggregated, bad_movies, n=n)
-        print("found similar!")
         recs = _remove_dupes(recs, input, bad_movies)
-        print("dupes removed!")
         formatted_recs = [_get_info(x) for x in recs]
-        print("info gotten!")
         if scoring and val_list:
             print(f"The model recommended {_score_model(recs, val_list)} movies that were on the watchlist!\n")
             print(f"\t\t Average Rating: {sum([i[3] for i in formatted_recs if i[3] is not None])/len(formatted_recs)}\n")
