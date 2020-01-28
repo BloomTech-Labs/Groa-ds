@@ -17,11 +17,11 @@ fi
 
 echo "Getting $1's Fully Qualified Domain Name..."
 
-DESCRIBE_INSTANCE=$(ec2-describe-instances $1)
+DESCRIBE_INSTANCE=$(aws2 ec2 describe-instances $1)
 INSTANCE_FQDN=$(echo ${DESCRIBE_INSTANCE} | sed -E 's/RESERVATION.*ami-.{9}//' | sed -E 's/\ .*//')
 
 echo "Removing $INSTANCE_FQDN from known_hosts..."
 ssh-keygen -R $INSTANCE_FQDN
 
 echo "Terminating $INSTANCE_FQDN..."
-ec2-terminate-instances $1
+aws2 ec2 terminate-instances $1

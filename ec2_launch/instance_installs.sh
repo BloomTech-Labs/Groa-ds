@@ -100,7 +100,7 @@ MAX_SECONDS_TO_WAIT=181
 SECONDS_TO_ADD=5
 
 # Create new instance
-EC2_RUN_RESULT=$(ec2-run-instances --instance-type $INSTANCE_TYPE --group default --key $EC2_INSTANCE_KEY $BLOCK_DEVICE_MAPPINGS --instance-initiated-shutdown-behavior stop $SCRIPT_PARAM $AMI)
+EC2_RUN_RESULT=$(aws2 ec2 run-instances --instance-type $INSTANCE_TYPE --group default --key $EC2_INSTANCE_KEY $BLOCK_DEVICE_MAPPINGS --instance-initiated-shutdown-behavior stop $SCRIPT_PARAM $AMI)
 
 INSTANCE_NAME=$(echo ${EC2_RUN_RESULT} | sed 's/RESERVATION.*INSTANCE //' | sed 's/ .*//')
 
@@ -108,7 +108,7 @@ SECONDS_TO_WAIT=0
 
 echo
 
-while [ $MAX_SECONDS_TO_WAIT -gt $SECONDS_TO_WAIT ] && ! ec2-describe-instances $INSTANCE_NAME | grep -q "running"
+while [ $MAX_SECONDS_TO_WAIT -gt $SECONDS_TO_WAIT ] && ! aws2 ec2 describe-instances $INSTANCE_NAME | grep -q "running"
 do
   SECONDS_TO_WAIT=$(( $SECONDS_TO_WAIT + $SECONDS_TO_ADD ))
   echo "$INSTANCE_NAME not running. Waiting $SECONDS_TO_WAIT seconds before checking again..."
@@ -123,12 +123,12 @@ fi
 echo
 echo "Instance $INSTANCE_NAME is now running."
 
-DESCRIBE_INSTANCE=$(ec2-describe-instances $INSTANCE_NAME)
+DESCRIBE_INSTANCE=$(aws2 ec2 describe-instances $INSTANCE_NAME)
 INSTANCE_FQDN=$(echo ${DESCRIBE_INSTANCE} | sed -E 's/RESERVATION.*ami-.{9}//' | sed -E 's/\ .*//')
 
 if [ $IP_ADDRESS ]; then
   echo "Associating it with IP Address $IP_ADDRESS..."
-  ec2-associate-address $IP_ADDRESS -i $INSTANCE_NAME
+  aws2 ec2 associate-address $IP_ADDRESS -i $INSTANCE_NAME
 fi
 
 # Sleep for a bit... ssh seems to fail if started too soon.
