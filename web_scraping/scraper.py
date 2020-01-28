@@ -96,16 +96,17 @@ class Scraper():
         """
         directory = os.getcwd()
         os.chdir(directory)
-
+        movie_name = movie_name.replace("-"," ")
         with open(f'Logfile{self.scraper_instance}.txt', 'a+') as file:
             file.write("---------------------------------------------------------------------\n")
             file.write(str(datetime.now()) + "\n")
-            file.write(f"Movie ID: {movie_name}\n")
+            file.write(f"Movie: {movie_name}\n")
             file.write(f"This movie has {num_review} reviews\n")
             file.write(f"Out of {num_review} reviews there were {num_nan} with NaN ratings\n")
             file.write(f"Finished Scraping {movie_name} in {round(elapsed,2)} seconds\n")
             file.write("----------------------------------------------------------------------")
             file.write("\n")
+
 
     def make_dataframe(self,movie_id, reviews, rating, titles, username,
                    found_useful_num, found_useful_den, date, review_id):
@@ -412,15 +413,15 @@ class Scraper():
         """
         starts a timer
         """
-        self.start = time.perf_counter()
+        self.begin = time.perf_counter()
 
     def end_timer(self):
         '''
         ends the timer started by start_timer()
 
         '''
-        self.end = time.perf_counter()
-        self.elapsed = self.end - self.start
+        self.done = time.perf_counter()
+        self.elapsed = self.done - self.begin
         return self.elapsed
 
     def convert_time(self,elapsed):
@@ -638,7 +639,7 @@ class Scraper():
             print("----------------------------------------")
             try:
                 t1 = time.perf_counter()
-                #Nan_count = 0
+                
                 review_count = 0
                 self.locate(id)
                 url_initial = f"https://www.letterboxd.com/imdb/{id}"
@@ -706,6 +707,7 @@ class Scraper():
                                     continue
                             fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
                             reviews.append(fulltext)
+                            
                         else:
                             reviews.append(body.get_text())
                         review_count += 1
@@ -761,12 +763,14 @@ class Scraper():
                 finish = t2-t1
                 if count == 0 and os.path.exists(f"Logfile{self.scraper_instance}.txt"):
                     os.remove(f"Logfile{self.scraper_instance}.txt")
-                #self.create_log(id, review_count, Nan_count, finish)
+                print("Logging")
+                self.create_log(title,review_count,None,finish)
             except Exception as e:
                 broken.append(id)
                 print(sys.exc_info()[1])
                 continue
 
+                
         try:
             df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
             self.letterboxd_insert(df)
@@ -788,6 +792,7 @@ class Scraper():
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
 
+    
 
     def letterboxd_dataframe(self,movie_id,review_id,ratings,reviews,date,username):
         df = pd.DataFrame(
