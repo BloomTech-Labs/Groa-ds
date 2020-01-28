@@ -64,7 +64,7 @@ def lb_uploaded():
             watched_global = pd.read_csv('temp/watched.csv')
             watchlist_global = pd.read_csv('temp/watchlist.csv')
 
-            return render_template('public/letterboxd_uploaded.html', data=ratings_global.to_html())
+            return render_template('public/letterboxd_uploaded.html', data=ratings_global.to_html(index=False))
 
 @application.route('/letterboxd_submission', methods=['GET', 'POST'])
 def lb_submit():
@@ -88,7 +88,7 @@ def lb_submit():
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
-    return render_template('public/recommendations.html', df=recs, tables=[recs.to_html(classes='data')], titles=recs.columns.values)
+    return render_template('public/recommendations.html', df=recs, tables=[recs.to_html(classes='data',index=False)], titles=recs.columns.values)
 
 @application.route('/imdb_upload')
 def imdb_upload():
@@ -133,7 +133,7 @@ def upload_file():
             global df_global
             df_global = df.to_json()
             #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.
-            return render_template('public/view.html', name='Watched List',data = df.to_html())
+            return render_template('public/view.html', name='Watched List',data = df.to_html(index=False))
 
 @application.route('/submission',methods=['GET','POST'])
 def submit():
@@ -159,7 +159,7 @@ def submit():
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
-    return render_template('public/recommendations.html', df=recs, tables=[recs.to_html(classes='data')], titles=recs.columns.values)
+    return render_template('public/recommendations.html', df=recs, tables=[recs.to_html(classes='data',index=False)], titles=recs.columns.values)
 
 @application.route('/manualreview', methods=['GET', 'POST'])
 def review():
