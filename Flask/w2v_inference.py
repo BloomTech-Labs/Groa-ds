@@ -42,7 +42,7 @@ def df_to_id_list(df):
                   OR original_title ILIKE '{i}' AND start_year = {j}
                 ORDER BY runtime_minutes DESC
                 LIMIT 1""")
-            id = c.fetchone()[0]
+            id = cursor_dog.fetchone()[0]
             ids.append(id)
         except:
             continue

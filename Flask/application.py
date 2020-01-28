@@ -11,7 +11,7 @@ from w2v_inference import *
 
 
 application = Flask(__name__)
-application.secret_key = 'I would have been your daddy'
+application.secret_key = 'secret_bee'
 
 
 @application.route("/")
@@ -56,12 +56,12 @@ def lb_uploaded():
             reviews = pd.read_csv('temp/reviews.csv')
             watched = pd.read_csv('temp/watched.csv')
             watchlist = pd.read_csv('temp/watchlist.csv')
-
+            
             session['ratings'] = ratings.to_json()
             session['reviews'] = reviews.to_json()
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
-            return render_template('public/letterboxd_uploaded.html', data=ratings)
+            return render_template('public/letterboxd_uploaded.html', data=ratings.head().to_html())
 
 @application.route('/letterboxd_submission', methods=['GET', 'POST'])
 def lb_submit():
