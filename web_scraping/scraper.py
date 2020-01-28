@@ -17,23 +17,20 @@ import sys
 
 class Scraper():
     """
-    Scrapes IMDB and contains utility and logging functions.
+    Scrapes IMDB, Letterboxd, and finder.
 
-    Start and end parameters are inclusive. max_iter controls how many loops
-    can be run before the program inserts into the database. scraper_instance must
-    be different for each instance of the program to ensure their log files do not
-    mess each other up. pw is currently taken from getpass and is the password
-    for the postgres database.
-
-    TODO: change pw and path to environment variables
-    Make a scraper that will only grab reviews that the database does not already
-    have.
-    Make the scraper automatically restart itself.
+    Start parameter is inclusive, end parameter is exclusive. However, if you
+    are usng the questionnaire at the bottom of this file, the end parameter is
+    adjusted to be inclusive. max_iter controls how many loops can be run
+    before the program inserts into the database. This indirectly controls the
+    size and frequency of insertions. scraper_instance must be unique for each
+    instance of the program to ensure their log files do not mess each other
+    up. Necessary environment variables are PASSWORD, HOST, PORT, and FILENAME.
     """
 
     def __init__(self,start,end,max_iter, scraper_instance):
         self.start = start
-        self.end = end
+        self.end = end + 1
         self.current_ids = []
         self.all_ids = []
         self.range = 0
@@ -50,6 +47,9 @@ class Scraper():
     def connect_to_database(self):
         """
         Connects to the database.
+
+        Uses class variables set from the environment and takes no arguments
+        other than self. Returns a cursor object and a connection object.
         """
         connection = psycopg2.connect(
             database = self.database,
@@ -62,7 +62,10 @@ class Scraper():
 
     def get_ids(self):
         '''
-        Takes in the names of a file or path to a file to read into a dataframe.
+        Takes in the path to a file to read into a dataframe.
+
+        Uses a class variable set from environment variable FILENAME to look
+        for a csv formatted after the tarball released by IMDB.com. Returns
         '''
         df = pd.read_csv(self.filename,encoding = 'ascii',header = None)
 
@@ -887,7 +890,7 @@ def checker(str):
 
 if __name__ == "__main__":
     start = int(input("Start at which row? "))
-    end = int(input("End at which row? (Inclusive)")) + 1
+    end = int(input("End at which row? (Inclusive)"))
     if start > end:
         raise ValueError("The starting position needs to be less than or equal to end position.")
 
