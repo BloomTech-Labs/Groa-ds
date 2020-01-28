@@ -13,6 +13,12 @@ from w2v_inference import *
 application = Flask(__name__)
 application.secret_key = 'I would have been your daddy'
 
+# where we store large files for global access
+df_global = None
+ratings_global = None
+reviews_global = None
+watched_global = None
+watchlist_global = None
 
 @application.route("/")
 def index():
@@ -22,12 +28,12 @@ def index():
     return render_template("public/index.html")
 
 @application.route("/letterboxd_upload", methods=["GET", "POST"])
-def letterboxd_upload():    
+def letterboxd_upload():
     '''
     allows you to upload your ratings csv that you got from imdb
     '''
     return render_template('public/letterboxd_upload.html')
-    
+
 @application.route('/letterboxd_uploaded', methods=['GET','POST'])
 def lb_uploaded():
     '''
@@ -51,38 +57,35 @@ def lb_uploaded():
             file = request.files["file"]
             with ZipFile(file, 'r') as zip:
                 zip.extractall(path='temp',members=['ratings.csv','reviews.csv','watchlist.csv','watched.csv'])
-            
-            ratings = pd.read_csv('temp/ratings.csv', encoding='cp1252')
-            reviews = pd.read_csv('temp/reviews.csv')
-            watched = pd.read_csv('temp/watched.csv')
-            watchlist = pd.read_csv('temp/watchlist.csv')
 
-            session['ratings'] = ratings.to_json()
-            session['reviews'] = reviews.to_json()
-            session['watched'] = watched.to_json()
-            session['watchlist'] = watchlist.to_json()
-            return render_template('public/letterboxd_uploaded.html', data=ratings)
+            global ratings_global, reviews_global, watched_global, watchlist_global
+            ratings_global = pd.read_csv('temp/ratings.csv', encoding='cp1252')
+            reviews_global = pd.read_csv('temp/reviews.csv')
+            watched_global = pd.read_csv('temp/watched.csv')
+            watchlist_global = pd.read_csv('temp/watchlist.csv')
+
+            return render_template('public/letterboxd_uploaded.html', data=ratings_global)
 
 @application.route('/letterboxd_submission', methods=['GET', 'POST'])
 def lb_submit():
     '''
     Shows recommendations from your Letterboxd choices
     '''
-    ratings = pd.read_json(session['ratings'])
-    watched = pd.read_json(session['watched'])
-    watchlist = pd.read_json(session['watchlist'])
+    ratings = ratings_global
+    watched = watched_global
+    watchlist = watchlist_global
     bad_rate=int(request.form['bad_rate'])/2
     good_rate=int(request.form['good_rate'])/2
     #connect
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
     # import user data
-    
+
     # prep user data
     good_list, bad_list, hist_list, val_list = prep_data(
                                         ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
-    
-    
+
+
     recs = s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False)
     return render_template('public/recommendations.html', df=recs)
 
@@ -96,7 +99,7 @@ def imdb_upload():
 @application.route('/uploader',methods = ['GET','POST'])
 def upload_file():
     '''
-    the result of the imdb upload, you can see a table of your rated movies and adjust them according to 
+    the result of the imdb upload, you can see a table of your rated movies and adjust them according to
     year released and personal rating
     '''
     if request.method == "POST":
@@ -114,26 +117,31 @@ def upload_file():
         if request.files:
 
             file = request.files["file"]
-            df=pd.read_csv(file)
+            try:
+                df=pd.read_csv(file, encoding='cp1252')
+            except:
+                df=pd.read_csv(file, encoding='latin1')
             #strip beginning ts
             df['Const'] = df['Const'].str.strip('t')
-            #dropping what I think to be extraneous 
+            #dropping what I think to be extraneous
             df = df.drop(columns=['Title Type','Num Votes','Directors','Genres','URL','Release Date'])
-            df = df.rename(columns={'Your Rating':'Rating','Title':'Name','Const':'Movie ID'})
+            # df = df.rename(columns={'Your Rating':'Rating','Title':'Name','Const':'Movie ID'})
             #get stuff better than 7
             #df = df[df['Your Rating'] >= 7]
-            session['df']=df.to_json()
-            #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.        
+            # session['df']= df.to_json()
+            global df_global
+            df_global = df.to_json()
+            #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.
             return render_template('public/view.html', name='Watched List',data = df.to_html())
-                    
+
 @application.route('/submission',methods=['GET','POST'])
 def submit():
     '''
     Shows recommendations from your IMDB choices
     '''
- 
+
     #need to configure input for current model but ulitmately may not need to for updated model
-    df=pd.read_json(session['df'])
+    df=pd.read_json(df_global)
     bad_rate=int(request.form['bad_rate'])/2
     good_rate=int(request.form['good_rate'])/2
     #year_min=int(request.form['year_min'])
@@ -142,16 +150,16 @@ def submit():
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
     # import user data
-    
-    
+
+
     # prep user data
     good_list, bad_list, hist_list, val_list = prep_data(
                                         df, good_threshold=good_rate, bad_threshold=bad_rate)
-    
-    
+    print("prepped!")
+
     recs=s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False)
     return render_template('public/recommendations.html', df=recs)
-    
+
 @application.route('/manualreview', methods=['GET', 'POST'])
 def review():
     '''
@@ -175,10 +183,10 @@ def watchhistory():
     #checkout the twitoff app to do /watchhistory/user
 
     '''start scraper on user's rating page to get rated movies because
-    for us, rating = watched. If user's ratings are private, return message to 
+    for us, rating = watched. If user's ratings are private, return message to
     please make ratings public. That's probably better than asking for their login info.
     '''
     #display scraped data? display whether they've actually reviewed it and if not, have a link to redirect to review page?
-    
+
 if __name__ == "__main__":
     application.run(port=5000, debug=True)
