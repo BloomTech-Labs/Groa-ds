@@ -57,17 +57,14 @@ def lb_uploaded():
             file = request.files["file"]
             with ZipFile(file, 'r') as zip:
                 zip.extractall(path='temp',members=['ratings.csv','reviews.csv','watchlist.csv','watched.csv'])
-            
-            ratings = pd.read_csv('temp/ratings.csv', encoding='cp1252')
-            reviews = pd.read_csv('temp/reviews.csv')
-            watched = pd.read_csv('temp/watched.csv')
-            watchlist = pd.read_csv('temp/watchlist.csv')
-            
-            session['ratings'] = ratings.to_json()
-            session['reviews'] = reviews.to_json()
-            session['watched'] = watched.to_json()
-            session['watchlist'] = watchlist.to_json()
-            return render_template('public/letterboxd_uploaded.html', data=ratings.head().to_html())
+
+            global ratings_global, reviews_global, watched_global, watchlist_global
+            ratings_global = pd.read_csv('temp/ratings.csv', encoding='cp1252')
+            reviews_global = pd.read_csv('temp/reviews.csv')
+            watched_global = pd.read_csv('temp/watched.csv')
+            watchlist_global = pd.read_csv('temp/watchlist.csv')
+
+            return render_template('public/letterboxd_uploaded.html', data=ratings_global)
 
 @application.route('/letterboxd_submission', methods=['GET', 'POST'])
 def lb_submit():
