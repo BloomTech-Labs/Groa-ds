@@ -4,6 +4,9 @@ import pandas as pd
 import psycopg2
 import re
 import os
+import warnings;
+
+warnings.filterwarnings('ignore')
 
 cursor_dog = None
 
@@ -14,7 +17,7 @@ def fill_id(id):
         id = "0"*(7 - length) + str(id)
     return str(id)
 
-def df_to_id_list(df):
+def df_to_id_list(df, id_book):
     """Converts dataframe of movies to a list of the IDs for those movies.
 
     Every title in the input dataframe is checked against the local file, which
@@ -26,7 +29,6 @@ def df_to_id_list(df):
     names = df.Name.tolist()
     years = [int(year) for year in df.Year.tolist()]
     info = list(zip(names, years))
-    id_book = pd.read_csv('title_basics_small.csv')
     matched = pd.merge(df, id_book,
                left_on=['Name', 'Year'], right_on=['primaryTitle', 'startYear'],
                how='inner')
@@ -76,6 +78,7 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
     tuple of lists of ids.
         (good_list, bad_list, hist_list, val_list)
     """
+    id_book = pd.read_csv('title_basics_small.csv')
     try:
         # try to read Letterboxd user data
         # drop rows with nulls in the columns we use
@@ -85,13 +88,13 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
         bad_df = ratings_df[ratings_df['Rating'] <= bad_threshold]
         neutral_df = ratings_df[(ratings_df['Rating'] > bad_threshold) & (ratings_df['Rating'] < good_threshold)]
         # convert dataframes to lists
-        good_list = df_to_id_list(good_df)
-        bad_list = df_to_id_list(bad_df)
-        neutral_list = df_to_id_list(neutral_df)
+        good_list = df_to_id_list(good_df, id_book)
+        bad_list = df_to_id_list(bad_df, id_book)
+        neutral_list = df_to_id_list(neutral_df, id_book)
     except KeyError:
         # Try to read IMDb user data
         # strip ids of "tt" prefix
-        ratings_df['movie_id'] = ratings_df['Const'].str.lstrip("tt")
+        ratings_df['movie_id'] = ratings_df['Const'].astype('str').str.lstrip("tt")
         # drop rows with nulls in the columns we use
         ratings_df = ratings_df.dropna(axis=0, subset=['Your Rating', 'Year'])
         # split according to user rating
@@ -114,7 +117,7 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
         # drop nulls from watched dataframe
         full_history = watched_df.dropna(axis=0, subset=['Name', 'Year'])
         # get list of watched movies that haven't been rated
-        hist_list = df_to_id_list(full_history[~full_history['Name'].isin(rated_names)])
+        hist_list = df_to_id_list(full_history[~full_history['Name'].isin(rated_names)], id_book)
         # add back list of "neutral" movies (whose IDs we already found before)
         hist_list = hist_list + neutral_list
     else: hist_list = neutral_list
@@ -122,7 +125,7 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
     if watchlist_df is not None:
         try:
             watchlist_df = watchlist_df.dropna(axis=0, subset=['Name', 'Year'])
-            val_list = df_to_id_list(watchlist_df)
+            val_list = df_to_id_list(watchlist_df, id_book)
         except KeyError:
             watchlist_df = watchlist_df.dropna(axis=0, subset=['Const', 'Year'])
             watchlist_df['movie_id'] = watchlist_df['Const'].str.lstrip("tt")

@@ -8,14 +8,14 @@
     <div class="row">
         <div class="col">
 
-            <h1>Groa recommends these movies!</h1>
-           
-                <pre>
-                    
-                {{ df }}
+                <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+                <div class=page>
+                <h1>Groa recommends these movies!</h1>
 
-                </pre>
-            
+                {% for table in tables %}
+                            {{titles[loop.index]}}
+                            {{ table|safe }}
+                {% endfor %}
         </div>
     </div>
 </div>
