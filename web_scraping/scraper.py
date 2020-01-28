@@ -845,6 +845,12 @@ class Scraper():
         print("Insertion Complete")
 
     def scrape_finder():
+        """
+        Grabs all the names and urls of all the movies on Netflix.
+
+        Finder.com has all the movies on Netflix on a single page. Scrapes them
+        and adds them to the database.
+        """
         url = f'https://www.finder.com/netflix-movies'
         response = requests.get(url)
         soup = BeautifulSoup(response.text, 'html.parser')
