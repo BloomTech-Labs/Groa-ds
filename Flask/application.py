@@ -3,9 +3,9 @@ import pandas as pd
 from zipfile import ZipFile
 
 import psycopg2
-#from getpass import getpass
+# from getpass import getpass
 
-#self import
+# self import
 from psycopg2_blob import seventoten,query2,id_to_title
 from w2v_inference import *
 
@@ -74,9 +74,9 @@ def lb_submit():
     ratings = ratings_global
     watched = watched_global
     watchlist = watchlist_global
-    bad_rate=int(request.form['bad_rate'])/2
-    good_rate=int(request.form['good_rate'])/2
-    #connect
+    bad_rate = int(request.form['bad_rate']) / 2
+    good_rate = int(request.form['good_rate']) / 2
+    # connect
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
     # import user data
@@ -86,8 +86,9 @@ def lb_submit():
                                         ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
 
 
-    recs = s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False)
-    return render_template('public/recommendations.html', df=recs)
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
+                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
+    return render_template('public/recommendations.html', df=recs, tables=[recs.to_html(classes='data')], titles=recs.columns.values)
 
 @application.route('/imdb_upload')
 def imdb_upload():
@@ -155,10 +156,10 @@ def submit():
     # prep user data
     good_list, bad_list, hist_list, val_list = prep_data(
                                         df, good_threshold=good_rate, bad_threshold=bad_rate)
-    print("prepped!")
 
-    recs=s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False)
-    return render_template('public/recommendations.html', df=recs)
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
+                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
+    return render_template('public/recommendations.html', df=recs, tables=[recs.to_html(classes='data')], titles=recs.columns.values)
 
 @application.route('/manualreview', methods=['GET', 'POST'])
 def review():
