@@ -386,13 +386,15 @@ class Scraper():
 
     def start_timer(self):
         """
-        starts a timer
+        Starts a timer.
+        TODO chsnge the class variable
         """
         self.start = time.perf_counter()
 
     def end_timer(self):
         '''
-        ends the timer started by start_timer()
+        Ends the timer started by start_timer.
+        TODO change the class variable
         '''
         self.end = time.perf_counter()
         self.elapsed = self.end - self.start
@@ -400,36 +402,31 @@ class Scraper():
 
     def convert_time(self,elapsed):
         '''
-        converts seconds in to
-        HH:MM:SS format
+        Converts seconds into HH:MM:SS format.
         '''
         e = str(timedelta(seconds=elapsed))
         return e
 
     def update(self,ids = None):
         '''
-        This function takes in the list of review/movie ids and splits them into their
-        own lists.
+        Scrapes IMDB for reviews, then adds those not already in the database.
 
         Process:
 
-        1) Each unique movie ID is used to search IMBd for its movie, and the reviews
-        are sorted by recency.
+        1) Each unique movie ID is used to search IMBd for its movie, and
+        the reviews are sorted by recency.
 
         2) The top review will have its ID checked against review IDs in the
         database to see if there is a match.
 
         3) If there isn't a match (meaning that the review ID is not yet
-        in the list of review IDs) that review will be saved and step 2 will be repeated with the next
-        review on the page.
+        in the list of review IDs) that review will be saved and step 2 will
+        be repeated with the next review on the page.
 
-        4) Once the function comes across a review with its review ID already in the database, it will
-        be the last review scraped for that movie ID and the whole process is repeated with the next unique
-        movie ID.
-
+        4) Once the function comes across a review with its review ID already
+        in the database, it will be the last review scraped for that movie ID
+        and the whole process is repeated with the next unique movie ID.
         '''
-
-
         ids = self.ids if ids is None else ids
         review_ids = []
         movie_ids = []
@@ -438,16 +435,12 @@ class Scraper():
         for rid,mid in ids:
             review_ids.append(str(rid))
             movie_ids.append(str(mid))
-
-
         # only unique movie
         unique_movie_ids = set(movie_ids)
         unique_movie_ids = list(unique_movie_ids)
         unique_movie_ids.sort()
-
         print(f"There are {len(unique_movie_ids)} unique movie IDs")
         print(f"The first 10 unique IDs are: \n{unique_movie_ids[:10]}\n")
-
         movie_id = []
         rating = []
         reviews = []
@@ -460,7 +453,6 @@ class Scraper():
         iteration_counter = 0
         broken = []
         self.start_timer()
-
         # Start the process described
         print("Updating...")
         for id in unique_movie_ids[:1000]:
@@ -470,12 +462,9 @@ class Scraper():
                 movie_title = ''
                 num = id
                 id = "tt" + id
-
                 url_short = f'http://www.imdb.com/title/{id}/'
-
                 # sort the reviews by date
                 url_reviews = url_short + 'reviews?sort=submissionDate&dir=desc&ratingFilter=0'
-
                 time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
@@ -484,18 +473,16 @@ class Scraper():
                             print(f"call to {url_reviews} failed with status code {response.status_code}!")
                             continue
                 soup = BeautifulSoup(response.text, 'html.parser')
-
                 # items holds all the HTML for the webpage
                 items = soup.find_all(class_='lister-item-content')
-
-
-
                 while True:
                     if iteration_counter >= self.max_iter_count:
-                        df = self.make_dataframe(movie_id, reviews, rating, titles,
-                                                 username, found_useful_num,
-                                                 found_useful_den, date, new_review_id)
-                        #self.insert_rows(df)
+                        df = self.make_dataframe(movie_id, reviews, rating,
+                                                 titles, username,
+                                                 found_useful_num,
+                                                 found_useful_den,
+                                                 date, new_review_id)
+                        self.insert_rows(df)
                         movie_id.clear()
                         rating.clear()
                         reviews.clear()
@@ -509,13 +496,11 @@ class Scraper():
                         df = df.iloc[0:0]
 
                     for item in items:
-
                         # get the review ID
                         raw_revid = (item.find(class_="title").get("href"))
                         match = re.search(r'rw\d+', raw_revid)
                         review_id = match.group()
                         #print(f"review ID from IMBd: {review_id}")
-
                         # check whether or not the review ID is in the database (steps 2 and 3)
                         if review_id not in review_ids:
                             print(f"Updating {id} at index {unique_movie_ids.index(num)} in the database for review ID {review_id}")
@@ -764,7 +749,11 @@ class Scraper():
         self.show(broken)
 
 
-    def letterboxd_dataframe(self,movie_id,review_id,ratings,reviews,date,username):
+    def letterboxd_dataframe(self,movie_id,review_id,
+                             ratings,reviews,date,username):
+        """
+        Used in scrape_letterboxd to make and return a dataframe.
+        """
         df = pd.DataFrame(
             {
                 'movie_id': movie_id,
@@ -823,8 +812,8 @@ class Scraper():
         """
         Grabs all the names and urls of all the movies on Netflix.
 
-        Finder.com has all the movies on Netflix on a single page. Scrapes them
-        and adds them to the database.
+        Finder.com has all the movies on Netflix on a single page.
+        Scrapes them and adds them to the database.
         """
         url = f'https://www.finder.com/netflix-movies'
         response = requests.get(url)
