@@ -17,23 +17,20 @@ import sys
 
 class Scraper():
     """
-    Scrapes IMDB and contains utility and logging functions.
+    Scrapes IMDB, Letterboxd, and finder.
 
-    Start and end parameters are inclusive. max_iter controls how many loops
-    can be run before the program inserts into the database. scraper_instance must
-    be different for each instance of the program to ensure their log files do not
-    mess each other up. pw is currently taken from getpass and is the password
-    for the postgres database.
-
-    TODO: change pw and path to environment variables
-    Make a scraper that will only grab reviews that the database does not already
-    have.
-    Make the scraper automatically restart itself.
+    Start parameter is inclusive, end parameter is exclusive. However, if you
+    are usng the questionnaire at the bottom of this file, the end parameter is
+    adjusted to be inclusive. max_iter controls how many loops can be run
+    before the program inserts into the database. This indirectly controls the
+    size and frequency of insertions. scraper_instance must be unique for each
+    instance of the program to ensure their log files do not mess each other
+    up. Necessary environment variables are PASSWORD, HOST, PORT, and FILENAME.
     """
 
     def __init__(self,start,end,max_iter, scraper_instance):
         self.start = start
-        self.end = end
+        self.end = end + 1
         self.current_ids = []
         self.all_ids = []
         self.range = 0
@@ -50,6 +47,9 @@ class Scraper():
     def connect_to_database(self):
         """
         Connects to the database.
+
+        Uses class variables set from the environment and takes no arguments
+        other than self. Returns a cursor object and a connection object.
         """
         connection = psycopg2.connect(
             database = self.database,
@@ -62,7 +62,11 @@ class Scraper():
 
     def get_ids(self):
         '''
-        Takes in the names of a file or path to a file to read into a dataframe.
+        Takes in the path to a file to read into a dataframe.
+
+        Uses a class variable set from environment variable FILENAME to look
+        for a csv formatted after the tarball released by IMDB.com. Returns a
+        list
         '''
         df = pd.read_csv(self.filename,encoding = 'ascii',header = None)
 
@@ -110,6 +114,9 @@ class Scraper():
 
     def make_dataframe(self,movie_id, reviews, rating, titles, username,
                    found_useful_num, found_useful_den, date, review_id):
+        """
+        Creates a pandas dataframe from the scrape or update functions.
+        """
         df = pd.DataFrame(
             {
                 'movie_id': movie_id,
@@ -130,10 +137,10 @@ class Scraper():
         """
         Scrapes imbd.com for review pages.
 
-        create_log, make_dataframe, and insert_rows are intended to be used inside
-        this function. Takes in the id of the movie in "ttxxxxxxx" format, robust
-        to different numbers of numerals. Fails gracefully on movies with no
-        reviews, moving on without returning anything.
+        create_log, make_dataframe, and insert_rows are intended to be used
+        inside this function. Takes in the id of the movie in "ttxxxxxxx"
+        format, robust to different numbers of numerals. Fails gracefully on
+        movies with no reviews, moving on without returning anything.
         """
         id_list = self.current_ids if id_list is None else id_list
 
@@ -263,7 +270,6 @@ class Scraper():
         print('All done!\n')
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
-        return df
 
     def locate(self,last_id):
         '''
@@ -278,17 +284,6 @@ class Scraper():
             file.write(str(self.pickup+1))
             file.write("\n")
             file.write(str(self.end))
-
-    def pick_up(self):
-        """
-        Currently unused.
-        """
-        with open(f"pickup{self.scraper_instance}.txt",'r') as file:
-            lines = file.readlines()
-            self.pickup = lines[0]
-            self.end = lines[1]
-            self.pickup = int(self.pickup)
-            self.end = int(self.end)
 
     def insert_rows(self, df):
         """
@@ -333,28 +328,9 @@ class Scraper():
         connection.close()
         print("Insertion Complete")
 
-    def set_date_cutoff(self,day,month,year):
-        self.day = day
-        self.month = month
-        self.year = year
-        self.decode = {
-            'January':1,
-            'February':2,
-            'March':3,
-            'April':4,
-            'May':5,
-            'June':6,
-            'July':7,
-            'August':8,
-            'September':9,
-            'October':10,
-            'November':11,
-            'December':12
-            }
-
     def pull_ids(self,save = True,filename = False):
         '''
-        Connects to the database and retrieves the all of the review ids and returns it as a list
+        Connects to the database and returns all of the review ids as a list.
         '''
         self.start_timer()
         print("Connecting to database...")
@@ -411,14 +387,15 @@ class Scraper():
 
     def start_timer(self):
         """
-        starts a timer
+        Starts a timer.
+        TODO chsnge the class variable
         """
         self.begin = time.perf_counter()
 
     def end_timer(self):
         '''
-        ends the timer started by start_timer()
-
+        Ends the timer started by start_timer.
+        TODO change the class variable
         '''
         self.done = time.perf_counter()
         self.elapsed = self.done - self.begin
@@ -426,36 +403,31 @@ class Scraper():
 
     def convert_time(self,elapsed):
         '''
-        converts seconds in to
-        HH:MM:SS format
+        Converts seconds into HH:MM:SS format.
         '''
         e = str(timedelta(seconds=elapsed))
         return e
 
     def update(self,ids = None):
         '''
-        This function takes in the list of review/movie ids and splits them into their
-        own lists.
+        Scrapes IMDB for reviews, then adds those not already in the database.
 
         Process:
 
-        1) Each unique movie ID is used to search IMBd for its movie, and the reviews
-        are sorted by recency.
+        1) Each unique movie ID is used to search IMBd for its movie, and
+        the reviews are sorted by recency.
 
         2) The top review will have its ID checked against review IDs in the
         database to see if there is a match.
 
         3) If there isn't a match (meaning that the review ID is not yet
-        in the list of review IDs) that review will be saved and step 2 will be repeated with the next
-        review on the page.
+        in the list of review IDs) that review will be saved and step 2 will
+        be repeated with the next review on the page.
 
-        4) Once the function comes across a review with its review ID already in the database, it will
-        be the last review scraped for that movie ID and the whole process is repeated with the next unique
-        movie ID.
-
+        4) Once the function comes across a review with its review ID already
+        in the database, it will be the last review scraped for that movie ID
+        and the whole process is repeated with the next unique movie ID.
         '''
-
-
         ids = self.ids if ids is None else ids
         review_ids = []
         movie_ids = []
@@ -464,16 +436,12 @@ class Scraper():
         for rid,mid in ids:
             review_ids.append(str(rid))
             movie_ids.append(str(mid))
-
-
         # only unique movie
         unique_movie_ids = set(movie_ids)
         unique_movie_ids = list(unique_movie_ids)
         unique_movie_ids.sort()
-
         print(f"There are {len(unique_movie_ids)} unique movie IDs")
         print(f"The first 10 unique IDs are: \n{unique_movie_ids[:10]}\n")
-
         movie_id = []
         rating = []
         reviews = []
@@ -486,7 +454,6 @@ class Scraper():
         iteration_counter = 0
         broken = []
         self.start_timer()
-
         # Start the process described
         print("Updating...")
         for id in unique_movie_ids[:1000]:
@@ -496,12 +463,9 @@ class Scraper():
                 movie_title = ''
                 num = id
                 id = "tt" + id
-
                 url_short = f'http://www.imdb.com/title/{id}/'
-
                 # sort the reviews by date
                 url_reviews = url_short + 'reviews?sort=submissionDate&dir=desc&ratingFilter=0'
-
                 time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
@@ -510,18 +474,16 @@ class Scraper():
                             print(f"call to {url_reviews} failed with status code {response.status_code}!")
                             continue
                 soup = BeautifulSoup(response.text, 'html.parser')
-
                 # items holds all the HTML for the webpage
                 items = soup.find_all(class_='lister-item-content')
-
-
-
                 while True:
                     if iteration_counter >= self.max_iter_count:
-                        df = self.make_dataframe(movie_id, reviews, rating, titles,
-                                                 username, found_useful_num,
-                                                 found_useful_den, date, new_review_id)
-                        #self.insert_rows(df)
+                        df = self.make_dataframe(movie_id, reviews, rating,
+                                                 titles, username,
+                                                 found_useful_num,
+                                                 found_useful_den,
+                                                 date, new_review_id)
+                        self.insert_rows(df)
                         movie_id.clear()
                         rating.clear()
                         reviews.clear()
@@ -535,13 +497,11 @@ class Scraper():
                         df = df.iloc[0:0]
 
                     for item in items:
-
                         # get the review ID
                         raw_revid = (item.find(class_="title").get("href"))
                         match = re.search(r'rw\d+', raw_revid)
                         review_id = match.group()
                         #print(f"review ID from IMBd: {review_id}")
-
                         # check whether or not the review ID is in the database (steps 2 and 3)
                         if review_id not in review_ids:
                             print(f"Updating {id} at index {unique_movie_ids.index(num)} in the database for review ID {review_id}")
@@ -794,7 +754,11 @@ class Scraper():
 
     
 
-    def letterboxd_dataframe(self,movie_id,review_id,ratings,reviews,date,username):
+    def letterboxd_dataframe(self,movie_id,review_id,
+                             ratings,reviews,date,username):
+        """
+        Used in scrape_letterboxd to make and return a dataframe.
+        """
         df = pd.DataFrame(
             {
                 'movie_id': movie_id,
@@ -853,8 +817,8 @@ class Scraper():
         """
         Grabs all the names and urls of all the movies on Netflix.
 
-        Finder.com has all the movies on Netflix on a single page. Scrapes them
-        and adds them to the database.
+        Finder.com has all the movies on Netflix on a single page.
+        Scrapes them and adds them to the database.
         """
         url = f'https://www.finder.com/netflix-movies'
         response = requests.get(url)
@@ -892,7 +856,7 @@ def checker(str):
 
 if __name__ == "__main__":
     start = int(input("Start at which row? "))
-    end = int(input("End at which row? (Inclusive)")) + 1
+    end = int(input("End at which row? (Inclusive)"))
     if start > end:
         raise ValueError("The starting position needs to be less than or equal to end position.")
 
