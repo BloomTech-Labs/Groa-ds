@@ -39,9 +39,11 @@ Thumbs.db
 # Environment files #
 #####################
 *.env
+*.flaskenv
 
 # Folders #
 ###########
 .vscode/
-venv/
+groavirt/
 __pycache__/
+runapp.py

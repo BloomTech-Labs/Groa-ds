@@ -1,19 +1,22 @@
 import psycopg2
 import pandas as pd
-from decouple import config
+import os
 
 
-def query(username):
+
+def seventoten(username):
     '''
-    accepting a username, this function returns user ratings and reviews of the user
+    accepting a username, this function returns user ratings greater than seven
+    and movie_ids of the user 
     '''
     name = username
-    sql = f"SELECT user_rating, review_text FROM reviews WHERE username = '{name}'"
+    sql = f'''SELECT user_rating, movie_id FROM reviews WHERE username = '{name}' 
+              AND user_rating BETWEEN 7 AND 10'''
 
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = config('DB_PASSWORD'),
+    password  = os.getenv('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     dat = pd.read_sql_query(sql, connection)
@@ -30,7 +33,7 @@ def query2(username):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = config('DB_PASSWORD'),
+    password  = os.getenv('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
@@ -40,7 +43,7 @@ def query2(username):
     connection = None
     return rows
 
-def query3(list):
+def id_to_title(list):
     '''
     accepting a list of movie ids outputted from the model, this function 
     will change those ids to titles
@@ -49,7 +52,7 @@ def query3(list):
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = config('DB_PASSWORD'),
+    password  = os.getenv('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
