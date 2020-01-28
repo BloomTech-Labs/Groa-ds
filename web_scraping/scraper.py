@@ -65,7 +65,8 @@ class Scraper():
         Takes in the path to a file to read into a dataframe.
 
         Uses a class variable set from environment variable FILENAME to look
-        for a csv formatted after the tarball released by IMDB.com. Returns
+        for a csv formatted after the tarball released by IMDB.com. Returns a
+        list
         '''
         df = pd.read_csv(self.filename,encoding = 'ascii',header = None)
 
@@ -112,6 +113,9 @@ class Scraper():
 
     def make_dataframe(self,movie_id, reviews, rating, titles, username,
                    found_useful_num, found_useful_den, date, review_id):
+        """
+        Creates a pandas dataframe from the scrape or update functions.
+        """
         df = pd.DataFrame(
             {
                 'movie_id': movie_id,
@@ -132,10 +136,10 @@ class Scraper():
         """
         Scrapes imbd.com for review pages.
 
-        create_log, make_dataframe, and insert_rows are intended to be used inside
-        this function. Takes in the id of the movie in "ttxxxxxxx" format, robust
-        to different numbers of numerals. Fails gracefully on movies with no
-        reviews, moving on without returning anything.
+        create_log, make_dataframe, and insert_rows are intended to be used
+        inside this function. Takes in the id of the movie in "ttxxxxxxx"
+        format, robust to different numbers of numerals. Fails gracefully on
+        movies with no reviews, moving on without returning anything.
         """
         id_list = self.current_ids if id_list is None else id_list
 
@@ -265,7 +269,6 @@ class Scraper():
         print('All done!\n')
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
-        return df
 
     def locate(self,last_id):
         '''
@@ -280,17 +283,6 @@ class Scraper():
             file.write(str(self.pickup+1))
             file.write("\n")
             file.write(str(self.end))
-
-    def pick_up(self):
-        """
-        Currently unused.
-        """
-        with open(f"pickup{self.scraper_instance}.txt",'r') as file:
-            lines = file.readlines()
-            self.pickup = lines[0]
-            self.end = lines[1]
-            self.pickup = int(self.pickup)
-            self.end = int(self.end)
 
     def insert_rows(self, df):
         """
@@ -335,28 +327,9 @@ class Scraper():
         connection.close()
         print("Insertion Complete")
 
-    def set_date_cutoff(self,day,month,year):
-        self.day = day
-        self.month = month
-        self.year = year
-        self.decode = {
-            'January':1,
-            'February':2,
-            'March':3,
-            'April':4,
-            'May':5,
-            'June':6,
-            'July':7,
-            'August':8,
-            'September':9,
-            'October':10,
-            'November':11,
-            'December':12
-            }
-
     def pull_ids(self,save = True,filename = False):
         '''
-        Connects to the database and retrieves the all of the review ids and returns it as a list
+        Connects to the database and returns all of the review ids as a list.
         '''
         self.start_timer()
         print("Connecting to database...")
@@ -420,7 +393,6 @@ class Scraper():
     def end_timer(self):
         '''
         ends the timer started by start_timer()
-
         '''
         self.end = time.perf_counter()
         self.elapsed = self.end - self.start
