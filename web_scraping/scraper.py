@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from decouple import config
+from python-decouple import config
 import pandas as pd
 import re
 import time
