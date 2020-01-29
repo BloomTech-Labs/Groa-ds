@@ -75,9 +75,20 @@ n_cpus = multiprocessing.cpu_count()
 # make rows folder if it doesn't exist yet
 os.makedirs('rows/', exist_ok=True)
 
+my_time = time.time()
+def timer_func(x=None):
+    """Prints seconds passed since last checkpoint, for debugging purposes."""
+    global my_time
+    if x is not None:
+        print(x, time.time() - my_time)
+    my_time = time.time()
+
 def get_user_list():
     """Get a list of users"""
-    user_query = """SELECT DISTINCT username from reviews"""
+    user_query = """SELECT username
+	                FROM reviews
+	                GROUP BY username
+	                HAVING COUNT(username) >= 6"""
     cursor_boi.execute(user_query)
     user_list = cursor_boi.fetchall()
     print(len(user_list), "users found!")
@@ -132,13 +143,16 @@ def batch_serialize(start: int, end: int):
         return None
     rows_list = []
     for id in user_list[pickup:end]:
+        timer_func()
         text_list = get_review_text(id)
+        print(len(text_list), text_list[:3])
         if len(text_list) > 0:
             reviews = aggregate_reviews(text_list)
             tokens = tokenize(reviews)
             user_dict = {'username':id, 'tokens':tokens}
             rows_list.append(user_dict)
     # pickle list of rows, with the ending row as file name.
+    print(rows_list[0])
     pickling_on = open(f"rows/{end}.pickle","wb")
     pickle.dump(rows_list, pickling_on)
     pickling_on.close()
