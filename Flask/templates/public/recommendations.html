@@ -12,10 +12,9 @@
                 <div class=page>
                 <h1>Groa recommends these movies!</h1>
 
-                {% for table in tables %}
-                            {{titles[loop.index]}}
-                            {{ table|safe }}
-                {% endfor %}
+                {% block content %}
+                    {{ data|safe }}
+                {% endblock %}
         </div>
     </div>
 </div>
