@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore')
 cursor_dog = None
 
 def prep_reviews(df):
-    """Converts Letterboxd reviews dataframe to list of tokens."""
+    """Converts Letterboxd reviews dataframe to list of reviews."""
     reviews_list = df['Review'].tolist()
     return reviews_list
 
@@ -154,6 +154,14 @@ class r2v_Recommender():
             ids = [x[0] for x in recs]
             return len(list(set(ids) & set(val_list)))
 
+        def similar_users(reviews, n=10):
+            """Get similar users based on reviews."""
+            aggregated_tokens = aggregate_reviews(review)
+            review_tokens = tokenize(aggregated_tokens)
+            vec = model.infer_vector(review_tokens)
+            results = model.docvecs.most_similar([vec], topn=n)
+            return [x[0] for x in results]
+
         aggregated = _aggregate_vectors(good_movies)
         recs = _similar_movies(aggregated, bad_movies, n=n)
         recs = _remove_dupes(recs, good_movies, bad_movies)
@@ -168,11 +176,3 @@ class r2v_Recommender():
             print('\n')
         if rec_movies:
             return formatted_recs
-
-
-test_review = [tuple([x, '']) for x in test_review]
-test_aggregated_tokens = aggregate_reviews(test_review)
-test_tokens = tokenize(test_aggregated_tokens)
-test_vec = model.infer_vector(test_tokens)
-results = model.docvecs.most_similar([test_vec], topn= 10)
-print("most similar users: \n", results)
