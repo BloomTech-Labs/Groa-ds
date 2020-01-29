@@ -91,25 +91,25 @@ class Scraper():
         for count,index in enumerate(lst):
             print(f"{count+1}) {index}")
 
-    def create_log(self,movie_name, num_review, num_nan, elapsed):
+#    def create_log(self,movie_name, num_review, num_nan, elapsed):
         """
         Creates a log for each movie scraped.
 
         Takes info generated within imdb_scraper to produce a log file to return
         a log of the movie name, the number of reviews, and the time taken
         """
-        directory = os.getcwd()
-        os.chdir(directory)
-        movie_name = movie_name.replace("-"," ")
-        with open(f'Logfile{self.scraper_instance}.txt', 'a+') as file:
-            file.write("---------------------------------------------------------------------\n")
-            file.write(str(datetime.now()) + "\n")
-            file.write(f"Movie: {movie_name}\n")
-            file.write(f"This movie has {num_review} reviews\n")
-            file.write(f"Out of {num_review} reviews there were {num_nan} with NaN ratings\n")
-            file.write(f"Finished Scraping {movie_name} in {round(elapsed,2)} seconds\n")
-            file.write("----------------------------------------------------------------------")
-            file.write("\n")
+#        directory = os.getcwd()
+#        os.chdir(directory)
+#        movie_name = movie_name.replace("-"," ")
+#        with open(f'Logfile{self.scraper_instance}.txt', 'a+') as file:
+#            file.write("---------------------------------------------------------------------\n")
+#            file.write(str(datetime.now()) + "\n")
+#            file.write(f"Movie: {movie_name}\n")
+#            file.write(f"This movie has {num_review} reviews\n")
+#            file.write(f"Out of {num_review} reviews there were {num_nan} with NaN ratings\n")
+#            file.write(f"Finished Scraping {movie_name} in {round(elapsed,2)} seconds\n")
+#            file.write("----------------------------------------------------------------------")
+#            file.write("\n")
 
 
     def make_dataframe(self,movie_id, reviews, rating, titles, username,
@@ -280,10 +280,10 @@ class Scraper():
         self.pickup = self.all_ids.index(last_id)
 
         #writes the last used ID to a file
-        with open("pickup.txt",'w') as file:
-            file.write(str(self.pickup+1))
-            file.write("\n")
-            file.write(str(self.end))
+#        with open("pickup.txt",'w') as file:
+#            file.write(str(self.pickup+1))
+#            file.write("\n")
+#            file.write(str(self.end))
 
     def insert_rows(self, df):
         """
@@ -599,9 +599,9 @@ class Scraper():
             print("----------------------------------------")
             try:
                 t1 = time.perf_counter()
-                
+
                 review_count = 0
-                self.locate(id)
+#                self.locate(id)
                 url_initial = f"https://www.letterboxd.com/imdb/{id}"
                 time.sleep(randint(3,6))
                 initial_response = requests.get(url_initial)
@@ -667,7 +667,7 @@ class Scraper():
                                     continue
                             fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
                             reviews.append(fulltext)
-                            
+
                         else:
                             reviews.append(body.get_text())
                         review_count += 1
@@ -730,7 +730,7 @@ class Scraper():
                 print(sys.exc_info()[1])
                 continue
 
-                
+
         try:
             df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
             self.letterboxd_insert(df)
@@ -752,7 +752,7 @@ class Scraper():
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
 
-    
+
 
     def letterboxd_dataframe(self,movie_id,review_id,
                              ratings,reviews,date,username):
