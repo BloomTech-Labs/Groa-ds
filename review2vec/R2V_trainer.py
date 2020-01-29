@@ -143,16 +143,13 @@ def batch_serialize(start: int, end: int):
         return None
     rows_list = []
     for id in user_list[pickup:end]:
-        timer_func()
         text_list = get_review_text(id)
-        print(len(text_list), text_list[:3])
         if len(text_list) > 0:
             reviews = aggregate_reviews(text_list)
             tokens = tokenize(reviews)
             user_dict = {'username':id, 'tokens':tokens}
             rows_list.append(user_dict)
     # pickle list of rows, with the ending row as file name.
-    print(rows_list[0])
     pickling_on = open(f"rows/{end}.pickle","wb")
     pickle.dump(rows_list, pickling_on)
     pickling_on.close()
