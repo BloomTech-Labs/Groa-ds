@@ -52,3 +52,6 @@ echo "Dependencies installed via piplock file"
 
 pip3 install psycopg2-binary
 echo "Binary version of psycopg2 installed manually"
+
+python ec2file12.py 
+echo "Scraping complete"

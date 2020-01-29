@@ -15,9 +15,9 @@ key_name=$EC2_INSTANCE_KEY # your keypair name -- instantiated in the env file h
 security_group=sg-0fb23b3d00c3d354a # your security group -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html
 wait_seconds=30 # seconds between polls for the public IP to populate (keeps it from hammering their API)
 port=23453 # the SSH tunnel port you want
-key_location="ericscrape1.pem" # your private key -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair
+key_location="scraperboi.pem" # your private key -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair
 user="ec2-user" # the EC2 linux user name
-user_data=file://scrape_movies.sh
+user_data=file://scrape_movies0.txt
 # END SETTINGS
 
 # --------------------- you shouldn't have to change much below this ---------------------
@@ -56,9 +56,8 @@ getip ()
 start ()
 {
 	echo "Starting instance..."
-	instance_id=$(aws ec2 run-instances --image-id $imageid --count 1 --instance-type $instance_type --key-name $key_name --security-group-ids $security_group --user-data file://scrape_movies.txt --output text --query 'Instances[*].InstanceId' )
+	instance_id=$(aws ec2 run-instances --image-id $imageid --count 1 --instance-type $instance_type --key-name $key_name --security-group-ids $security_group --user-data file://scrape_movies0.txt --output text --query 'Instances[*].InstanceId' )
 	echo "the instance id is $instance_id"
-
 	#script I found on stack overflow  --NEEDS TO CHANGE
 	aws ec2 create-tags --resources $instance_id --tags "Key=Name, Value=$AMIname"
 	#delay until AWS says instance is running
@@ -67,15 +66,15 @@ start ()
 	sleep 30
 	echo "done sleeping"
 
-  ip_address=$(aws ec2 describe-instances --instance-ids $instance_id --output text --query 'Reservations[*].Instances[*].PrivateIpAddress')
+	ip_address=$(aws ec2 describe-instances --instance-ids $instance_id --output text --query 'Reservations[*].Instances[*].PrivateIpAddress')
 	echo "got the ip_address: $ip_address"
 	sleep 5
 	echo "gonna sleep for another half a minute"
 	sleep 30
 	echo "better try to connect now"
-
 	connect
 }
+
 
 # public
 stop ()
