@@ -163,7 +163,7 @@ class Scraper():
                 Nan_count = 0
                 review_count = 0
                 movie_title = ''
-                self.locate(id)
+                # self.locate(id)
 
                 url_short = f'http://www.imdb.com/title/{id}/'
                 url_reviews = url_short + 'reviews?ref_=tt_urv'
@@ -599,9 +599,9 @@ class Scraper():
             print("----------------------------------------")
             try:
                 t1 = time.perf_counter()
-                
+
                 review_count = 0
-                self.locate(id)
+                # self.locate(id)
                 url_initial = f"https://www.letterboxd.com/imdb/{id}"
                 time.sleep(randint(3,6))
                 initial_response = requests.get(url_initial)
@@ -667,7 +667,7 @@ class Scraper():
                                     continue
                             fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
                             reviews.append(fulltext)
-                            
+
                         else:
                             reviews.append(body.get_text())
                         review_count += 1
@@ -721,16 +721,16 @@ class Scraper():
 
                 t2 = time.perf_counter()
                 finish = t2-t1
-                if count == 0 and os.path.exists(f"Logfile{self.scraper_instance}.txt"):
-                    os.remove(f"Logfile{self.scraper_instance}.txt")
-                print("Logging")
-                self.create_log(title,review_count,None,finish)
+                # if count == 0 and os.path.exists(f"Logfile{self.scraper_instance}.txt"):
+                #     os.remove(f"Logfile{self.scraper_instance}.txt")
+                # print("Logging")
+                # self.create_log(title,review_count,None,finish)
             except Exception as e:
                 broken.append(id)
                 print(sys.exc_info()[1])
                 continue
 
-                
+
         try:
             df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
             self.letterboxd_insert(df)
@@ -752,7 +752,7 @@ class Scraper():
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
 
-    
+
 
     def letterboxd_dataframe(self,movie_id,review_id,
                              ratings,reviews,date,username):
