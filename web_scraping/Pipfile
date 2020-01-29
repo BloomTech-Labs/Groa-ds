@@ -11,6 +11,17 @@ beautifulsoup4 = "*"
 pandas = "*"
 psycopg2 = "*"
 aws2 = "*"
+getpass = "*"
+decouple = "*"
+random = "*"
+sys = "*"
+datetime = "*"
+os = "*"
+re = "*"
+logging = "*"
+time = "*"
+config = "*"
+
 
 [requires]
 python_version = "3.6"
