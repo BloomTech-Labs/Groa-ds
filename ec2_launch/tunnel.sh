@@ -56,7 +56,7 @@ getip ()
 start ()
 {
 	echo "Starting instance..."
-	instance_id=$(aws ec2 run-instances --image-id $imageid --count 1 --instance-type $instance_type --key-name $key_name --security-group-ids $security_group --user-data file://scrape_movies0.txt --output text --query 'Instances[*].InstanceId' )
+	instance_id=$(aws ec2 run-instances --image-id $imageid --count 1 --instance-type $instance_type --key-name $key_name --security-group-ids $security_group --user-data file://scrape_movies1.txt --output text --query 'Instances[*].InstanceId' )
 	echo "the instance id is $instance_id"
 	#script I found on stack overflow  --NEEDS TO CHANGE
 	aws ec2 create-tags --resources $instance_id --tags "Key=Name, Value=$AMIname"
