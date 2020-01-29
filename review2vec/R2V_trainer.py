@@ -319,6 +319,7 @@ def setup():
             test_tokens = tokenize(test_aggregated_tokens)
             test_vec = model.infer_vector(test_tokens)
             results = model.docvecs.most_similar([test_vec], topn= 10)
+            results = [x[0] for x in results]
             print("most similar users: \n", results)
 
         if choice == 7:
