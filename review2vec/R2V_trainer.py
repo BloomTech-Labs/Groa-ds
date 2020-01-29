@@ -25,21 +25,22 @@ from sklearn.pipeline import Pipeline
 from sklearn.neighbors import NearestNeighbors
 
 """
-This script opens a setup wizard for a movie recommender model (after the user
-enters the password to the database where movie reviews are held). The process
-is broken into steps because the first-time setup can take a long time. Before
-any inferencing can take place, all movie reviews are joined together into one
-string per movie, and the resulting string is used to create a Document-Term-Matrix.
+This script opens a setup wizard for a movie recommender model based on the
+similarity of users' review styles.
 
-Since the matrix in question needs to have a small number of terms for fast inferencing,
-Truncated SVD is used directly following TF-IDF vectorizer. The pipeline of these
-two algorithms is fitted on a small matrix and then used to create the master.
+Before any inferencing can take place, all of a user's movie reviews are tokenized and
+joined together into one list. The resulting list of tokens is used to train Doc2Vec.
 
-Once the master (reduced) DTM is created, it can be used with KNN to find movies
-with similar reviews to the input review.
+The process is broken into steps because the first-time setup can take a long time.
+If there is a network error, all prepared training data will persist in 5000-user
+files.
 
-NOTE: in this version, the only acceptable input reviews are plain text with no
-" or ' symbols.
+The fully trained model can transform a similarly tokenized review history into
+a 100-dimensional vector, which is used to find similar reviewers. Ultimately,
+this model will function as a complement to the more traditional user-based
+collaborative-filtering model, "w2v_limitingfactor_v1". This "Review2Vec" model
+is thought to have the advantage of finding less obvious recommendations using
+the most salient parts of a user's reviews.
 """
 
 # open shuffled movie id list
@@ -302,7 +303,7 @@ def setup():
             test_vec = model.infer_vector(test_tokens)
             results = model.docvecs.most_similar([test_vec], topn= 10)
             print(results)
-            
+
         if choice == 7:
             # Turn off the connection closure setting so the database can be
             # accessed in interactive mode.
