@@ -28,7 +28,7 @@ wait_seconds = 30 # seconds between polls for the public IP to populate (keeps i
 port = 23453 # the SSH tunnel port you want
 key_location = "scraperboi.pem" # your private key -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair
 user = "ec2-user" # the EC2 linux user name
-#user_data = "file://scrape_movies0.txt"
+#user_data = f"file://scrape_movies{i}.txt"
 ec2 = boto3.resource('ec2')
 session = awsutils.get_session('us-east-1')
 client = session.client('ec2')
@@ -85,7 +85,7 @@ def launch(quantity):
         InstanceType=instance_type,
         KeyName=key_name,
         SecurityGroupIds=security_group,
-        UserData=f'file://scrape_movies2.txt',
+        UserData=open(f"scrape_movies{i}.txt").read(),
         TagSpecifications=[{'ResourceType': 'instance', 'Tags': [{'Key': 'Scraper', 'Value': f'{i}'}]}]
         )
 
