@@ -1,6 +1,9 @@
 .pickle
-Pipfile.lock
-.vscode/
 .env
-bin/
 .lock
+
+Pipfile.lock
+
+bin/
+rows/
+.vscode/
