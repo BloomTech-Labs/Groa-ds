@@ -254,14 +254,14 @@ class Recommender(object):
                 join ratings r on m.movie_id = r.movie_id
                 where m.movie_id = '{id[0]}'""")
             except:
-                return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None])
+                return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None,id[0]])
 
             t = self.cursor_dog.fetchone()
             if t:
-                title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id[0]}/", t[2], t[3], id[1]])
+                title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id[0]}/", t[2], t[3], id[1],id[0]])
                 return title
             else:
-                return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None])
+                return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None,id[0]])
 
         def _remove_dislikes(bad_movies, good_movies_vec, input=1, harshness=1):
             """Takes a list of movies that the user dislikes.
