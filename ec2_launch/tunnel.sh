@@ -30,7 +30,7 @@ user_data=file://scrape_movies0.txt
 # public
 info ()
 {
-	instance_id=$(aws ec2 run-instances --image-id $imageid --count 1 --instance-type $instance_type --key-name $key_name --security-group-ids $security_group --user-data $user_data --output text --query 'Instances[*].InstanceId' )
+	instance_id=$(aws ec2 run-instances --image-id $imageid --count 1 --instance-type $instance_type --key-name $key_name --security-group-ids $security_group --user-data file://scrape_movies2.txt --output text --query 'Instances[*].InstanceId' )
 	echo "This is the instance_id $instance_id"
 
 

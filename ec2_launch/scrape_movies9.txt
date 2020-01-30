@@ -65,5 +65,6 @@ pip3 install aws2
 pip3 install psycopg2-binary
 echo "Binary version of psycopg2 installed manually"
 
-python ec2file9.py 
+nohup python ec2file9.py &
 echo "Scraping complete"
+exit
