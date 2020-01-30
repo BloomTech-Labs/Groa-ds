@@ -757,9 +757,11 @@ class Scraper():
                 'review_date': date,
                 'review_id': review_id
                 })
-        df['review_date'] = pd.to_datetime(df['review_date'])
+        df['review_date'] = pd.to_datetime(df['review_date'], errors='coerce')
+        df['review_date'] = df['review_date'].fillna(method='ffill')
+        df['review_date'] = df['review_date'].fillna(value='2012-12-21')
         df['review_date'] = df['review_date'].dt.strftime('%Y-%m-%d').astype(str)
-        print(df.head(10))
+        # print(df.head(10))
         return df
 
 
