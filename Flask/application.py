@@ -2,7 +2,7 @@ from flask import Flask, session, render_template, request, flash, redirect
 from flask_session import Session
 import pandas as pd
 from zipfile import ZipFile
-
+import json
 
 import psycopg2
 # from getpass import getpass
@@ -69,7 +69,7 @@ def lb_uploaded():
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
 
-            return render_template('public/letterboxd_uploaded.html', data=ratings.head().to_html(index=False))
+            return render_template('public/letterboxd_submission.html', data=ratings.head().to_html(index=False))
 
 @application.route('/letterboxd_submission', methods=['GET', 'POST'])
 def lb_submit():
@@ -92,18 +92,44 @@ def lb_submit():
 
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
-                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
+                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
 
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
-    recs['Resubmission']= '<input type="checkbox" name='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    recs=recs.drop(columns='Movie ID')
     session.clear()                   
+    session['good_list']=json.dumps(good_list)
+    session['bad_list']=json.dumps(bad_list)
+    session['hist_list']=json.dumps(hist_list)
+    session['val_list']=json.dumps(val_list)
+    session['good_rate']=good_rate
+    session['bad_rate']=bad_rate   
+    return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False))
 
-    return render_template('public/recommendations.html', data=recs.to_html(index=False))
 
-
+@application.route('/resubmission')
+def resubmit():
+    resubmissions = request.form.getlist('movie id')
+    good_list = json.loads(session['good_list'])
+    good_list.extend(resubmissions)
+    bad_list = json.loads(session['bad_list'])
+    hist_list = json.loads(session['hist_list'])
+    val_list = json.loads(session['val_list'])
+    
+    s = Recommender('w2v_limitingfactor_v1.model')
+    s.connect_db()
+    
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
+                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
+    def links(x):
+        '''Changes URLs to actual links'''
+        return '<a href="%s">Go to the IMDb page</a>' % (x)
+    recs['URL'] = recs['URL'].apply(links)
+    return render_template('public/re_recommendations.html', data=recs.to_html(index=False))
+    
 @application.route('/imdb_upload')
 def imdb_upload():
     '''
@@ -142,7 +168,7 @@ def upload_file():
             df = df.drop(columns=['Title Type','Num Votes','Directors','Genres','URL','Release Date'])
             session['df']= df.to_json()
             #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.
-            return render_template('public/view.html', name='Watched List',data = df.head().to_html(index=False))
+            return render_template('public/imdb_submission.html', name='Watched List',data = df.head().to_html(index=False))
 
 @application.route('/submission',methods=['GET','POST'])
 def submit():
@@ -167,14 +193,21 @@ def submit():
                                         df, good_threshold=good_rate, bad_threshold=bad_rate)
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
-                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
+                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
-    recs['Resubmission']= '<input type="checkbox" name='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
-    session.clear() 
-    return render_template('public/recommendations.html', data=recs.to_html(index=False,escape=False))
+    recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    recs=recs.drop(columns='Movie ID')
+    session.clear()
+    session['good_list']=json.dumps(good_list)
+    session['bad_list']=json.dumps(bad_list)
+    session['hist_list']=json.dumps(hist_list)
+    session['val_list']=json.dumps(val_list)
+    session['good_rate']=good_rate
+    session['bad_rate']=bad_rate
+    return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False,escape=False))
 
 @application.route('/manualreview', methods=['GET', 'POST'])
 def review():
