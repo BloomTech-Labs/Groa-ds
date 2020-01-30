@@ -3,4 +3,4 @@
 scrape = open("scrape_movies.txt").read()
 for i in range(30):
     f = open(f"scrape_movies{i}.txt", "a")
-    f.write(f'{scrape}\npython ec2file{i}.py \necho "Scraping complete"')
+    f.write(f'{scrape}\nnohup python ec2file{i}.py &\necho "Scraping complete"\nexit')
