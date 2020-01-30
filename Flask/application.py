@@ -8,7 +8,7 @@ import psycopg2
 # from getpass import getpass
 
 # self import
-from psycopg2_blob import seventoten,query2,id_to_title
+from psycopg2_blob import seventoten,query2,id_to_title,get_imdb_users
 from w2v_inference import *
 
 
@@ -25,7 +25,7 @@ def index():
     '''
     Main Page, has no real function as of now
     '''
-    return render_template("public/index.html")
+    return render_template("public/Homepage.html")
 
 @application.route("/letterboxd_upload", methods=["GET", "POST"])
 def letterboxd_upload():
@@ -34,7 +34,7 @@ def letterboxd_upload():
     '''
     return render_template('public/letterboxd_upload.html')
 
-@application.route('/letterboxd_uploaded', methods=['GET','POST'])
+@application.route('/letterboxd_submission', methods=['GET','POST'])
 def lb_uploaded():
     '''
     next step for letterboxd, this page gets the zipfile from the previous page, extracts four csvs and commits them
@@ -93,13 +93,16 @@ def lb_submit():
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
+
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
     recs['Resubmission']= '<input type="checkbox" name='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
     session.clear()                   
+
     return render_template('public/recommendations.html', data=recs.to_html(index=False))
+
 
 @application.route('/imdb_upload')
 def imdb_upload():
@@ -200,6 +203,11 @@ def watchhistory():
     please make ratings public. That's probably better than asking for their login info.
     '''
     #display scraped data? display whether they've actually reviewed it and if not, have a link to redirect to review page?
+
+@application.route('/userlookup')
+def userlookup():
+    users = get_imdb_users()
+    return render_template('public/user_search.html',users = users)
 
 if __name__ == "__main__":
     application.run(port=5000, debug=True)

@@ -1,6 +1,8 @@
 import psycopg2
 import pandas as pd
 import os
+from decouple import config
+from tqdm import tqdm
 
 
 
@@ -60,3 +62,41 @@ def id_to_title(list):
     result = list(cursor.fetchall())
     connection = None
     return result
+
+def connect_to_DB():
+    connection = psycopg2.connect(
+    database  = "postgres",
+    user      = "postgres",
+    password  = config('PASSWORD'),
+    host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
+    port      = '5432')
+    cursor = connection.cursor()
+    return cursor
+
+
+def get_imdb_users():
+    '''
+    returns a list of all of the unique usernames in the IMDB username column
+    '''
+    cursor = connect_to_DB()
+    query = f"SELECT username From reviews"
+    cursor.execute(query)
+    result = list(cursor.fetchall())
+    cursor.close()
+    users = []
+    for name in tqdm(result):
+        users.append(name[0])
+
+    unique_users = set(users)
+    unique_users = list(unique_users)
+    unique_users.sort()
+    return unique_users
+
+def imdb_user_lookup(username):
+    '''
+    takes in a username and searches the data base for all of the reviews made by that user and 
+    returns a dataframe.
+    '''
+    users = get_imdb_users()
+    return users
+
