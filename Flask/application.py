@@ -1,6 +1,8 @@
 from flask import Flask, session, render_template, request, flash, redirect
+from flask_session import Session
 import pandas as pd
 from zipfile import ZipFile
+
 
 import psycopg2
 # from getpass import getpass
@@ -12,13 +14,11 @@ from w2v_inference import *
 
 application = Flask(__name__)
 application.secret_key = 'secret_bee'
+SESSION_TYPE = 'filesystem'
+application.config.from_object(__name__)
+Session(application)
 
-# where we store large files for global access
-df_global = None
-ratings_global = None
-reviews_global = None
-watched_global = None
-watchlist_global = None
+
 
 @application.route("/")
 def index():
@@ -58,22 +58,31 @@ def lb_uploaded():
             with ZipFile(file, 'r') as zip:
                 zip.extractall(path='temp',members=['ratings.csv','reviews.csv','watchlist.csv','watched.csv'])
 
-            global ratings_global, reviews_global, watched_global, watchlist_global
-            ratings_global = pd.read_csv('temp/ratings.csv', encoding='cp1252')
-            reviews_global = pd.read_csv('temp/reviews.csv')
-            watched_global = pd.read_csv('temp/watched.csv')
-            watchlist_global = pd.read_csv('temp/watchlist.csv')
+            
+            ratings = pd.read_csv('temp/ratings.csv', encoding='cp1252')
+            reviews = pd.read_csv('temp/reviews.csv')
+            watched = pd.read_csv('temp/watched.csv')
+            watchlist = pd.read_csv('temp/watchlist.csv')
 
+            session['ratings'] = ratings.to_json()
+            #session['reviews'] = reviews
+            session['watched'] = watched.to_json()
+            session['watchlist'] = watchlist.to_json()
+
+<<<<<<< HEAD
             return render_template('public/letterboxd_submission.html', data=ratings_global.to_html(index=False))
+=======
+            return render_template('public/letterboxd_uploaded.html', data=ratings.head().to_html(index=False))
+>>>>>>> e8e6665c84427f672aaec7b612f23939ce3af7c3
 
 @application.route('/letterboxd_submission', methods=['GET', 'POST'])
 def lb_submit():
     '''
     Shows recommendations from your Letterboxd choices
     '''
-    ratings = ratings_global
-    watched = watched_global
-    watchlist = watchlist_global
+    ratings = pd.read_json(session['ratings'])
+    watched = pd.read_json(session['watched'])
+    watchlist = pd.read_json(session['watchlist'])
     bad_rate = int(request.form['bad_rate']) / 2
     good_rate = int(request.form['good_rate']) / 2
     # connect
@@ -88,7 +97,11 @@ def lb_submit():
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
+<<<<<<< HEAD
     return render_template('public/Groa_recommendations.html', df=recs, tables=[recs.to_html(classes='data',index=False)], titles=recs.columns.values)
+=======
+    return render_template('public/recommendations.html', data=recs.to_html(index=False))
+>>>>>>> e8e6665c84427f672aaec7b612f23939ce3af7c3
 
 @application.route('/imdb_upload')
 def imdb_upload():
@@ -129,11 +142,13 @@ def upload_file():
             # df = df.rename(columns={'Your Rating':'Rating','Title':'Name','Const':'Movie ID'})
             #get stuff better than 7
             #df = df[df['Your Rating'] >= 7]
-            # session['df']= df.to_json()
-            global df_global
-            df_global = df.to_json()
+            session['df']= df.to_json()
             #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.
+<<<<<<< HEAD
             return render_template('public/IMDB_submission.html', name='Watched List',data = df.to_html(index=False))
+=======
+            return render_template('public/view.html', name='Watched List',data = df.head().to_html(index=False))
+>>>>>>> e8e6665c84427f672aaec7b612f23939ce3af7c3
 
 @application.route('/submission',methods=['GET','POST'])
 def submit():
@@ -142,7 +157,7 @@ def submit():
     '''
 
     #need to configure input for current model but ulitmately may not need to for updated model
-    df=pd.read_json(df_global)
+    df=pd.read_json(session['df'])
     bad_rate=int(request.form['bad_rate'])/2
     good_rate=int(request.form['good_rate'])/2
     #year_min=int(request.form['year_min'])
