@@ -93,6 +93,12 @@ def lb_submit():
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
+    def links(x):
+        '''Changes URLs to actual links'''
+        return '<a href="%s">Go to the IMDb page</a>' % (x)
+    recs['URL'] = recs['URL'].apply(links)
+    recs['Resubmission']= '<input type="checkbox" name='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    session.clear()                   
     return render_template('public/recommendations.html', data=recs.to_html(index=False))
 
 @application.route('/imdb_upload')
@@ -131,9 +137,6 @@ def upload_file():
             df['Const'] = df['Const'].str.strip('t')
             #dropping what I think to be extraneous
             df = df.drop(columns=['Title Type','Num Votes','Directors','Genres','URL','Release Date'])
-            # df = df.rename(columns={'Your Rating':'Rating','Title':'Name','Const':'Movie ID'})
-            #get stuff better than 7
-            #df = df[df['Your Rating'] >= 7]
             session['df']= df.to_json()
             #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.
             return render_template('public/view.html', name='Watched List',data = df.head().to_html(index=False))
@@ -162,7 +165,13 @@ def submit():
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
-    return render_template('public/recommendations.html', data=recs.to_html(index=False))
+    def links(x):
+        '''Changes URLs to actual links'''
+        return '<a href="%s">Go to the IMDb page</a>' % (x)
+    recs['URL'] = recs['URL'].apply(links)
+    recs['Resubmission']= '<input type="checkbox" name='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    session.clear() 
+    return render_template('public/recommendations.html', data=recs.to_html(index=False,escape=False))
 
 @application.route('/manualreview', methods=['GET', 'POST'])
 def review():

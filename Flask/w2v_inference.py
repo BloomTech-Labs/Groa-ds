@@ -4,11 +4,11 @@ import pandas as pd
 import psycopg2
 import re
 import os
-import warnings;
+import warnings
 
 warnings.filterwarnings('ignore')
 
-cursor_dog = None
+
 
 def fill_id(id):
     """Adds leading zeroes back if necessary. This makes the id match the database."""
@@ -37,14 +37,14 @@ def df_to_id_list(df, id_book):
     for i, j in missed:
         i = re.sub('[^\s0-9a-zA-Z\s]+', '%', i)
         try:
-            cursor_dog.execute(f"""
+            self.cursor_dog.execute(f"""
                 SELECT movie_id, original_title, primary_title
                 FROM movies
                 WHERE primary_title ILIKE '{i}' AND start_year = {j}
                   OR original_title ILIKE '{i}' AND start_year = {j}
                 ORDER BY runtime_minutes DESC
                 LIMIT 1""")
-            id = cursor_dog.fetchone()[0]
+            id = self.cursor_dog.fetchone()[0]
             ids.append(id)
         except:
             continue
@@ -140,6 +140,7 @@ class Recommender(object):
         """Initialize model with name of .model file"""
         self.model_name = model_name
         self.model = None
+        self.cursor_dog = None
 
     def connect_db(self):
         """connect to database, create cursor"""
@@ -152,9 +153,9 @@ class Recommender(object):
             port      = '5432'
         )
         # create cursor that is used throughout
-        global cursor_dog
+        
         try:
-            cursor_dog = connection.cursor()
+            self.cursor_dog = connection.cursor()
             print("Connected!")
         except:
             print("Connection problem chief!")
@@ -247,7 +248,7 @@ class Recommender(object):
         def _get_info(id):
             """Takes an id string and returns the movie info with a url."""
             try:
-                cursor_dog.execute(f"""
+                self.cursor_dog.execute(f"""
                 select m.primary_title, m.start_year, r.average_rating, r.num_votes
                 from movies m
                 join ratings r on m.movie_id = r.movie_id
@@ -255,7 +256,7 @@ class Recommender(object):
             except:
                 return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None])
 
-            t = cursor_dog.fetchone()
+            t = self.cursor_dog.fetchone()
             if t:
                 title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id[0]}/", t[2], t[3], id[1]])
                 return title
