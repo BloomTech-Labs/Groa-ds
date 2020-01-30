@@ -107,10 +107,10 @@ def lb_submit():
     session['val_list']=json.dumps(val_list)
     session['good_rate']=good_rate
     session['bad_rate']=bad_rate   
-    return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False))
+    return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False,escape=False))
 
 
-@application.route('/resubmission')
+@application.route('/resubmission',methods=['POST'])
 def resubmit():
     resubmissions = request.form.getlist('movie id')
     good_list = json.loads(session['good_list'])
@@ -128,7 +128,8 @@ def resubmit():
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
-    return render_template('public/re_recommendations.html', data=recs.to_html(index=False))
+    recs.drop(columns='Movie ID')
+    return render_template('public/re_recommendations.html', data=recs.to_html(index=False,escape=False))
     
 @application.route('/imdb_upload')
 def imdb_upload():

@@ -1,7 +1,6 @@
 import psycopg2
 import pandas as pd
 import os
-from decouple import config
 from tqdm import tqdm
 
 
@@ -67,7 +66,7 @@ def connect_to_DB():
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = config('PASSWORD'),
+    password  = os.getenv('PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()

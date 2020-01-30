@@ -1,6 +1,6 @@
 {% extends "public/templates/public_template.html" %}
 
-{% block title %}Groa Recommendations{% endblock %}
+{% block title %}Groa ReRecommendations{% endblock %}
 
 {% block main %}
 
@@ -10,12 +10,12 @@
 
                 <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
                 <div class=page>
-                <h1>Groa recommends these movies!</h1>
-            <form action='/resubmission' method='POST'>            
+                <h1>Here are your new recommendations!</h1>
+                       
                 {% block content %}
                     {{ data|safe }}
                 {% endblock %}
-            </form>
+    
         </div>
     </div>
 </div>
