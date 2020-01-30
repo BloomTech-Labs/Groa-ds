@@ -18,7 +18,6 @@ import sys
 class Scraper():
     """
     Scrapes IMDB, Letterboxd, and finder.
-
     Start parameter is inclusive, end parameter is exclusive. However, if you
     are usng the questionnaire at the bottom of this file, the end parameter is
     adjusted to be inclusive. max_iter controls how many loops can be run
@@ -47,7 +46,6 @@ class Scraper():
     def connect_to_database(self):
         """
         Connects to the database.
-
         Uses class variables set from the environment and takes no arguments
         other than self. Returns a cursor object and a connection object.
         """
@@ -63,7 +61,6 @@ class Scraper():
     def get_ids(self):
         '''
         Takes in the path to a file to read into a dataframe.
-
         Uses a class variable set from environment variable FILENAME to look
         for a csv formatted after the tarball released by IMDB.com. Returns a
         list
@@ -94,7 +91,6 @@ class Scraper():
     def create_log(self,movie_name, num_review, num_nan, elapsed):
         """
         Creates a log for each movie scraped.
-
         Takes info generated within imdb_scraper to produce a log file to return
         a log of the movie name, the number of reviews, and the time taken
         """
@@ -136,7 +132,6 @@ class Scraper():
     def scrape(self,id_list = None):
         """
         Scrapes imbd.com for review pages.
-
         create_log, make_dataframe, and insert_rows are intended to be used
         inside this function. Takes in the id of the movie in "ttxxxxxxx"
         format, robust to different numbers of numerals. Fails gracefully on
@@ -288,7 +283,6 @@ class Scraper():
     def insert_rows(self, df):
         """
         Connects to the database and inserts reviews as new rows.
-
         Takes a dataframe and formats it into a very long string to convert to
         SQL. Connects to the database, executes the query, and closes the cursor
         and connection.
@@ -411,19 +405,14 @@ class Scraper():
     def update(self,ids = None):
         '''
         Scrapes IMDB for reviews, then adds those not already in the database.
-
         Process:
-
         1) Each unique movie ID is used to search IMBd for its movie, and
         the reviews are sorted by recency.
-
         2) The top review will have its ID checked against review IDs in the
         database to see if there is a match.
-
         3) If there isn't a match (meaning that the review ID is not yet
         in the list of review IDs) that review will be saved and step 2 will
         be repeated with the next review on the page.
-
         4) Once the function comes across a review with its review ID already
         in the database, it will be the last review scraped for that movie ID
         and the whole process is repeated with the next unique movie ID.
@@ -777,7 +766,6 @@ class Scraper():
     def letterboxd_insert(self, df):
         """
         Connects to the database and inserts reviews as new rows.
-
         Takes a dataframe and formats it into a very long string to convert to
         SQL. Connects to the database, executes the query, and closes the cursor
         and connection.
@@ -816,7 +804,6 @@ class Scraper():
     def scrape_finder():
         """
         Grabs all the names and urls of all the movies on Netflix.
-
         Finder.com has all the movies on Netflix on a single page.
         Scrapes them and adds them to the database.
         """
