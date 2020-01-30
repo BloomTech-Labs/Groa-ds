@@ -1,6 +1,6 @@
 {% extends "public/templates/public_template.html" %}
 
-{% block title %}IMDB Upload{% endblock %}
+{% block title %}Letterboxd submission{% endblock %}
 
 {% block main %}
 
@@ -11,7 +11,7 @@
     {{ data|safe }}
   {% endblock %}
 </div>
-<form action='/submission' method='post'>
+<form action='/letterboxd_submission' method='post'>
   <div class="slidecontainer">
     <input type="range" min="1" max="10" value="6" class="slider" id="myRange" name="bad_rate">
     <p>Minimum value to be considered a bad movie: <span id="demo"></span></p>
@@ -30,9 +30,7 @@
   </div> -->
     <input type="checkbox" name="Hidden Gems" value="Hidden gems">Add Hidden Gems to my search<br>
     <input type="checkbox" name="Cult" value="Cult">Add Cult movies to my search<br>
-  
-
-  <input type="submit" value="Get Recommendations!">
+  <input type="submit" value="Submit to the model">
 </form>
 
 <script>

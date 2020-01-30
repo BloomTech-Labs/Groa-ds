@@ -6,7 +6,7 @@ import psycopg2
 # from getpass import getpass
 
 # self import
-from psycopg2_blob import seventoten,query2,id_to_title
+from psycopg2_blob import seventoten,query2,id_to_title,get_imdb_users
 from w2v_inference import *
 
 
@@ -25,7 +25,7 @@ def index():
     '''
     Main Page, has no real function as of now
     '''
-    return render_template("public/index.html")
+    return render_template("public/Homepage.html")
 
 @application.route("/letterboxd_upload", methods=["GET", "POST"])
 def letterboxd_upload():
@@ -34,7 +34,7 @@ def letterboxd_upload():
     '''
     return render_template('public/letterboxd_upload.html')
 
-@application.route('/letterboxd_uploaded', methods=['GET','POST'])
+@application.route('/letterboxd_submission', methods=['GET','POST'])
 def lb_uploaded():
     '''
     next step for letterboxd, this page gets the zipfile from the previous page, extracts four csvs and commits them
@@ -64,7 +64,7 @@ def lb_uploaded():
             watched_global = pd.read_csv('temp/watched.csv')
             watchlist_global = pd.read_csv('temp/watchlist.csv')
 
-            return render_template('public/letterboxd_uploaded.html', data=ratings_global.to_html(index=False))
+            return render_template('public/letterboxd_submission.html', data=ratings_global.to_html(index=False))
 
 @application.route('/letterboxd_submission', methods=['GET', 'POST'])
 def lb_submit():
@@ -88,7 +88,7 @@ def lb_submit():
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
-    return render_template('public/recommendations.html', df=recs, tables=[recs.to_html(classes='data',index=False)], titles=recs.columns.values)
+    return render_template('public/Groa_recommendations.html', df=recs, tables=[recs.to_html(classes='data',index=False)], titles=recs.columns.values)
 
 @application.route('/imdb_upload')
 def imdb_upload():
@@ -133,7 +133,7 @@ def upload_file():
             global df_global
             df_global = df.to_json()
             #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.
-            return render_template('public/view.html', name='Watched List',data = df.to_html(index=False))
+            return render_template('public/IMDB_submission.html', name='Watched List',data = df.to_html(index=False))
 
 @application.route('/submission',methods=['GET','POST'])
 def submit():
@@ -159,7 +159,7 @@ def submit():
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score'])
-    return render_template('public/recommendations.html', df=recs, tables=[recs.to_html(classes='data',index=False)], titles=recs.columns.values)
+    return render_template('public/Groa_recommendations.html', df=recs, tables=[recs.to_html(classes='data',index=False)], titles=recs.columns.values)
 
 @application.route('/manualreview', methods=['GET', 'POST'])
 def review():
@@ -188,6 +188,11 @@ def watchhistory():
     please make ratings public. That's probably better than asking for their login info.
     '''
     #display scraped data? display whether they've actually reviewed it and if not, have a link to redirect to review page?
+
+@application.route('/userlookup')
+def userlookup():
+    users = get_imdb_users()
+    return render_template('public/user_search.html',users = users)
 
 if __name__ == "__main__":
     application.run(port=5000, debug=True)
