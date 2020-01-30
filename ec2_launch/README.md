@@ -1,5 +1,5 @@
 How to get the credentials for running EC2 Instance Script
-
+--------------------------------------------------------------
 
 ###First you want to take the following steps:
 
