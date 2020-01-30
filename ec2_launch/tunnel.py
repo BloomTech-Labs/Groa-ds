@@ -6,7 +6,7 @@ import pprint
 import datetime
 import time
 import requests
-import paramiko
+#import paramiko
 
 
 import awsutils
@@ -16,14 +16,14 @@ import awsutils
 # usage: ./tunnel.sh start (spin up EC2 and create the tunnel)
 #        ./tunnel.sh stop (terminate the EC2 instance to save money)
 #        ./tunnel.sh resume (in case your tunnel is interrupted but the EC2 instance is still running)
-
+# Check the output by going to "vim /var/log/cloud-init-output.log"
 # CHANGE THE PARAMETERS BELOW
 
 imageid = "ami-062f7200baf2fa504" # this is an Amazon Linux AMI, but you can change it to whatever you want
 instance_type = "t2.micro"
 instance_quantity = 30
 key_name = config("EC2_INSTANCE_KEY") # your keypair name -- instantiated in the env file http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
-security_group = "sg-0fb23b3d00c3d354a" # your security group -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html
+security_group = ["sg-0fb23b3d00c3d354a"] # your security group -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html
 wait_seconds = 30 # seconds between polls for the public IP to populate (keeps it from hammering their API)
 port = 23453 # the SSH tunnel port you want
 key_location = "scraperboi.pem" # your private key -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair
@@ -33,7 +33,7 @@ ec2 = boto3.resource('ec2')
 session = awsutils.get_session('us-east-1')
 client = session.client('ec2')
 resource = session.resource('ec2')
-client = paramiko.SSHClient()
+#client = paramiko.SSHClient()
 # --------------------- Below is a quick rundown of what each part does ---------------------
 
 """
@@ -77,7 +77,7 @@ def launch(quantity):
     """
     Creates a set number of EC2 instances with the given file parameters.
     """
-    for i in self.quantity:
+    for i in range(quantity):
         instance = client.run_instances(
         ImageId=imageid,
         MinCount=1,
@@ -85,20 +85,21 @@ def launch(quantity):
         InstanceType=instance_type,
         KeyName=key_name,
         SecurityGroupIds=security_group,
-        UserData=f'file://scrape_movies2.txt'
+        UserData=f'file://scrape_movies2.txt',
         TagSpecifications=[{'ResourceType': 'instance', 'Tags': [{'Key': 'Scraper', 'Value': f'{i}'}]}]
         )
 
         print("Taking a quick sleep after making scraper", i)
         time.sleep(15)
 
-        find_name = client.describe_instances(Filters=[{'Name': 'Scraper', 'Values': f'{i}'}])
-        inid = find_name['Reservations'][0]['Instances'][0]['InstanceId']
-        print("The InstanceId for this scraper is:", iid)
-        time.sleep(2)
-        print("Taking another little snooze")
-        time.sleep(10)
-        pdns = find_name['Reservations'][0]['Instances'][0]['PublicDnsName']
+#        find_name = client.describe_instances(Filters=[{'Name': 'Scraper', 'Values': [f'{i}']}])
+#        inid = find_name['Reservations'][0]['Instances'][0]['InstanceId']
+#        print("The InstanceId for this scraper is:", iid)
+#        time.sleep(2)
+#        print("Taking another little snooze")
+#        time.sleep(10)
+#        pdns = find_name['Reservations'][0]['Instances'][0]['PublicDnsName']
+#        print("Here's the PublicDNS:", pdns)
 
 
 
