@@ -1,7 +1,7 @@
 How to get the credentials for running EC2 Instance Script
 --------------------------------------------------------------
 
-###First you want to take the following steps:
+##First you want to take the following steps:
 
 ```
 * Go to aws.amazon.com
@@ -15,8 +15,8 @@ How to get the credentials for running EC2 Instance Script
 
 ```
 
-####Once you have your Security Keys you will want to establish a security group
-####for the EC2 instances by:
+##Once you have your Security Keys you will want to establish a security group
+##for the EC2 instances by:
 
 ```
 * Go to aws.amazon.com
@@ -40,8 +40,8 @@ Description: SSH for letterboxd scrapers
 * Save this text file in the '[yourname]AWSCredentials' folder we created earlier
 ```
 
-####Finally you go to Key Pairs, which is also under Network & Security and
-####you create a new key pair by:
+##Finally you go to Key Pairs, which is also under Network & Security and
+##you create a new key pair by:
 
 ```
 * Selecting Create Key Pair
