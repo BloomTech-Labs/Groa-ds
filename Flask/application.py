@@ -90,11 +90,11 @@ def lb_recommend():
     # import user data
 
     # prep user data
-    good_list, bad_list, hist_list, val_list = prep_data(
+    good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
                                         ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
 
 
-    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
 
     def links(x):
@@ -108,6 +108,7 @@ def lb_recommend():
     session['bad_list']=json.dumps(bad_list)
     session['hist_list']=json.dumps(hist_list)
     session['val_list']=json.dumps(val_list)
+    session['ratings_dict']=json.dumps(ratings_dict)
     session['good_rate']=good_rate
     session['bad_rate']=bad_rate
     return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False,escape=False))
@@ -121,11 +122,12 @@ def resubmit():
     bad_list = json.loads(session['bad_list'])
     hist_list = json.loads(session['hist_list'])
     val_list = json.loads(session['val_list'])
+    ratings_dict = json.loads(session['ratings_dict'])
 
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
 
-    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
     def links(x):
         '''Changes URLs to actual links'''
@@ -193,10 +195,10 @@ def submit():
 
 
     # prep user data
-    good_list, bad_list, hist_list, val_list = prep_data(
+    good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
                                         df, good_threshold=good_rate, bad_threshold=bad_rate)
 
-    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
     def links(x):
         '''Changes URLs to actual links'''
@@ -209,6 +211,7 @@ def submit():
     session['bad_list']=json.dumps(bad_list)
     session['hist_list']=json.dumps(hist_list)
     session['val_list']=json.dumps(val_list)
+    session['ratings_dict']=json.dumps(ratings_dict)
     session['good_rate']=good_rate
     session['bad_rate']=bad_rate
     return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False,escape=False))

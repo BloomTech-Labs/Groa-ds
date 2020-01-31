@@ -26,29 +26,39 @@ def df_to_id_list(df, id_book):
     for matches.
     """
     df['Year'] = df['Year'].astype(int).astype(str)
+    matched = pd.merge(df, id_book,
+                left_on=['Name', 'Year'], right_on=['primaryTitle', 'startYear'],
+                how='inner')
+    ids = matched['tconst'].astype(str).tolist()
+    final_ratings = []
     names = df.Name.tolist()
     years = [int(year) for year in df.Year.tolist()]
-    info = list(zip(names, years))
-    matched = pd.merge(df, id_book,
-               left_on=['Name', 'Year'], right_on=['primaryTitle', 'startYear'],
-               how='inner')
-    ids = matched['tconst'].astype(str).tolist()
+    if 'Rating' in df.columns:
+        stars = [int(rating) for rating in df.Rating.tolist()]
+        info = list(zip(names, years, stars))
+        final_ratings = matched['Rating'].astype(int).tolist()
+    else:
+        info = list(zip(names, years, list(range(len(years)))))
     missed = [x for x in info if x[0] not in matched['primaryTitle'].tolist()]
-    for i, j in missed:
+    for i, j, k in missed:
         i = re.sub('[^\s0-9a-zA-Z\s]+', '%', i)
         try:
-            self.cursor_dog.execute(f"""
+            # TODO: fix this cursor so it actually references something.
+            cursor_dog.execute(f"""
                 SELECT movie_id, original_title, primary_title
                 FROM movies
                 WHERE primary_title ILIKE '{i}' AND start_year = {j}
                   OR original_title ILIKE '{i}' AND start_year = {j}
                 ORDER BY runtime_minutes DESC
                 LIMIT 1""")
-            id = self.cursor_dog.fetchone()[0]
+            id = cursor_dog.fetchone()[0]
             ids.append(id)
-        except:
+            final_ratings.append(k)
+        except Exception as e:
             continue
-    return [fill_id(id) for id in ids]
+    final_ratings = [x*2 for x in final_ratings]
+    ratings_dict = dict(zip(ids, final_ratings))
+    return tuple([[fill_id(id) for id in ids], ratings_dict])
 
 def prep_data(ratings_df, watched_df=None, watchlist_df=None,
                    good_threshold=4, bad_threshold=3):
@@ -88,13 +98,13 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
         bad_df = ratings_df[ratings_df['Rating'] <= bad_threshold]
         neutral_df = ratings_df[(ratings_df['Rating'] > bad_threshold) & (ratings_df['Rating'] < good_threshold)]
         # convert dataframes to lists
-        good_list = df_to_id_list(good_df, id_book)
-        bad_list = df_to_id_list(bad_df, id_book)
-        neutral_list = df_to_id_list(neutral_df, id_book)
+        good_list, good_dict = df_to_id_list(good_df, id_book)
+        bad_list, bad_dict = df_to_id_list(bad_df, id_book)
+        neutral_list, neutral_dict = df_to_id_list(neutral_df, id_book)
     except KeyError:
         # Try to read IMDb user data
         # strip ids of "tt" prefix
-        ratings_df['movie_id'] = ratings_df['Const'].astype('str').str.lstrip("tt")
+        ratings_df['movie_id'] = ratings_df['Const'].apply(lambda x: str(x).lstrip("tt"))
         # drop rows with nulls in the columns we use
         ratings_df = ratings_df.dropna(axis=0, subset=['Your Rating', 'Year'])
         # split according to user rating
@@ -105,10 +115,16 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
         good_list = good_df['movie_id'].to_list()
         bad_list = bad_df['movie_id'].to_list()
         neutral_list = neutral_df['movie_id'].to_list()
+        # make ratings dictionaries
+        good_dict = dict(zip(good_list, good_df['Your Rating'].tolist()))
+        bad_dict = dict(zip(bad_list, bad_df['Your Rating'].tolist()))
+        neutral_dict = dict(zip(neutral_list, neutral_df['Your Rating'].tolist()))
     except Exception as e:
         # can't read the dataframe as Letterboxd or IMDb user data
         print("This dataframe has columns:", ratings_df.columns)
         raise Exception(e)
+
+    ratings_dict = dict(list(good_dict.items()) + list(bad_dict.items()) + list(neutral_dict.items()))
 
     if watched_df is not None:
         # Construct list of watched movies that aren't rated "good" or "bad"
@@ -117,7 +133,7 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
         # drop nulls from watched dataframe
         full_history = watched_df.dropna(axis=0, subset=['Name', 'Year'])
         # get list of watched movies that haven't been rated
-        hist_list = df_to_id_list(full_history[~full_history['Name'].isin(rated_names)], id_book)
+        hist_list = df_to_id_list(full_history[~full_history['Name'].isin(rated_names)], id_book)[0]
         # add back list of "neutral" movies (whose IDs we already found before)
         hist_list = hist_list + neutral_list
     else: hist_list = neutral_list
@@ -125,14 +141,14 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
     if watchlist_df is not None:
         try:
             watchlist_df = watchlist_df.dropna(axis=0, subset=['Name', 'Year'])
-            val_list = df_to_id_list(watchlist_df, id_book)
+            val_list = df_to_id_list(watchlist_df, id_book)[0]
         except KeyError:
             watchlist_df = watchlist_df.dropna(axis=0, subset=['Const', 'Year'])
             watchlist_df['movie_id'] = watchlist_df['Const'].str.lstrip("tt")
             val_list = watchlist_df['movie_id'].tolist()
     else: val_list = []
 
-    return (good_list, bad_list, hist_list, val_list)
+    return (good_list, bad_list, hist_list, val_list, ratings_dict)
 
 class Recommender(object):
 
@@ -159,7 +175,6 @@ class Recommender(object):
             print("Connected!")
         except:
             print("Connection problem chief!")
-        # Enter database password and press Enter.
 
     def _get_model(self):
         """Get the model object for this instance, loading it if it's not already loaded."""
@@ -172,7 +187,8 @@ class Recommender(object):
             self.model = w2v_model
         return self.model
 
-    def predict(self, input, bad_movies=[], hist_list=[], val_list=[],
+    def predict(self, input, bad_movies=[], hist_list=[],
+                        val_list=[], ratings_dict = {},
                 n=50, harshness=1, rec_movies=True,
                 show_vibes=False, scoring=False):
         """Returns a list of recommendations and useful metadata, given a pretrained
@@ -192,6 +208,9 @@ class Recommender(object):
 
             val_list : iterable
                 List of movies the user has already indicated interest in.
+
+            ratings_dict : dictionary
+                Dictionary of movie_id keys, user rating values.
 
             n : int
                 Number of recommendations to return.
@@ -225,7 +244,19 @@ class Recommender(object):
             movie_vec = []
             for i in movies:
                 try:
-                    movie_vec.append(clf[i])        # get the vector for each movie
+                    m_vec = clf[i]  # get the vector for each movie
+                    if ratings_dict:
+                        try:
+                            r = ratings_dict[i] # get user_rating for each movie
+                            # use a polynomial to weight the movie by rating.
+                            # This equation is totally arbitrary. I just fit a polynomial
+                            # to some weights that look good. The effect is to raise
+                            # the importance of 1, 9, and 10 star ratings.
+                            w = ((r**3)*-0.00143) + ((r**2)*0.0533) + (r*-0.4695) + 2.1867
+                            m_vec = m_vec * w
+                        except KeyError:
+                            continue
+                    movie_vec.append(m_vec)
                 except KeyError:
                     continue
             return np.mean(movie_vec, axis=0)
@@ -248,20 +279,21 @@ class Recommender(object):
         def _get_info(id):
             """Takes an id string and returns the movie info with a url."""
             try:
-                self.cursor_dog.execute(f"""
+                info_query = f"""
                 select m.primary_title, m.start_year, r.average_rating, r.num_votes
                 from movies m
                 join ratings r on m.movie_id = r.movie_id
-                where m.movie_id = '{id[0]}'""")
-            except:
-                return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None,id[0]])
+                where m.movie_id = '{id[0]}'"""
+                self.cursor_dog.execute(info_query)
+            except Exception as e:
+                return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None, id[0]])
 
             t = self.cursor_dog.fetchone()
             if t:
-                title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id[0]}/", t[2], t[3], id[1],id[0]])
+                title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id[0]}/", t[2], t[3], id[1], id[0]])
                 return title
             else:
-                return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None,id[0]])
+                return tuple([f"Movie title not retrieved. ID:{id[0]}", None, None, None, None, None, id[0]])
 
         def _remove_dislikes(bad_movies, good_movies_vec, input=1, harshness=1):
             """Takes a list of movies that the user dislikes.
