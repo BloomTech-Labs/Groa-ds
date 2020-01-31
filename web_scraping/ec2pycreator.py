@@ -1,8 +1,8 @@
 from decouple import config
 
 number = int(config("NUMBER"))
-start = number*1770
-end = (number+1)*1770
+start = (number*53100) + 1
+end = start + 1770
 instance = number*30
 
 
