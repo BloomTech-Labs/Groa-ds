@@ -1,4 +1,4 @@
 from scraper import * 
-s = Scraper(start=28332, end=30102, max_iter=30, scraper_instance=132) 
+s = Scraper(start=26562, end=28332, max_iter=30, scraper_instance=102) 
 ids = s.get_ids() 
 s.scrape_letterboxd(ids)
