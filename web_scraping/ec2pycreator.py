@@ -1,16 +1,12 @@
-from decouple import config
-
-number = int(config("NUMBER"))
-start = (number*53100) + 1
-end = start + 1770
-instance = number*30
+start = 0
+end = 1781
+instance = 0
 
 
-
-for i in range(30):
-    f = open(f"ec2file{i}.py", "w")
+for i in range(150):
+    f = open(f"ec2files/ec2file{i}.py", "w")
     f.write(f"from scraper import * \ns = Scraper(start={start}, end={end}, max_iter=30, scraper_instance={instance}) \nids = s.get_ids() \ns.scrape_letterboxd(ids)")
     start = end + 1
-    end = start + 1770
+    end = start + 1781
     instance += 1
     f.close()
