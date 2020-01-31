@@ -59,7 +59,7 @@ def lb_uploaded():
             with ZipFile(file, 'r') as zip:
                 zip.extractall(path='temp',members=['ratings.csv','reviews.csv','watchlist.csv','watched.csv'])
 
-            
+
             ratings = pd.read_csv('temp/ratings.csv', encoding='cp1252')
             reviews = pd.read_csv('temp/reviews.csv')
             watched = pd.read_csv('temp/watched.csv')
@@ -74,8 +74,8 @@ def lb_uploaded():
 
             return render_template('public/letterboxd_submission.html', data=ratings.head().to_html(index=False))
 
-@application.route('/letterboxd_recommendations', methods=['GET', 'POST'])
-def lb_recommend():
+@application.route('/letterboxd_submission', methods=['GET', 'POST'])
+def lb_submit():
     '''
     Shows recommendations from your Letterboxd choices
     '''
@@ -103,13 +103,13 @@ def lb_recommend():
     recs['URL'] = recs['URL'].apply(links)
     recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
     recs=recs.drop(columns='Movie ID')
-    session.clear()                   
+    session.clear()
     session['good_list']=json.dumps(good_list)
     session['bad_list']=json.dumps(bad_list)
     session['hist_list']=json.dumps(hist_list)
     session['val_list']=json.dumps(val_list)
     session['good_rate']=good_rate
-    session['bad_rate']=bad_rate   
+    session['bad_rate']=bad_rate
     return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False,escape=False))
 
 
@@ -121,10 +121,10 @@ def resubmit():
     bad_list = json.loads(session['bad_list'])
     hist_list = json.loads(session['hist_list'])
     val_list = json.loads(session['val_list'])
-    
+
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
-    
+
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
     def links(x):
@@ -133,7 +133,7 @@ def resubmit():
     recs['URL'] = recs['URL'].apply(links)
     recs.drop(columns='Movie ID')
     return render_template('public/re_recommendations.html', data=recs.to_html(index=False,escape=False))
-    
+
 @application.route('/imdb_upload')
 def imdb_upload():
     '''
@@ -245,7 +245,7 @@ def watchhistory():
 def userlookup():
 
     users = get_imdb_users()
-    
+
     return render_template('public/user_search.html',users = users)
 
 if __name__ == "__main__":
