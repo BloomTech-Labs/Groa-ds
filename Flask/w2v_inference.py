@@ -149,11 +149,11 @@ class Recommender(object):
             database  = "postgres",
             user      = "postgres",
             password  = os.getenv('DB_PASSWORD'),
-            host      = "groalives.cvslmiksgnix.us-east-1.rds.amazonaws.com",
+            host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
             port      = '5432'
         )
         # create cursor that is used throughout
-        
+
         try:
             self.cursor_dog = connection.cursor()
             print("Connected!")
