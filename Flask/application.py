@@ -3,6 +3,7 @@ from flask_session import Session
 import pandas as pd
 from zipfile import ZipFile
 import json
+import os, shutil
 
 import psycopg2
 # from getpass import getpass
@@ -69,10 +70,12 @@ def lb_uploaded():
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
 
+            shutil.rmtree('/temp')
+
             return render_template('public/letterboxd_submission.html', data=ratings.head().to_html(index=False))
 
-@application.route('/letterboxd_submission', methods=['GET', 'POST'])
-def lb_submit():
+@application.route('/letterboxd_recommendations', methods=['GET', 'POST'])
+def lb_recommend():
     '''
     Shows recommendations from your Letterboxd choices
     '''
