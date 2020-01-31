@@ -36,7 +36,7 @@ def letterboxd_upload():
     return render_template('public/letterboxd_upload.html')
 
 @application.route('/letterboxd_submission', methods=['GET','POST'])
-def lb_uploaded():
+def lb_submit():
     '''
     next step for letterboxd, this page gets the zipfile from the previous page, extracts four csvs and commits them
     to the session. HTML wise, this page presents two sliders that are used by the model
@@ -66,16 +66,16 @@ def lb_uploaded():
             watchlist = pd.read_csv('temp/watchlist.csv')
 
             session['ratings'] = ratings.to_json()
-            #session['reviews'] = reviews
+            # session['reviews'] = reviews.to_json()
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
 
-            shutil.rmtree('/temp')
+            shutil.rmtree('temp')
 
             return render_template('public/letterboxd_submission.html', data=ratings.head().to_html(index=False))
 
-@application.route('/letterboxd_submission', methods=['GET', 'POST'])
-def lb_submit():
+@application.route('/letterboxd_recommendations', methods=['GET', 'POST'])
+def lb_recommend():
     '''
     Shows recommendations from your Letterboxd choices
     '''
