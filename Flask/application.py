@@ -70,7 +70,7 @@ def lb_uploaded():
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
 
-            shutil.rmtree('temp')
+            shutil.rmtree('/temp')
 
             return render_template('public/letterboxd_submission.html', data=ratings.head().to_html(index=False))
 
