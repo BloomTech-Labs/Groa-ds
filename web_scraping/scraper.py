@@ -688,6 +688,7 @@ class Scraper():
                             print(f"Unable to find ratings for this review ID: {append}")
                             rating.append(11)
                         username.append(item.find(class_="name").get_text())
+
                         if item.find('span', '_nobr').get_text():
                             dates = item.find('span', '_nobr').get_text()
                             date.append(dates)
@@ -696,7 +697,7 @@ class Scraper():
                             extract = datetime.split('"')
                             dates = str(extract[3])
                             date.append(dates[:10])
-
+ 
 
                     if soup.find('a', class_="next"):
                         print('yep, more reviews')

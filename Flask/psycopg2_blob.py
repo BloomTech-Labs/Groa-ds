@@ -1,7 +1,7 @@
 import psycopg2
 import pandas as pd
 import os
-from tqdm import tqdm
+#from tqdm import tqdm
 
 
 
@@ -83,7 +83,8 @@ def get_imdb_users():
     result = list(cursor.fetchall())
     cursor.close()
     users = []
-    for name in tqdm(result):
+    print("retrieved usernames")
+    for name in result:
         users.append(name[0])
 
     unique_users = set(users)
@@ -98,4 +99,14 @@ def imdb_user_lookup(username):
     '''
     users = get_imdb_users()
     return users
+
+def save_users():
+    users = get_imdb_users()
+    with open("Usernames.txt","w") as file:
+        for user in users:
+            file.write(user)
+            file.write("\n")
+
+    print(f"saved users to {os.getcwd()}\\Usernames.txt")
+
 

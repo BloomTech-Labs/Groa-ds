@@ -240,7 +240,9 @@ def watchhistory():
 
 @application.route('/userlookup')
 def userlookup():
+
     users = get_imdb_users()
+    
     return render_template('public/user_search.html',users = users)
 
 if __name__ == "__main__":
