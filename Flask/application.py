@@ -131,6 +131,7 @@ def resubmit():
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
+    recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
     recs.drop(columns='Movie ID')
     return render_template('public/re_recommendations.html', data=recs.to_html(index=False,escape=False))
 
