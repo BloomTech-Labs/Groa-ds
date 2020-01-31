@@ -9,8 +9,7 @@ import requests
 #import paramiko
 
 
-import awsutils
-
+import awsutils as awsutils
 # Start/stop a set number of EC2 instances to use as a ssh tunnel
 # requires above packages to be pip installed locally
 # usage: ./tunnel.sh start (spin up EC2 and create the tunnel)
@@ -23,10 +22,10 @@ imageid = "ami-062f7200baf2fa504" # this is an Amazon Linux AMI, but you can cha
 instance_type = "t2.micro"
 instance_quantity = 30
 key_name = config("EC2_INSTANCE_KEY") # your keypair name -- instantiated in the env file http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
-security_group = ["sg-0fb23b3d00c3d354a"] # your security group -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html
+security_group = ["sg-01a650edc55c9b949"] # your security group -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html
 wait_seconds = 30 # seconds between polls for the public IP to populate (keeps it from hammering their API)
 port = 23453 # the SSH tunnel port you want
-key_location = "scraperboi.pem" # your private key -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair
+key_location = "letterboxdscraper.pem" # your private key -- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair
 user = "ec2-user" # the EC2 linux user name
 #user_data = f"file://scrape_movies{i}.txt"
 ec2 = boto3.resource('ec2')
@@ -86,7 +85,7 @@ def launch(quantity):
         KeyName=key_name,
         SecurityGroupIds=security_group,
         UserData=open(f"scrape_movies{i}.txt").read(),
-        TagSpecifications=[{'ResourceType': 'instance', 'Tags': [{'Key': 'Scraper', 'Value': f'{i}'}]}]
+        #TagSpecifications=[{'ResourceType': 'instance', 'Tags': [{'Key': 'Scraper', 'Value': f'{i}'}]}]
         )
 
         print("Taking a quick sleep after making scraper", i)
