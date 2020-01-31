@@ -102,8 +102,11 @@ def lb_recommend():
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
     recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    id_list = recs['Movie ID'].to_list()
     recs=recs.drop(columns='Movie ID')
+    
     session.clear()
+    session['id_list']=json.dumps(id_list)
     session['good_list']=json.dumps(good_list)
     session['bad_list']=json.dumps(bad_list)
     session['hist_list']=json.dumps(hist_list)
@@ -116,11 +119,24 @@ def lb_recommend():
 @application.route('/resubmission',methods=['POST'])
 def resubmit():
     resubmissions = request.form.getlist('movie id')
+    id_list = json.loads(session['id_list'])
     good_list = json.loads(session['good_list'])
     good_list.extend(resubmissions)
     bad_list = json.loads(session['bad_list'])
     hist_list = json.loads(session['hist_list'])
     val_list = json.loads(session['val_list'])
+
+    difference_list = set(good_list).difference(id_list)
+    
+    def highlight_new(s):
+        '''highlight the new recommendations'''
+        for x in difference_list:
+            for y in s['Movie ID']:
+                if x == y:
+                    return ['background-color: yellow']*8
+                else:
+                    return ['background-color: white']*8
+    
 
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
@@ -132,8 +148,12 @@ def resubmit():
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
     recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    id_list2 = recs['Movie ID'].to_list()
+    session['id_list']=json.dumps(id_list2)
     recs.drop(columns='Movie ID')
-    return render_template('public/re_recommendations.html', data=recs.to_html(index=False,escape=False))
+    styled_recs=(recs.style.apply(highlight_new, axis=1).render())
+    print(styled_recs)
+    return render_template('public/re_recommendations.html', data=styled_recs)
 
 @application.route('/imdb_upload')
 def imdb_upload():
@@ -142,8 +162,8 @@ def imdb_upload():
     '''
     return render_template('public/imdb_upload.html')
 
-@application.route('/uploader',methods = ['GET','POST'])
-def upload_file():
+@application.route('/imdb_submission',methods = ['GET','POST'])
+def imdb_submit():
     '''
     the result of the imdb upload, you can see a table of your rated movies and adjust them according to
     year released and personal rating
@@ -175,7 +195,7 @@ def upload_file():
             #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.
             return render_template('public/imdb_submission.html', name='Watched List',data = df.head().to_html(index=False))
 
-@application.route('/submission',methods=['GET','POST'])
+@application.route('/imdb_recommendations',methods=['GET','POST'])
 def submit():
     '''
     Shows recommendations from your IMDB choices
@@ -204,8 +224,11 @@ def submit():
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
     recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    id_list = recs['Movie ID'].to_list()
     recs=recs.drop(columns='Movie ID')
+    
     session.clear()
+    session['id_list']=json.dumps(id_list)
     session['good_list']=json.dumps(good_list)
     session['bad_list']=json.dumps(bad_list)
     session['hist_list']=json.dumps(hist_list)
