@@ -52,8 +52,7 @@ class r2v_Recommender():
             self.model = d2v_model
         return self.model
 
-    def predict(self, reviews, good_movies, bad_movies=[], hist_list=[],
-                n=50, min_dev=1.5, max_votes=1000):
+    def predict(self, reviews, hist_list=[], n=100, max_votes=1000):
         """Returns a list of recommendations and useful metadata, given a pretrained
         word2vec model and a list of movies.
 
@@ -61,46 +60,44 @@ class r2v_Recommender():
         ----------
 
             reviews: string
-                String of concatenated user reviews.
+                string of concatenated user reviews.
 
             good_movies : iterable
-                List of movies that the user likes.
+                list of movies that the user likes.
 
             bad_movies : iterable
-                List of movies that the user dislikes.
+                list of movies that the user dislikes.
 
             hist_list : iterable
-                List of movies the user has seen.
+                list of movies the user has seen.
 
             n : int
-                Number of recommendations to return.
+                number of recommendations to return.
 
             min_dev : float, int
-                Minimum standard deviation parameter for finding cult movies.
-                Higher min_dev --> fewer cult movies returned.
+                minimum standard deviation parameter for finding cult movies.
+                higher min_dev --> fewer cult movies returned.
 
             max_votes : int
-                Maximum number of votes for a movie to be considered a hidden gem.
+                maximum number of votes for a movie to be considered a hidden gem.
 
         Returns
         -------
-        Two lists of tuples : hidden_gems and cult_movies
-            (Title, Year, IMDb URL, Average Rating, Number of Votes, Similarity score)
+        Two lists of tuples: hidden_gems and cult_movies
+        (Title, Year, URL, # Votes, Avg. Rating, User Rating, Reviewer, Review)
         """
 
         clf = self._get_model()
-        dupes = []                 # list for storing duplicates
 
         def _remove_dupes(recs, good_movies, bad_movies):
             """remove any recommended IDs that were in the good_movies list"""
             all_rated = good_movies + bad_movies
             if hist_list:
                 all_rated = list(set(all_rated+hist_list))
-            nonlocal dupes
             dupes = [x for x in recs if x[0] in all_rated]
             return [x for x in recs if x[0] not in all_rated]
 
-        def similar_users(reviews, n_sims=10):
+        def similar_users(reviews, n_sims=30):
             """Get similar users based on reviews."""
             aggregated_tokens = aggregate_reviews(review)
             review_tokens = tokenize(aggregated_tokens)
@@ -108,68 +105,93 @@ class r2v_Recommender():
             sims = clf.docvecs.most_similar([vec], topn=n_sims)
             return [x[0] for x in sims]
 
-        def hidden_gems(id):
-            """TODO: Finds hidden gems."""
-            pass
-
-        def cult_movies(sims, min_dev=1.5, n=10):
-            """Takes a list of similar users to get cult movies.
+        def hidden_gems(sims, max_votes=1000, n=10):
+            """Finds hidden gems (highly rated but unpopular).
 
             Parameters
             ----------
                 sims : list
                     list of similar users.
 
-                min_dev : float, int
-                    Minimum number of standard deviations away from mean.
-                    Higher number --> fewer results.
+                max_votes : int
+                    max number of votes (ratings) for movies to be included.
 
-                n : max number of results.
+                n : int
+                    max number of results.
 
             Returns
             -------
-            Tuple of recommendations with info.
-                (Pmy. Title, Year, Avg. Rating, # Votes, Review, Reviewer, ID)
+            List of recommendations as tuples:
+            (Title, Year, URL, # Votes, Avg. Rating, User Rating, Reviewer, Review)
+            """
+            simset = set(sims)
+            hidden_query = f"""
+                            SELECT  m.primary_title, m.start_year, m.movie_id mid,
+                                    ra.num_votes num, ra.average_rating avgr,
+                                    r.user_rating taste, r.username,
+                                    r.review_text txt
+                            FROM reviews r
+                            JOIN movies m ON r.movie_id = m.movie_id
+                            JOIN ratings ra ON r.movie_id = ra.movie_id
+                            WHERE username IN {simset}
+                            AND user_rating BETWEEN 7 AND 10
+								AND ra.average_rating BETWEEN 7 AND 10
+								AND ra.num_votes <= {max_votes}
+                            ORDER BY user_rating DESC
+                            LIMIT {n}
+                            """
+            self.cursor_dog.execute(hidden_query)
+            try:
+                hidden_recs = self.cursor_dog.fetchall()
+                for i in hidden_recs:
+                    i[2] = f"https://www.imdb.com/title/tt{i[2]}/"
+            except:
+                hidden_recs = [("No cult movies found! Better luck next time.",
+                                    None, None, None, None, None, None, None)]
+            return hidden_recs
+
+        def cult_movies(sims, n=10):
+            """Takes a list of similar users to get cult movies (considered
+                underrated by similar users).
+
+            Parameters
+            ----------
+                sims : list
+                    list of similar users.
+
+                n : int
+                    max number of results.
+
+            Returns
+            -------
+            List of recommendations as tuples:
+            (Title, Year, URL, # Votes, Avg. Rating, User Rating, Reviewer, Review)
             """
             simset = set(sims)
             cult_query = f"""
-                WITH matches AS (
-    						SELECT  m.movie_id mid, m.primary_title tit,
-                                    m.start_year start, m.num_votes num,
-                                    r.user_rating taste, ra.average_rating avgr,
-                                    r.username, r.review_text txt
-    						FROM reviews r
-    						JOIN movies m ON r.movie_id = m.movie_id
-    						JOIN ratings ra ON r.movie_id = ra.movie_id
-    						WHERE username IN {simset}
-    							AND user_rating BETWEEN 7 AND 10
-    						ORDER BY user_rating DESC
-    						),
-                deviations AS (
-        					SELECT  DISTINCT(rr.movie_id) mid,
-                                    STDDEV(rev.user_rating) std,
-                                    rr.average_rating avgr
-        					FROM ratings rr
-        					JOIN reviews rev ON rev.movie_id = rr.movie_id
-        					GROUP BY rr.movie_id
-                            )
-                SELECT  matches.tit, matches.start, deviations.avgr,
-                        matches.num, matches.txt,  matches.taste, deviations.mid
-                FROM deviations
-                JOIN matches on matches.mid = deviations.mid
-                WHERE matches.taste > (({min_dev} * deviations.std) + deviations.avgr)
-                	AND matches.taste < 11
-                ORDER BY (matches.taste - deviations.avgr) / deviations.std
-                LIMIT {n}"""
+                            SELECT  m.primary_title, m.start_year, m.movie_id mid,
+                                    ra.num_votes num, ra.average_rating avgr,
+                                    r.user_rating taste, r.username,
+                                    r.review_text txt
+                            FROM reviews r
+                            JOIN movies m ON r.movie_id = m.movie_id
+                            JOIN ratings ra ON r.movie_id = ra.movie_id
+                            WHERE username IN {simset}
+                            AND user_rating BETWEEN 7 AND 10
+								AND user_rating BETWEEN 6 AND 10
+								AND user_rating > (ra.average_rating + 3)
+                            ORDER BY user_rating DESC
+                            LIMIT {n}
+                """
             self.cursor_dog.execute(cult_query)
             try:
                 cult_recs = self.cursor_dog.fetchall()
             except:
                 cult_recs = [("No cult movies found! Better luck next time.",
-                                            None, None, None, None, None, None)]
+                                    None, None, None, None, None, None, None)]
             return cult_recs
 
         sims = similar_users(reviews, n_sims=30)
-        cult_recs = cult_movies(sims, min_dev=min_dev, n=100)
-        recs = _remove_dupes(cult_recs, good_movies, bad_movies)
-        return recs
+        cult_recs = cult_movies(sims, n=n/2)
+        hidden_gems = hidden_gems(sims, n=n/2)
+        return [cult_recs, hiddens_gems]
