@@ -111,22 +111,32 @@ def lb_recommend():
     session['bad_list']=json.dumps(bad_list)
     session['hist_list']=json.dumps(hist_list)
     session['val_list']=json.dumps(val_list)
+    
     session['good_rate']=good_rate
     session['bad_rate']=bad_rate
+    
+    
     return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False,escape=False))
 
 
 @application.route('/resubmission',methods=['POST'])
 def resubmit():
-    resubmissions = request.form.getlist('movie id')
-    id_list = json.loads(session['id_list'])
+    '''
+    This page takes the ids from the recommedation page that the user liked and adds them to 
+    '''
+    try:
+        checked_list = json.loads(session['checked_list'])
+    except:
+        checked_list = []
+    checked_list.extend(request.form.getlist('movie id'))#only checked ids
+    id_list = json.loads(session['id_list'])#all of the ids of the previous recommendations
     good_list = json.loads(session['good_list'])
-    good_list.extend(resubmissions)
+    
     bad_list = json.loads(session['bad_list'])
     hist_list = json.loads(session['hist_list'])
     val_list = json.loads(session['val_list'])
 
-    difference_list = set(good_list).difference(id_list) 
+    difference_list = #set().difference(id_list) 
    
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
@@ -136,10 +146,15 @@ def resubmit():
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
+    
     recs['URL'] = recs['URL'].apply(links)
     recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    
     id_list2 = recs['Movie ID'].to_list()
+    
     session['id_list']=json.dumps(id_list2)
+    session['checked_list']=json.dumps(checked_list)
+    
     recs.drop(columns='Movie ID')
     
     return render_template('public/re_recommendations.html', data=recs.to_html(escape=False,index=False))
