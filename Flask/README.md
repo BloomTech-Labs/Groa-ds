@@ -1,5 +1,5 @@
 # Flask App Documentation <img align="right" src="https://www.clipartkey.com/mpngs/m/145-1450071_flask-python-logo-transparent.png" width="120" height="120">
-[Deployement Link]()
+[Deployment Link]()
 # Table of Contents
 1. [Quick Rundown](#sum)
 2. [Flask App Endpoints](#endpoints)
@@ -14,10 +14,41 @@ This flask app's purpose is to serve as an environment for displaying recommenda
 ## Flask App Endpoints <a name="endpoints"></a>
 The app really does two things at this point. It let's you upload a file from either imdb or letterboxd and it will give you recommendations from the model.
 ## Run Locally <a name="local"></a>
-Server will be and accessible at http://127.0.0.1:5000/ 
+### Step 1:
+Before starting anything, make sure to activate the virtual environment. [Set up your virtual environment](https://www.liquidweb.com/kb/how-to-setup-a-python-virtual-environment-on-windows-10/) and then [install the needed imports from the requirements file](https://stackoverflow.com/questions/48787250/set-up-virtualenv-using-a-requirements-txt-generated-by-conda). From then on, call source <\your virtual environment folder>\/Scripts/activate to start up the environment if your are in Windows. Other systems should call <\your virtual environment folder>\/bin/activate.
+
+### Step 2:
+In order to run the flask app, first you need to set it to the right file. 
+In Windows, we go: set FLASK_APP=application.py.
+In other systems, we go: export FLASK_APP=application.py.
+
+### Step 3:
+Now that flask knows which file to run, type in 'flask run'
+
+### Optional Step 4:
+If you want to be in debug mode: export FLASK_ENV=development
+In Windows, replace export with set
+
+### Optional Step 5:
+If you don't like doing step 2 or step 4 every time, you can make a .flaskenv file and put "FLASK_APP = application.py
+FLASK_ENV = development" in it. Very nice!
 ## Deployment Instruction for AWS Elastic Beanstalk <a name="deployment"></a>
 ### GUI Upload <a name="gui"></a>
 [Elastic Beanstalk Upload Guide](https://medium.com/analytics-vidhya/deploying-a-flask-app-to-aws-elastic-beanstalk-f320033fda3c)
+### Step 1(Windows):
+First go to your AWS console
+type bean in the search and select elastic beanstalk
+On the elastic beanstalk page you go to create new application on the top right of the page
+### Step 2(Windows):
+Give it a name and a description if you want to and then press create
+Then it will bring you to a new page that will say "No environments currently exist for this application. Create one now." Click on create one now
+Select web server environment
+### Step 3(Windows):
+Give it a name, domain and description (if you want to), on platform under preconfigured platform choose python, and on apllication code leave it at sample application (You can do the upload of your zipfile here if you choose the third option). Then create environment.
+It will start creating the environment. Mine took about 3 minute to create.
+### Step 4(Windows):
+Click on your application on the top bar and navigate to your environment. It will bring you to the dashboard. If you need to set environment variables (like passwords), navigate to Configuration, click Modify for the Software category, and then enter the key pair in Environment properties at the bottom of the page. Otherwise, you can upload the zipfile of your flask app. 
+
 #### Step 1:
 Zip all flask files including hidden folder `.ebextensions`,`.env` file and `requirements.txt`.
 #### Step 2: 
@@ -28,30 +59,9 @@ Go to your EB environment and upload your flask zip file
 ### CLI Upload <a name="cli"></a>
 Coming Soon
 ## Built With <a name="dependency"></a>
+[Flask](https://flask.palletsprojects.com/en/1.1.x/)[Pandas](https://pandas.pydata.org/pandas-docs/stable/)[Gensim](https://radimrehurek.com/gensim/auto_examples/index.html)[Psycopg2](https://www.psycopg.org/docs/)[AWS Elastic Beanstalk](https://docs.aws.amazon.com/elastic-beanstalk/index.html)
 ## What's Next <a name="next"></a>
 
 
-Before starting anything, make sure to activate the virtual environment. Do this with 'source groavirt/Scripts/activate'
-
-In order to run the flask app, first you need to set it to the right file. 
-In Windows, we go: set FLASK_APP=application.py.
-In other systems, we go: export FLASK_APP=application.py.
-Now that flask knows which file to run, type in 'flask run'
-If you want to be in debug mode: export FLASK_ENV=development
-In window, replace export with set
 
 
-Setting up Beanstalk:
-First go to your console
-type bean in the search and select elastic beanstalk
-on the elastic beanstalk page you go to create new application on the top right of the page
-Give it a name and a description if you want to and then press create
-Then it will bring you to a new page that will say "No environments currently exist for this application. Create one now." Click on create one now
-Select web server environment
-Give it a name, domain and description (if you want to), on platform under preconfigured platform choose python, and on apllication code leave it at sample application. Then create environment.
-It will start creating the environment. Mine took about 3 minute to create.
-Click on your application on the top bar and navigate to your environment. It will bring you to the dashboard. If you need to set environment variables (like passwords), use Tags at the bottom of the left side menu. Otherwise, you can upload the zipfile of your flask app. 
-
-That brings us to a new part, Setting up the zipfile: consult: https://medium.com/analytics-vidhya/deploying-a-flask-app-to-aws-elastic-beanstalk-f320033fda3c
-If you're on windows, get into the flask folder, cntrl-A to select everything, then right click and select send to zipfile.
-Then go back to beanstalk, select upload and deploy, and select the zipfile you just made. I think that's everything.
