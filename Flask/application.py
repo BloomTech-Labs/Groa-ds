@@ -126,18 +126,8 @@ def resubmit():
     hist_list = json.loads(session['hist_list'])
     val_list = json.loads(session['val_list'])
 
-    difference_list = set(good_list).difference(id_list)
-    
-    def highlight_new(s):
-        '''highlight the new recommendations'''
-        for x in difference_list:
-            for y in s['Movie ID']:
-                if x == y:
-                    return ['background-color: yellow']*8
-                else:
-                    return ['background-color: white']*8
-    
-
+    difference_list = set(good_list).difference(id_list) 
+   
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
 
@@ -151,9 +141,8 @@ def resubmit():
     id_list2 = recs['Movie ID'].to_list()
     session['id_list']=json.dumps(id_list2)
     recs.drop(columns='Movie ID')
-    styled_recs=(recs.style.apply(highlight_new, axis=1).render())
-    print(styled_recs)
-    return render_template('public/re_recommendations.html', data=styled_recs)
+    
+    return render_template('public/re_recommendations.html', data=recs.to_html(escape=False,index=False))
 
 @application.route('/imdb_upload')
 def imdb_upload():
