@@ -78,7 +78,8 @@ def lb_submit():
             shutil.rmtree(f'temp{tag}') # remove temp folder
 
             return render_template('public/letterboxd_submission.html',
-                                    data=ratings.head().to_html(index=False))
+                                    data=ratings.sort_values(by=['Date'],
+                                    ascending=False).head().to_html(index=False))
 
 @application.route('/letterboxd_recommendations', methods=['GET', 'POST'])
 def lb_recommend():
@@ -286,7 +287,8 @@ def imdb_submit():
             # dump ratings and reviews into database and then call model on username.
             # Said username is in the zipfile name<EZ>.
             return render_template('public/imdb_submission.html',
-                    name='Watched List',data = ratings.head().to_html(index=False))
+                    name='Watched List', data=ratings.sort_values(by=['Date'],
+                    ascending=False).head().to_html(index=False))
 
 @application.route('/imdb_recommendations',methods=['GET','POST'])
 def submit():
