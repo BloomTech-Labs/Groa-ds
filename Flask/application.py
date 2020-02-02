@@ -235,6 +235,22 @@ def resubmit():
         + recs['Movie ID'] + '>  Hard No<br>'
 
     id_list2 = recs['Movie ID'].to_list()
+    difference_list = list(set(id_list2).difference(set(id_list)))
+    def bool_func(column,id_list):
+        '''
+        This function checks the "Movie ID" column against the id_list and 
+        will give booleans on whether the ID in the column is present on the list.
+        If it is present, then it changes the entry from True to NEW!.
+        '''
+        bool_list=[]
+        for x in column:
+            bool_list.append(x in id_list)
+        b = ['NEW!' if x==True else '' for x in bool_list]
+        return b
+    recs['New Rec?'] = bool_func(recs['Movie ID'],difference_list) 
+    
+    cols=recs.columns.to_list()
+    recs=recs[cols[-1:]+cols[:-1]] #puts New Rec? column as column number 1 or number 0 if you're a computer
 
     session['id_list'] = json.dumps(id_list2)
     session['checked_list'] = json.dumps(checked_list)
