@@ -56,12 +56,13 @@ def lb_submit():
             return redirect(request.url)
 
         if request.files:
-
             file = request.files["file"]
-            tag = str(np.random.uniform())
+            tag = str(np.random.uniform()) # make a temp folder with a random name
             with ZipFile(file, 'r') as zip:
-                zip.extractall(path=f'temp{tag}',members=['ratings.csv','reviews.csv','watchlist.csv','watched.csv'])
-
+                zip.extractall(path=f'temp{tag}', members=['ratings.csv',
+                                                           'reviews.csv',
+                                                           'watchlist.csv',
+                                                           'watched.csv'])
 
             ratings = pd.read_csv(f'temp{tag}/ratings.csv', encoding='cp1252')
             reviews = pd.read_csv(f'temp{tag}/reviews.csv')
@@ -73,9 +74,10 @@ def lb_submit():
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
 
-            shutil.rmtree(f'temp{tag}')
+            shutil.rmtree(f'temp{tag}') # remove temp folder
 
-            return render_template('public/letterboxd_submission.html', data=ratings.head().to_html(index=False))
+            return render_template('public/letterboxd_submission.html',
+                                    data=ratings.head().to_html(index=False))
 
 @application.route('/letterboxd_recommendations', methods=['GET', 'POST'])
 def lb_recommend():
@@ -88,28 +90,29 @@ def lb_recommend():
     watchlist = pd.read_json(session['watchlist'])
     bad_rate = int(request.form['bad_rate']) / 2
     good_rate = int(request.form['good_rate']) / 2
-    hidden = "hidden" in request.form
-    cult = "cult" in request.form
+    hidden = "hidden" in request.form # user requests hidden gems
+    cult = "cult" in request.form # user requests cult movies
 
     # connect
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
     r = r2v_Recommender('r2v_Botanist_v1.1000.5.model')
     r.connect_db()
-    # import user data
 
-    # prep user data
+    # prep user watch history
     good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
                                         ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
 
+    # get recs based on ratings, watch history
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
+
+    # prep user reviews
     reviews = prep_reviews(reviews)
 
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
-
 
     hidden_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
             'User Rating', 'Reviewer', 'Review', 'Movie ID'])
@@ -179,7 +182,6 @@ def resubmit():
     rejected_list.extend(request.form.getlist('downvote')) # log downvotes
     id_list = json.loads(session['id_list']) # all of the ids of the previous recommendations
     good_list = json.loads(session['good_list'])
-
     bad_list = json.loads(session['bad_list'])
     hist_list = json.loads(session['hist_list'])
     val_list = json.loads(session['val_list'])
@@ -189,7 +191,8 @@ def resubmit():
     s.connect_db()
 
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
-                ratings_dict, checked_list, rejected_list, n=500, harshness=1, scoring=False),
+                ratings_dict, checked_list, rejected_list,
+                n=500, harshness=1, scoring=False),
                 columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes',
                 'Similarity Score','Movie ID'])
     def links(x):
@@ -271,13 +274,12 @@ def submit():
     #connect
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
-    # import user data
 
-
-    # prep user data
+    # prep user watch history
     good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
                         df, good_threshold=good_rate, bad_threshold=bad_rate)
 
+    # get recs based on ratings, watch history
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
                         ratings_dict, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating',
@@ -345,18 +347,19 @@ def userlookup():
 
 @application.route('/export', methods=['GET', 'POST'])
 def download_recs():
+    """Creates a download popup"""
     try:
         tag = str(np.random.uniform())[2:]
-        os.makedirs('exports', exist_ok=True)
+        os.makedirs('exports', exist_ok=True) # make temp dir with random name
         my_path = f'exports/Groa_recs{tag}.csv'
         recs_df = pd.read_json(session['recs'])
         recs_df = recs_df.drop(columns=['Vote Up', 'Vote Down'])
         recs_df.to_csv(my_path, index=False)
-        return_data = io.BytesIO()
+        return_data = io.BytesIO() # write file to memory so it can be deleted
         with open(my_path, 'rb') as myfile:
             return_data.write(myfile.read())
         return_data.seek(0) # move cursor to start
-        os.remove(my_path)
+        os.remove(my_path) # delete temp directory
         return send_file(return_data, mimetype='text/csv',
                          attachment_filename='Groa_recs.csv')
     except Exception as e:
