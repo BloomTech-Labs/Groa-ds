@@ -8,6 +8,26 @@ import warnings;
 
 warnings.filterwarnings('ignore')
 
+"""Review2Vec (R2V) is the second type of model we designed for Groa.
+We trained Gensim's Doc2Vec word embedding model on documents containing all the
+reviews a user has written on IMDb. Restricting our training data to only those
+users who had written at least 6 reviews, we represented almost 60k IMDb users
+in this model. R2V can then be used to infer a vector for a new user's movie
+reviews, and find "r2v-similar" users. We query those similar users to find cult
+movies and hidden gems that the Groa user might enjoy.
+
+Hidden gems are movies are well regarded but relatively underdiscovered. To find
+them, we query the database for movies enjoyed by r2v-similar users, having
+between 1k and 10k votes.
+
+Cult movies are movies that some users enjoy much more than the average.
+Our goal is to provide the user with movies that they might watch and
+consider underrated. We query the database for r2v-similar users, and select
+movies they rate at least three stars above the average. A lengthier query can
+also be found in the SQL directory, which finds movies rated at least 2 standard
+deviations above the average, but this query was too slow to be used in the app.
+A future team could solve this problem by storing the standard deviation of each
+movie's ratings in the movies table."""
 
 def prep_reviews(df):
     """Converts Letterboxd reviews dataframe to list of concatenated reviews."""
@@ -17,9 +37,9 @@ def prep_reviews(df):
     return reviews
 
 class r2v_Recommender():
-    def __init__(self, model_name):
+    def __init__(self, model_path):
         """Initialize model with name of .model file"""
-        self.model_name = model_name
+        self.model_path = model_path
         self.model = None
         self.cursor_dog = None
 
@@ -44,8 +64,8 @@ class r2v_Recommender():
     def _get_model(self):
         """Get the model object for this instance, loading it if it's not already loaded."""
         if self.model == None:
-            model_name = self.model_name
-            d2v_model = gensim.models.Doc2Vec.load(model_name)
+            model_path = self.model_path
+            d2v_model = gensim.models.Doc2Vec.load(model_path)
             # Keep only the normalized vectors.
             # This saves memory but makes the model untrainable (read-only).
             d2v_model.init_sims(replace=True)

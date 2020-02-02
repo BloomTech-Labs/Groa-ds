@@ -152,9 +152,9 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
 
 class Recommender(object):
 
-    def __init__(self, model_name):
+    def __init__(self, model_path):
         """Initialize model with name of .model file"""
-        self.model_name = model_name
+        self.model_path = model_path
         self.model = None
         self.cursor_dog = None
 
@@ -179,8 +179,8 @@ class Recommender(object):
     def _get_model(self):
         """Get the model object for this instance, loading it if it's not already loaded."""
         if self.model == None:
-            model_name = self.model_name
-            w2v_model = gensim.models.Word2Vec.load(model_name)
+            model_path = self.model_path
+            w2v_model = gensim.models.Word2Vec.load(model_path)
             # Keep only the normalized vectors.
             # This saves memory but makes the model untrainable (read-only).
             w2v_model.init_sims(replace=True)
