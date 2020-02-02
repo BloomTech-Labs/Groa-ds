@@ -8,10 +8,10 @@ import os
 def seventoten(username):
     '''
     accepting a username, this function returns user ratings greater than seven
-    and movie_ids of the user 
+    and movie_ids of the user
     '''
     name = username
-    sql = f'''SELECT user_rating, movie_id FROM reviews WHERE username = '{name}' 
+    sql = f'''SELECT user_rating, movie_id FROM reviews WHERE username = '{name}'
               AND user_rating BETWEEN 7 AND 10'''
 
     connection = psycopg2.connect(
@@ -46,7 +46,7 @@ def query2(username):
 
 def id_to_title(list):
     '''
-    accepting a list of movie ids outputted from the model, this function 
+    accepting a list of movie ids outputted from the model, this function
     will change those ids to titles
     '''
     sql = f"SELECT title FROM movies WHERE movie_id IN '{list}'"
@@ -66,7 +66,11 @@ def connect_to_DB():
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
+<<<<<<< HEAD
     password  = 'lambdaschoolgroa',
+=======
+    password  = os.getenv('DB_PASSWORD'),
+>>>>>>> refs/remotes/origin/Flask
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
@@ -78,7 +82,7 @@ def get_imdb_users():
     returns a list of all of the unique usernames in the IMDB username column
     '''
     cursor = connect_to_DB()
-    query = f"SELECT username From reviews"
+    query = f"SELECT DISTINCT username From reviews"
     cursor.execute(query)
     result = list(cursor.fetchall())
     cursor.close()
@@ -94,7 +98,7 @@ def get_imdb_users():
 
 def imdb_user_lookup(name):
     '''
-    takes in a username and searches the data base for all of the reviews made by that user and 
+    takes in a username and searches the data base for all of the reviews made by that user and
     returns a dataframe.
     '''
     cursor = connect_to_DB()

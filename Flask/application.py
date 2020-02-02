@@ -11,6 +11,7 @@ import psycopg2
 # self import
 from psycopg2_blob import seventoten,query2,id_to_title,get_imdb_users,imdb_user_lookup,read_users
 from w2v_inference import *
+from r2v_inference import *
 
 
 application = Flask(__name__)
@@ -36,7 +37,7 @@ def letterboxd_upload():
     return render_template('public/letterboxd_upload.html')
 
 @application.route('/letterboxd_submission', methods=['GET','POST'])
-def lb_uploaded():
+def lb_submit():
     '''
     next step for letterboxd, this page gets the zipfile from the previous page, extracts four csvs and commits them
     to the session. HTML wise, this page presents two sliders that are used by the model
@@ -59,18 +60,18 @@ def lb_uploaded():
             with ZipFile(file, 'r') as zip:
                 zip.extractall(path='temp',members=['ratings.csv','reviews.csv','watchlist.csv','watched.csv'])
 
-            
+
             ratings = pd.read_csv('temp/ratings.csv', encoding='cp1252')
             reviews = pd.read_csv('temp/reviews.csv')
             watched = pd.read_csv('temp/watched.csv')
             watchlist = pd.read_csv('temp/watchlist.csv')
 
             session['ratings'] = ratings.to_json()
-            #session['reviews'] = reviews
+            session['reviews'] = reviews.to_json()
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
 
-            shutil.rmtree('/temp')
+            shutil.rmtree('temp')
 
             return render_template('public/letterboxd_submission.html', data=ratings.head().to_html(index=False))
 
@@ -80,60 +81,118 @@ def lb_recommend():
     Shows recommendations from your Letterboxd choices
     '''
     ratings = pd.read_json(session['ratings'])
+    reviews = pd.read_json(session['reviews'])
     watched = pd.read_json(session['watched'])
     watchlist = pd.read_json(session['watchlist'])
     bad_rate = int(request.form['bad_rate']) / 2
     good_rate = int(request.form['good_rate']) / 2
+    hidden = "hidden" in request.form
+    cult = "cult" in request.form
+
     # connect
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
+    r = r2v_Recommender('r2v_Botanist_v1.1000.5.model')
+    r.connect_db()
     # import user data
 
     # prep user data
-    good_list, bad_list, hist_list, val_list = prep_data(
+    good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
                                         ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
 
-
-    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
+    reviews = prep_reviews(reviews)
 
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
+
+
+    hidden_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+            'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+    cult_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+            'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+
+    if hidden or cult:
+        if cult:
+            cult_results, hidden_results = r.predict(reviews, hist_list=hist_list)
+            cult_df = pd.DataFrame(cult_results,
+                columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+                        'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+            cult_df['URL'] = cult_df['URL'].apply(links)
+            cult_df['Resubmission'] = '<input type="checkbox" name="movie id" value=' \
+                + cult_df['Movie ID'] + '>Add this movie to the resubmission<br>'
+        if hidden:
+            hidden_df = pd.DataFrame(hidden_results,
+                columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+                        'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+            hidden_df['URL'] = hidden_df['URL'].apply(links)
+            hidden_df['Resubmission'] = '<input type="checkbox" name="movie id" value=' \
+                + hidden_df['Movie ID'] + '>Add this movie to the resubmission<br>'
+
     recs['URL'] = recs['URL'].apply(links)
-    recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
-    recs=recs.drop(columns='Movie ID')
-    session.clear()                   
+    recs['Resubmission'] = '<input type="checkbox" name="movie id" value=' \
+        + recs['Movie ID'] + '>Add this movie to the resubmission<br>'
+    id_list = recs['Movie ID'].to_list()
+    recs = recs.drop(columns='Movie ID')
+
+    session.clear()
+    session['id_list']=json.dumps(id_list)
     session['good_list']=json.dumps(good_list)
     session['bad_list']=json.dumps(bad_list)
     session['hist_list']=json.dumps(hist_list)
     session['val_list']=json.dumps(val_list)
-    session['good_rate']=good_rate
-    session['bad_rate']=bad_rate   
-    return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False,escape=False))
 
+    session['ratings_dict']=json.dumps(ratings_dict)
+    session['good_rate']=good_rate
+    session['bad_rate']=bad_rate
+    return render_template('public/Groa_recommendations.html',
+                            data=recs.to_html(index=False,escape=False),
+                            hidden_data=hidden_df.to_html(index=False,escape=False),
+                            cult_data=cult_df.to_html(index=False,escape=False))
 
 @application.route('/resubmission',methods=['POST'])
 def resubmit():
-    resubmissions = request.form.getlist('movie id')
+    '''
+    This page takes the ids from the recommedation page that the user liked and adds them to 
+    '''
+    try:
+        checked_list = json.loads(session['checked_list'])
+    except:
+        checked_list = []
+    checked_list.extend(request.form.getlist('movie id'))#only checked ids
+    id_list = json.loads(session['id_list'])#all of the ids of the previous recommendations
     good_list = json.loads(session['good_list'])
-    good_list.extend(resubmissions)
+    
     bad_list = json.loads(session['bad_list'])
     hist_list = json.loads(session['hist_list'])
     val_list = json.loads(session['val_list'])
-    
+    ratings_dict = json.loads(session['ratings_dict'])
+
+    difference_list = #set().difference(id_list) 
+   
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
-    
-    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
+
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
-    recs['URL'] = recs['URL'].apply(links)
-    recs.drop(columns='Movie ID')
-    return render_template('public/re_recommendations.html', data=recs.to_html(index=False,escape=False))
     
+    recs['URL'] = recs['URL'].apply(links)
+    recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    
+    id_list2 = recs['Movie ID'].to_list()
+    
+    session['id_list']=json.dumps(id_list2)
+    session['checked_list']=json.dumps(checked_list)
+    
+    recs.drop(columns='Movie ID')
+    
+    return render_template('public/re_recommendations.html', data=recs.to_html(escape=False,index=False))
+
 @application.route('/imdb_upload')
 def imdb_upload():
     '''
@@ -141,8 +200,8 @@ def imdb_upload():
     '''
     return render_template('public/imdb_upload.html')
 
-@application.route('/uploader',methods = ['GET','POST'])
-def upload_file():
+@application.route('/imdb_submission',methods = ['GET','POST'])
+def imdb_submit():
     '''
     the result of the imdb upload, you can see a table of your rated movies and adjust them according to
     year released and personal rating
@@ -174,7 +233,7 @@ def upload_file():
             #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.
             return render_template('public/imdb_submission.html', name='Watched List',data = df.head().to_html(index=False))
 
-@application.route('/submission',methods=['GET','POST'])
+@application.route('/imdb_recommendations',methods=['GET','POST'])
 def submit():
     '''
     Shows recommendations from your IMDB choices
@@ -193,22 +252,26 @@ def submit():
 
 
     # prep user data
-    good_list, bad_list, hist_list, val_list = prep_data(
+    good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
                                         df, good_threshold=good_rate, bad_threshold=bad_rate)
 
-    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, n=100, harshness=1, scoring=False),
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
     recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    id_list = recs['Movie ID'].to_list()
     recs=recs.drop(columns='Movie ID')
+
     session.clear()
+    session['id_list']=json.dumps(id_list)
     session['good_list']=json.dumps(good_list)
     session['bad_list']=json.dumps(bad_list)
     session['hist_list']=json.dumps(hist_list)
     session['val_list']=json.dumps(val_list)
+    session['ratings_dict']=json.dumps(ratings_dict)
     session['good_rate']=good_rate
     session['bad_rate']=bad_rate
     return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False,escape=False))
@@ -245,6 +308,9 @@ def watchhistory():
 def userlookup():
   
     users = read_users("Usernames.txt")  
+
+    users = get_imdb_users()
+
     return render_template('public/user_search.html',users = users)
 
 @application.route('/userreviews',methods = ["GET","POST"])

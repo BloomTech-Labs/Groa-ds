@@ -8,18 +8,20 @@ import warnings;
 
 warnings.filterwarnings('ignore')
 
-cursor_dog = None
 
 def prep_reviews(df):
-    """Converts Letterboxd reviews dataframe to list of reviews."""
-    reviews_list = df['Review'].tolist()
-    return reviews_list
+    """Converts Letterboxd reviews dataframe to string of concatenated reviews."""
+    reviews = df['Review'].tolist()
+    for i in reviews:
+        i = i.lower()
+    return reviews
 
 class r2v_Recommender():
     def __init__(self, model_name):
         """Initialize model with name of .model file"""
         self.model_name = model_name
         self.model = None
+        self.cursor_dog = None
 
     def connect_db(self):
         """connect to database, create cursor"""
@@ -28,13 +30,12 @@ class r2v_Recommender():
             database  = "postgres",
             user      = "postgres",
             password  = os.getenv('DB_PASSWORD'),
-            host      = "groalives.cvslmiksgnix.us-east-1.rds.amazonaws.com",
+            host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
             port      = '5432'
         )
         # create cursor that is used throughout
-        global cursor_dog
         try:
-            cursor_dog = connection.cursor()
+            self.cursor_dog = connection.cursor()
             print("Connected!")
         except:
             print("Connection problem chief!")
@@ -44,135 +45,151 @@ class r2v_Recommender():
         """Get the model object for this instance, loading it if it's not already loaded."""
         if self.model == None:
             model_name = self.model_name
-            d2v_model = gensim.models.Doc.load(model_name)
+            d2v_model = gensim.models.Doc2Vec.load(model_name)
             # Keep only the normalized vectors.
             # This saves memory but makes the model untrainable (read-only).
             d2v_model.init_sims(replace=True)
             self.model = d2v_model
         return self.model
 
-    def predict(self, reviews, good_movies, bad_movies=[], hist_list=[], val_list=[],
-                n=50, harshness=1, rec_movies=True,
-                show_vibes=False, scoring=False):
+    def predict(self, reviews, hist_list=[], n=100, max_votes=1000):
         """Returns a list of recommendations and useful metadata, given a pretrained
         word2vec model and a list of movies.
 
         Parameters
         ----------
 
-            good_movies : iterable
-                List of movies that the user likes.
-
-            bad_movies : iterable
-                List of movies that the user dislikes.
+            reviews: string
+                string of concatenated user reviews.
 
             hist_list : iterable
-                List of movies the user has seen.
-
-            val_list : iterable
-                List of movies the user has already indicated interest in.
+                list of movies the user has seen.
 
             n : int
-                Number of recommendations to return.
+                number of recommendations to return.
 
-            harshness : int
-                Weighting to apply to disliked movies.
-                Ex:
-                    1 - most strongly account for disliked movies.
-                    3 - divide "disliked movies" vector by 3.
-
-            rec_movies : boolean
-                If False, doesn't return movie recommendations (used for scoring).
-
-            show_vibes : boolean
-                If True, prints out the dupes as a feature.
-
-            scoring : boolean
-                If True, prints out the validation score.
+            max_votes : int
+                maximum number of votes for a movie to be considered a hidden gem.
 
         Returns
         -------
-        A list of tuples
-            (Title, Year, IMDb URL, Average Rating, Number of Votes, Similarity score)
+        Two lists of tuples: hidden_gems and cult_movies
+        (Title, Year, URL, # Votes, Avg. Rating, User Rating, Reviewer, Review, Movie ID)
         """
 
         clf = self._get_model()
-        dupes = []                 # list for storing duplicates
-
-        def _aggregate_vectors(movies):
-            """Gets the vector average of a list of movies."""
-            movie_vec = []
-            for i in movies:
-                try:
-                    movie_vec.append(clf[i])        # get the vector for each movie
-                except KeyError:
-                    continue
-            return np.mean(movie_vec, axis=0)
-
-        def _similar_movies(v, bad_movies=[], n=50):
-            """Aggregates movies and finds n vectors with highest cosine similarity."""
-            if bad_movies:
-                v = _remove_dislikes(bad_movies, v, good_movies=good_movies, harshness=harshness)
-            return clf.similar_by_vector(v, topn= n+1)[1:]
 
         def _remove_dupes(recs, good_movies, bad_movies):
             """remove any recommended IDs that were in the good_movies list"""
             all_rated = good_movies + bad_movies
             if hist_list:
                 all_rated = list(set(all_rated+hist_list))
-            nonlocal dupes
             dupes = [x for x in recs if x[0] in all_rated]
             return [x for x in recs if x[0] not in all_rated]
 
-        def _get_info(id):
-            """Takes an id string and returns the movie info with a url."""
-            try:
-                cursor_dog.execute(f"""
-                select m.primary_title, m.start_year, r.average_rating, r.num_votes
-                from movies m
-                join ratings r on m.movie_id = r.movie_id
-                where m.movie_id = '{id[0]}'""")
-            except:
-                return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None])
-
-            t = cursor_dog.fetchone()
-            if t:
-                title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id[0]}/", t[2], t[3], id[1]])
-                return title
-            else:
-                return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None])
-
-        def _remove_dislikes(bad_movies, good_movies_vec, input=1, harshness=1):
-            """Takes a list of movies that the user dislikes.
-            Their embeddings are averaged,
-            and subtracted from the good_movies."""
-            bad_vec = _aggregate_vectors(bad_movies)
-            bad_vec = bad_vec / harshness
-            return good_movies_vec - bad_vec
-
-        def _score_model(recs, val_list):
-            ids = [x[0] for x in recs]
-            return len(list(set(ids) & set(val_list)))
-
-        def similar_users(reviews, n=10):
+        def similar_users(reviews, n_sims=30):
             """Get similar users based on reviews."""
-            aggregated_tokens = aggregate_reviews(review)
-            review_tokens = tokenize(aggregated_tokens)
-            vec = model.infer_vector(review_tokens)
-            results = model.docvecs.most_similar([vec], topn=n)
-            return [x[0] for x in results]
+            vec = clf.infer_vector(reviews)
+            sims = clf.docvecs.most_similar([vec], topn=n_sims)
+            return [x[0] for x in sims]
 
-        aggregated = _aggregate_vectors(good_movies)
-        recs = _similar_movies(aggregated, bad_movies, n=n)
-        recs = _remove_dupes(recs, good_movies, bad_movies)
-        formatted_recs = [_get_info(x) for x in recs]
-        if scoring and val_list:
-            print(f"The model recommended {_score_model(recs, val_list)} movies that were on the watchlist!\n")
-            print(f"\t\t Average Rating: {sum([i[3] for i in formatted_recs if i[3] is not None])/len(formatted_recs)}\n")
-        if show_vibes:
-            print("You'll get along with people who like: \n")
-            for x in dupes:
-                print(_get_info(x))
-            print('\n')
-        if rec_movies:
-            return formatted_recs
+        def hidden_gems(sims, max_votes=10000, n=10):
+            """Finds hidden gems (highly rated but unpopular).
+
+            Parameters
+            ----------
+                sims : list
+                    list of similar users.
+
+                max_votes : int
+                    max number of votes (ratings) for movies to be included.
+
+                n : int
+                    max number of results.
+
+            Returns
+            -------
+            List of recommendations as tuples:
+            (Title, Year, URL, # Votes, Avg. Rating, User Rating, Reviewer, Review)
+            """
+            simset = tuple(sims)
+            hidden_query = f"""
+                            SELECT  m.primary_title, m.start_year, m.movie_id mid,
+                                    ra.num_votes num, ra.average_rating avgr,
+                                    r.user_rating taste, r.username,
+                                    r.review_text txt
+                            FROM reviews r
+                            JOIN movies m ON r.movie_id = m.movie_id
+                            JOIN ratings ra ON r.movie_id = ra.movie_id
+                            WHERE username IN {simset}
+                            AND user_rating BETWEEN 8 AND 10
+								AND ra.average_rating BETWEEN 7 AND 10
+								AND ra.num_votes BETWEEN 1000 AND {max_votes}
+                            ORDER BY ra.average_rating DESC
+                            LIMIT {n}
+                            """
+            self.cursor_dog.execute(hidden_query)
+            try:
+                hidden_recs = self.cursor_dog.fetchall()
+                hidden_recs = [list(x) for x in hidden_recs]
+                for i in hidden_recs:
+                    i.append(i[2]) # add ID to the end
+                    i[2] = f"https://www.imdb.com/title/tt{i[2]}/" # add URL
+                hidden_recs = [tuple(x) for x in hidden_recs]
+            except Exception as e:
+                print(e)
+                hidden_recs = [("No hidden gems found! Better luck next time.",
+                                None, None, None, None, None, None, None, None)]
+            return hidden_recs
+
+        def cult_movies(sims, n=10):
+            """Takes a list of similar users to get cult movies (considered
+                underrated by similar users).
+
+            Parameters
+            ----------
+                sims : list
+                    list of similar users.
+
+                n : int
+                    max number of results.
+
+            Returns
+            -------
+            List of recommendations as tuples:
+            (Title, Year, URL, # Votes, Avg. Rating, User Rating, Reviewer, Review)
+            """
+            simset = tuple(sims)
+            cult_query = f"""
+                            SELECT  m.primary_title, m.start_year, m.movie_id mid,
+                                    ra.num_votes num, ra.average_rating avgr,
+                                    r.user_rating taste, r.username,
+                                    r.review_text txt
+                            FROM reviews r
+                            JOIN movies m ON r.movie_id = m.movie_id
+                            JOIN ratings ra ON r.movie_id = ra.movie_id
+                            WHERE username IN {simset}
+                            AND user_rating BETWEEN 7 AND 10
+								AND user_rating BETWEEN 6 AND 10
+								AND user_rating > (ra.average_rating + 3)
+                            ORDER BY user_rating DESC
+                            LIMIT {n}
+                """
+            self.cursor_dog.execute(cult_query)
+            try:
+                cult_recs = self.cursor_dog.fetchall()
+                cult_recs = [list(x) for x in cult_recs]
+                for i in cult_recs:
+                    i.append(i[2]) # add ID to the end
+                    i[2] = f"https://www.imdb.com/title/tt{i[2]}/" # add URL
+                cult_recs = [tuple(x) for x in cult_recs]
+            except Exception as e:
+                print(e)
+                cult_recs = [("No cult movies found! Better luck next time.",
+                                None, None, None, None, None, None, None, None)]
+            return cult_recs
+
+        sims = similar_users(reviews, n_sims=100)
+        cult_recs = cult_movies(sims, n=n/2)
+        hidden_gems = hidden_gems(sims, n=n/2)
+        return [cult_recs, hidden_gems]
