@@ -123,19 +123,25 @@ def lb_recommend():
                 columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
                         'User Rating', 'Reviewer', 'Review', 'Movie ID'])
             cult_df['URL'] = cult_df['URL'].apply(links)
-            cult_df['Resubmission'] = '<input type="checkbox" name="movie id" value=' \
-                + cult_df['Movie ID'] + '>Add this movie to the resubmission<br>'
+            cult_df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
+                + cult_df['Movie ID'] + '>  Good idea<br>'
+            cult_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
+                + cult_df['Movie ID'] + '>  Hard No<br>'
         if hidden:
             hidden_df = pd.DataFrame(hidden_results,
                 columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
                         'User Rating', 'Reviewer', 'Review', 'Movie ID'])
             hidden_df['URL'] = hidden_df['URL'].apply(links)
-            hidden_df['Resubmission'] = '<input type="checkbox" name="movie id" value=' \
-                + hidden_df['Movie ID'] + '>Add this movie to the resubmission<br>'
+            hidden_df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
+                + hidden_df['Movie ID'] + '>  Good idea<br>'
+            hidden_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
+                + hidden_df['Movie ID'] + '>  Hard No<br>'
 
     recs['URL'] = recs['URL'].apply(links)
-    recs['Resubmission'] = '<input type="checkbox" name="movie id" value=' \
-        + recs['Movie ID'] + '>Add this movie to the resubmission<br>'
+    recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
+        + recs['Movie ID'] + '>  Good idea<br>'
+    recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
+        + recs['Movie ID'] + '>  Hard No<br>'
     id_list = recs['Movie ID'].to_list()
     recs = recs.drop(columns='Movie ID')
 
@@ -163,8 +169,13 @@ def resubmit():
         checked_list = json.loads(session['checked_list'])
     except:
         checked_list = []
-    checked_list.extend(request.form.getlist('movie id'))#only checked ids
-    id_list = json.loads(session['id_list'])#all of the ids of the previous recommendations
+    try:
+        rejected_list = json.loads(session['rejected_list'])
+    except:
+        rejected_list = []
+    checked_list.extend(request.form.getlist('upvote')) # log upvotes
+    rejected_list.extend(request.form.getlist('downvote')) # log downvotes
+    id_list = json.loads(session['id_list']) # all of the ids of the previous recommendations
     good_list = json.loads(session['good_list'])
 
     bad_list = json.loads(session['bad_list'])
@@ -172,28 +183,33 @@ def resubmit():
     val_list = json.loads(session['val_list'])
     ratings_dict = json.loads(session['ratings_dict'])
 
-    # difference_list = #set().difference(id_list)
-
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
 
-    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=1, scoring=False),
-                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
+                ratings_dict, checked_list, rejected_list, n=500, harshness=1, scoring=False),
+                columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes',
+                'Similarity Score','Movie ID'])
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
 
     recs['URL'] = recs['URL'].apply(links)
-    recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
+            + recs['Movie ID'] + '>  Good idea<br>'
+    recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
+        + recs['Movie ID'] + '>  Hard No<br>'
 
     id_list2 = recs['Movie ID'].to_list()
 
-    session['id_list']=json.dumps(id_list2)
-    session['checked_list']=json.dumps(checked_list)
+    session['id_list'] = json.dumps(id_list2)
+    session['checked_list'] = json.dumps(checked_list)
+    session['rejected_list'] = json.dumps(rejected_list)
 
     recs.drop(columns='Movie ID')
 
-    return render_template('public/re_recommendations.html', data=recs.to_html(escape=False,index=False))
+    return render_template('public/re_recommendations.html',
+                            data=recs.to_html(escape=False,index=False))
 
 @application.route('/imdb_upload')
 def imdb_upload():
@@ -205,8 +221,8 @@ def imdb_upload():
 @application.route('/imdb_submission',methods = ['GET','POST'])
 def imdb_submit():
     '''
-    the result of the imdb upload, you can see a table of your rated movies and adjust them according to
-    year released and personal rating
+    the result of the imdb upload, you can see a table of your rated movies
+    and adjust them according to year released and personal rating
     '''
     if request.method == "POST":
         # check if the post request has the file part
@@ -230,10 +246,13 @@ def imdb_submit():
             #strip beginning ts
             df['Const'] = df['Const'].str.strip('t')
             #dropping what I think to be extraneous
-            df = df.drop(columns=['Title Type','Num Votes','Directors','Genres','URL','Release Date'])
+            df = df.drop(columns=['Title Type','Num Votes','Directors','Genres',
+                                    'URL','Release Date'])
             session['df']= df.to_json()
-            #dump ratings and reviews into database and then call model on username. Said username is in the zipfile name<EZ>.
-            return render_template('public/imdb_submission.html', name='Watched List',data = df.head().to_html(index=False))
+            # dump ratings and reviews into database and then call model on username.
+            # Said username is in the zipfile name<EZ>.
+            return render_template('public/imdb_submission.html',
+                    name='Watched List',data = df.head().to_html(index=False))
 
 @application.route('/imdb_recommendations',methods=['GET','POST'])
 def submit():
@@ -242,9 +261,9 @@ def submit():
     '''
 
     #need to configure input for current model but ulitmately may not need to for updated model
-    df=pd.read_json(session['df'])
-    bad_rate=int(request.form['bad_rate'])/2
-    good_rate=int(request.form['good_rate'])/2
+    df = pd.read_json(session['df'])
+    bad_rate = int(request.form['bad_rate'])/2
+    good_rate = int(request.form['good_rate'])/2
     #year_min=int(request.form['year_min'])
     #year_max=int(request.form['year_max'])
     #connect
@@ -255,28 +274,34 @@ def submit():
 
     # prep user data
     good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
-                                        df, good_threshold=good_rate, bad_threshold=bad_rate)
+                        df, good_threshold=good_rate, bad_threshold=bad_rate)
 
-    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=1, scoring=False),
-                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
+                        ratings_dict, n=100, harshness=1, scoring=False),
+                        columns=['Title', 'Year', 'URL', 'Avg. Rating',
+                        '# Votes', 'Similarity Score','Movie ID'])
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
-    recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
+    recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' + \
+            recs['Movie ID'] + '>  Good idea<br>'
+    recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
+        + recs['Movie ID'] + '>  Hard No<br>'
     id_list = recs['Movie ID'].to_list()
-    recs=recs.drop(columns='Movie ID')
+    recs = recs.drop(columns = 'Movie ID')
 
     session.clear()
-    session['id_list']=json.dumps(id_list)
-    session['good_list']=json.dumps(good_list)
-    session['bad_list']=json.dumps(bad_list)
-    session['hist_list']=json.dumps(hist_list)
-    session['val_list']=json.dumps(val_list)
-    session['ratings_dict']=json.dumps(ratings_dict)
-    session['good_rate']=good_rate
-    session['bad_rate']=bad_rate
-    return render_template('public/Groa_recommendations.html', data=recs.to_html(index=False,escape=False))
+    session['id_list'] = json.dumps(id_list)
+    session['good_list'] = json.dumps(good_list)
+    session['bad_list'] = json.dumps(bad_list)
+    session['hist_list'] = json.dumps(hist_list)
+    session['val_list'] = json.dumps(val_list)
+    session['ratings_dict'] = json.dumps(ratings_dict)
+    session['good_rate'] = good_rate
+    session['bad_rate'] = bad_rate
+    return render_template('public/Groa_recommendations.html',
+                            data=recs.to_html(index=False,escape=False))
 
 @application.route('/manualreview', methods=['GET', 'POST'])
 def review():

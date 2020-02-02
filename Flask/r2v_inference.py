@@ -10,7 +10,7 @@ warnings.filterwarnings('ignore')
 
 
 def prep_reviews(df):
-    """Converts Letterboxd reviews dataframe to string of concatenated reviews."""
+    """Converts Letterboxd reviews dataframe to list of concatenated reviews."""
     reviews = df['Review'].tolist()
     for i in reviews:
         i = i.lower()
