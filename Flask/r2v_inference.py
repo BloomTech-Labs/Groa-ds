@@ -171,7 +171,7 @@ class r2v_Recommender():
                             WHERE username IN {simset}
                             AND user_rating BETWEEN 7 AND 10
 								AND user_rating BETWEEN 6 AND 10
-								AND user_rating > (ra.average_rating + 3)
+								AND user_rating >= (ra.average_rating + 3)
                             ORDER BY user_rating DESC
                             LIMIT {n}
                 """
