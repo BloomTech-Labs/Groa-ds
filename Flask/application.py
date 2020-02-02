@@ -10,7 +10,7 @@ import psycopg2
 # from getpass import getpass
 
 # self import
-from psycopg2_blob import seventoten,query2,id_to_title,get_imdb_users
+from psycopg2_blob import seventoten,query2,id_to_title,get_imdb_users,imdb_user_lookup,read_users
 from w2v_inference import *
 from r2v_inference import *
 
@@ -384,11 +384,11 @@ def watchhistory():
     '''
     #display scraped data? display whether they've actually reviewed it and if not, have a link to redirect to review page?
 
-@application.route('/userlookup')
+@application.route('/userlookup',methods = ["GET","POST"])
 def userlookup():
-
-    users = get_imdb_users()
-
+  
+    users = read_users("Usernames.txt")  
+    #users = get_imdb_users()
     return render_template('public/user_search.html',users = users)
 
 @application.route('/export', methods=['GET', 'POST'])
@@ -410,6 +410,14 @@ def download_recs():
                          attachment_filename='Groa_recs.csv')
     except Exception as e:
         print(e)
+        
+        
+@application.route('/userreviews',methods = ["GET","POST"])
+def userreviews():
+    name = request.form['Username']
+    df = imdb_user_lookup(name)
+    return render_template('public/user_reviews.html', data=df.to_html(index=False))
+
 
 if __name__ == "__main__":
     application.run(port=5000, debug=True)
