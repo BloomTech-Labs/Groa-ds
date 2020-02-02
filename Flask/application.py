@@ -70,6 +70,7 @@ def lb_submit():
             watchlist = pd.read_csv(f'temp{tag}/watchlist.csv')
 
             session['ratings'] = ratings.to_json()
+            print("got ratings")
             session['reviews'] = reviews.to_json()
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
@@ -92,6 +93,7 @@ def lb_recommend():
     good_rate = int(request.form['good_rate']) / 2
     hidden = "hidden" in request.form # user requests hidden gems
     cult = "cult" in request.form # user requests cult movies
+    extra_weight = "extra_weight" in request.form # user requests cult movies
 
     # connect
     s = Recommender('w2v_limitingfactor_v1.model')
@@ -103,9 +105,17 @@ def lb_recommend():
     good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
                                         ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
 
+    # pass dictionary of ratings if the user requests extra weighting
+    if extra_weight:
+        weighting = ratings_dict
+    else:
+        weighting = {}
+
     # get recs based on ratings, watch history
-    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=1, scoring=False),
-                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
+                        ratings_dict=weighting, n=100, harshness=1, scoring=True),
+                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes',
+                        'Similarity Score','Movie ID'])
 
     # prep user reviews
     reviews = prep_reviews(reviews)
@@ -120,8 +130,8 @@ def lb_recommend():
             'User Rating', 'Reviewer', 'Review', 'Movie ID'])
 
     if hidden or cult:
+        cult_results, hidden_results = r.predict(reviews, hist_list=hist_list)
         if cult:
-            cult_results, hidden_results = r.predict(reviews, hist_list=hist_list)
             cult_df = pd.DataFrame(cult_results,
                 columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
                         'User Rating', 'Reviewer', 'Review', 'Movie ID'])
@@ -149,21 +159,24 @@ def lb_recommend():
 
     session.clear()
     session['recs'] = recs.to_json()
-    session['id_list']=json.dumps(id_list)
-    session['good_list']=json.dumps(good_list)
-    session['bad_list']=json.dumps(bad_list)
-    session['hist_list']=json.dumps(hist_list)
-    session['val_list']=json.dumps(val_list)
-    session['ratings_dict']=json.dumps(ratings_dict)
-    session['good_rate']=good_rate
-    session['bad_rate']=bad_rate
+    session['id_list'] = json.dumps(id_list)
+    session['good_list'] = json.dumps(good_list)
+    session['bad_list'] = json.dumps(bad_list)
+    session['hist_list'] = json.dumps(hist_list)
+    session['val_list'] = json.dumps(val_list)
+    session['ratings_dict'] = json.dumps(ratings_dict)
+    session['good_rate'] = good_rate
+    session['bad_rate'] = bad_rate
+    session['hidden'] = hidden
+    session['cult'] = cult
+    session['extra_weight'] = extra_weight
 
     recs = recs.drop(columns='Movie ID')
 
     return render_template('public/Groa_recommendations.html',
-                            data=recs.to_html(index=False,escape=False),
-                            hidden_data=hidden_df.to_html(index=False,escape=False),
-                            cult_data=cult_df.to_html(index=False,escape=False))
+                            data = recs.to_html(index=False,escape=False),
+                            hidden_data = hidden_df.to_html(index=False,escape=False),
+                            cult_data = cult_df.to_html(index=False,escape=False))
 
 @application.route('/resubmission',methods=['POST'])
 def resubmit():
@@ -186,12 +199,28 @@ def resubmit():
     hist_list = json.loads(session['hist_list'])
     val_list = json.loads(session['val_list'])
     ratings_dict = json.loads(session['ratings_dict'])
+    try:
+        hidden = session['hidden'] # TODO: add hidden and cult to resubmission
+    except:
+        pass
+    try:
+        cult = session['cult']
+    except:
+        pass
+    extra_weight = session['extra_weight']
 
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
 
+    # pass dictionary of ratings if the user requests extra weighting
+    if extra_weight:
+        weighting = ratings_dict
+    else:
+        weighting = {}
+
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
-                ratings_dict, checked_list, rejected_list,
+                ratings_dict=weighting, checked_list=checked_list,
+                rejected_list=rejected_list,
                 n=500, harshness=1, scoring=False),
                 columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes',
                 'Similarity Score','Movie ID'])
@@ -245,19 +274,19 @@ def imdb_submit():
 
             file = request.files["file"]
             try:
-                df=pd.read_csv(file, encoding='cp1252')
+                ratings = pd.read_csv(file, encoding='cp1252')
             except:
-                df=pd.read_csv(file, encoding='latin1')
+                ratings = pd.read_csv(file, encoding='latin1')
             #strip beginning ts
-            df['Const'] = df['Const'].str.strip('t')
+            ratings['Const'] = ratings['Const'].str.strip('t')
             #dropping what I think to be extraneous
-            df = df.drop(columns=['Title Type','Num Votes','Directors','Genres',
+            ratings = ratings.drop(columns=['Title Type','Num Votes','Directors','Genres',
                                     'URL','Release Date'])
-            session['df']= df.to_json()
+            session['ratings'] = ratings.to_json()
             # dump ratings and reviews into database and then call model on username.
             # Said username is in the zipfile name<EZ>.
             return render_template('public/imdb_submission.html',
-                    name='Watched List',data = df.head().to_html(index=False))
+                    name='Watched List',data = ratings.head().to_html(index=False))
 
 @application.route('/imdb_recommendations',methods=['GET','POST'])
 def submit():
@@ -266,22 +295,38 @@ def submit():
     '''
 
     #need to configure input for current model but ulitmately may not need to for updated model
-    df = pd.read_json(session['df'])
+    ratings = pd.read_json(session['ratings'])
     bad_rate = int(request.form['bad_rate'])/2
     good_rate = int(request.form['good_rate'])/2
+    watched = None # IMDb user only uploads ratings
+    watchlist = None
     #year_min=int(request.form['year_min'])
     #year_max=int(request.form['year_max'])
-    #connect
+    """TODO: Enable hidden gems and cult movies for IMDb users, using w2v model."""
+    # hidden = "hidden" in request.form # user requests hidden gems
+    # cult = "cult" in request.form # user requests cult movies
+    extra_weight = "extra_weight" in request.form # user requests extra weighting
+    # connect
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
 
     # prep user watch history
     good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
-                        df, good_threshold=good_rate, bad_threshold=bad_rate)
+                                        ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
+
+    # pass dictionary of ratings if the user requests extra weighting
+    if extra_weight:
+        weighting = ratings_dict
+    else:
+        weighting = {}
+
+    # prep user watch history
+    good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
+                        ratings, good_threshold=good_rate, bad_threshold=bad_rate)
 
     # get recs based on ratings, watch history
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
-                        ratings_dict, n=100, harshness=1, scoring=False),
+                        ratings_dict=weighting, n=100, harshness=1, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating',
                         '# Votes', 'Similarity Score','Movie ID'])
     def links(x):
@@ -304,6 +349,7 @@ def submit():
     session['ratings_dict'] = json.dumps(ratings_dict)
     session['good_rate'] = good_rate
     session['bad_rate'] = bad_rate
+    session['extra_weight'] = extra_weight
 
     recs = recs.drop(columns = 'Movie ID')
 
