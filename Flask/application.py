@@ -302,9 +302,6 @@ def submit():
     watchlist = None
     #year_min=int(request.form['year_min'])
     #year_max=int(request.form['year_max'])
-    """TODO: Enable hidden gems and cult movies for IMDb users, using w2v model."""
-    # hidden = "hidden" in request.form # user requests hidden gems
-    # cult = "cult" in request.form # user requests cult movies
     extra_weight = "extra_weight" in request.form # user requests extra weighting
     # connect
     s = Recommender('w2v_limitingfactor_v1.model')
@@ -386,8 +383,8 @@ def watchhistory():
 
 @application.route('/userlookup',methods = ["GET","POST"])
 def userlookup():
-  
-    users = read_users("Usernames.txt")  
+
+    users = read_users("Usernames.txt")
     #users = get_imdb_users()
     return render_template('public/user_search.html',users = users)
 
@@ -410,8 +407,8 @@ def download_recs():
                          attachment_filename='Groa_recs.csv')
     except Exception as e:
         print(e)
-        
-        
+
+
 @application.route('/userreviews',methods = ["GET","POST"])
 def userreviews():
     name = request.form['Username']
