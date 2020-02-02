@@ -1,10 +1,10 @@
-from flask import Flask, session, render_template, request, flash, redirect
+from flask import Flask, session, render_template, request, flash, redirect, send_file
 from flask_session import Session
 import pandas as pd
 import numpy as np
 from zipfile import ZipFile
 import json
-import os, shutil
+import os, shutil, io
 
 import psycopg2
 # from getpass import getpass
@@ -143,18 +143,20 @@ def lb_recommend():
     recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
         + recs['Movie ID'] + '>  Hard No<br>'
     id_list = recs['Movie ID'].to_list()
-    recs = recs.drop(columns='Movie ID')
 
     session.clear()
+    session['recs'] = recs.to_json()
     session['id_list']=json.dumps(id_list)
     session['good_list']=json.dumps(good_list)
     session['bad_list']=json.dumps(bad_list)
     session['hist_list']=json.dumps(hist_list)
     session['val_list']=json.dumps(val_list)
-
     session['ratings_dict']=json.dumps(ratings_dict)
     session['good_rate']=good_rate
     session['bad_rate']=bad_rate
+
+    recs = recs.drop(columns='Movie ID')
+
     return render_template('public/Groa_recommendations.html',
                             data=recs.to_html(index=False,escape=False),
                             hidden_data=hidden_df.to_html(index=False,escape=False),
@@ -205,7 +207,7 @@ def resubmit():
     session['id_list'] = json.dumps(id_list2)
     session['checked_list'] = json.dumps(checked_list)
     session['rejected_list'] = json.dumps(rejected_list)
-
+    session['recs'] = recs.to_json()
     recs.drop(columns='Movie ID')
 
     return render_template('public/re_recommendations.html',
@@ -289,9 +291,9 @@ def submit():
     recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
         + recs['Movie ID'] + '>  Hard No<br>'
     id_list = recs['Movie ID'].to_list()
-    recs = recs.drop(columns = 'Movie ID')
 
     session.clear()
+    session['recs'] = recs.to_json()
     session['id_list'] = json.dumps(id_list)
     session['good_list'] = json.dumps(good_list)
     session['bad_list'] = json.dumps(bad_list)
@@ -300,6 +302,9 @@ def submit():
     session['ratings_dict'] = json.dumps(ratings_dict)
     session['good_rate'] = good_rate
     session['bad_rate'] = bad_rate
+
+    recs = recs.drop(columns = 'Movie ID')
+
     return render_template('public/Groa_recommendations.html',
                             data=recs.to_html(index=False,escape=False))
 
@@ -337,6 +342,25 @@ def userlookup():
     users = get_imdb_users()
 
     return render_template('public/user_search.html',users = users)
+
+@application.route('/export', methods=['GET', 'POST'])
+def download_recs():
+    try:
+        tag = str(np.random.uniform())[2:]
+        os.makedirs('exports', exist_ok=True)
+        my_path = f'exports/Groa_recs{tag}.csv'
+        recs_df = pd.read_json(session['recs'])
+        recs_df = recs_df.drop(columns=['Vote Up', 'Vote Down'])
+        recs_df.to_csv(my_path, index=False)
+        return_data = io.BytesIO()
+        with open(my_path, 'rb') as myfile:
+            return_data.write(myfile.read())
+        return_data.seek(0) # move cursor to start
+        os.remove(my_path)
+        return send_file(return_data, mimetype='text/csv',
+                         attachment_filename='Groa_recs.csv')
+    except Exception as e:
+        print(e)
 
 if __name__ == "__main__":
     application.run(port=5000, debug=True)
