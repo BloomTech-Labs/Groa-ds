@@ -1,6 +1,7 @@
 from flask import Flask, session, render_template, request, flash, redirect
 from flask_session import Session
 import pandas as pd
+import numpy as np
 from zipfile import ZipFile
 import json
 import os, shutil
@@ -57,21 +58,22 @@ def lb_submit():
         if request.files:
 
             file = request.files["file"]
+            tag = str(np.random.uniform())
             with ZipFile(file, 'r') as zip:
-                zip.extractall(path='temp',members=['ratings.csv','reviews.csv','watchlist.csv','watched.csv'])
+                zip.extractall(path=f'temp{tag}',members=['ratings.csv','reviews.csv','watchlist.csv','watched.csv'])
 
 
-            ratings = pd.read_csv('temp/ratings.csv', encoding='cp1252')
-            reviews = pd.read_csv('temp/reviews.csv')
-            watched = pd.read_csv('temp/watched.csv')
-            watchlist = pd.read_csv('temp/watchlist.csv')
+            ratings = pd.read_csv(f'temp{tag}/ratings.csv', encoding='cp1252')
+            reviews = pd.read_csv(f'temp{tag}/reviews.csv')
+            watched = pd.read_csv(f'temp{tag}/watched.csv')
+            watchlist = pd.read_csv(f'temp{tag}/watchlist.csv')
 
             session['ratings'] = ratings.to_json()
             session['reviews'] = reviews.to_json()
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
 
-            shutil.rmtree('temp')
+            shutil.rmtree(f'temp{tag}')
 
             return render_template('public/letterboxd_submission.html', data=ratings.head().to_html(index=False))
 
@@ -155,7 +157,7 @@ def lb_recommend():
 @application.route('/resubmission',methods=['POST'])
 def resubmit():
     '''
-    This page takes the ids from the recommedation page that the user liked and adds them to 
+    This page takes the ids from the recommedation page that the user liked and adds them to
     '''
     try:
         checked_list = json.loads(session['checked_list'])
@@ -164,14 +166,14 @@ def resubmit():
     checked_list.extend(request.form.getlist('movie id'))#only checked ids
     id_list = json.loads(session['id_list'])#all of the ids of the previous recommendations
     good_list = json.loads(session['good_list'])
-    
+
     bad_list = json.loads(session['bad_list'])
     hist_list = json.loads(session['hist_list'])
     val_list = json.loads(session['val_list'])
     ratings_dict = json.loads(session['ratings_dict'])
 
-    difference_list = #set().difference(id_list) 
-   
+    # difference_list = #set().difference(id_list)
+
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
 
@@ -180,17 +182,17 @@ def resubmit():
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
-    
+
     recs['URL'] = recs['URL'].apply(links)
     recs['Resubmission']= '<input type="checkbox" name="movie id" value='+recs['Movie ID']+'>Add this movie to the resubmission<br>'
-    
+
     id_list2 = recs['Movie ID'].to_list()
-    
+
     session['id_list']=json.dumps(id_list2)
     session['checked_list']=json.dumps(checked_list)
-    
+
     recs.drop(columns='Movie ID')
-    
+
     return render_template('public/re_recommendations.html', data=recs.to_html(escape=False,index=False))
 
 @application.route('/imdb_upload')
