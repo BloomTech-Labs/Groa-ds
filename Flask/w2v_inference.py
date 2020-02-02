@@ -288,7 +288,7 @@ class Recommender(object):
                 for i in feedback_list:
                     try:
                         f_vec = clf[i]
-                        movie_vec.append(f_vec*3) # heavily weight feedback
+                        movie_vec.append(f_vec*1.8) # weight feedback by adding multiplier here
                     except KeyError:
                         continue
             return np.mean(movie_vec, axis=0)
@@ -299,9 +299,9 @@ class Recommender(object):
                 v = _remove_dislikes(bad_movies, v, harshness=harshness)
             return clf.similar_by_vector(v, topn= n+1)[1:]
 
-        def _remove_dupes(recs, input, bad_movies, hist_list=[], checked_list=[]):
+        def _remove_dupes(recs, input, bad_movies, hist_list=[], feedback_list=[]):
             """remove any recommended IDs that were in the input list"""
-            all_rated = input + bad_movies + hist_list + checked_list
+            all_rated = input + bad_movies + hist_list + feedback_list
             nonlocal dupes
             dupes = [x for x in recs if x[0] in input]
             return [x for x in recs if x[0] not in all_rated]
@@ -320,7 +320,7 @@ class Recommender(object):
 
         aggregated = _aggregate_vectors(input, checked_list)
         recs = _similar_movies(aggregated, bad_movies, n=n)
-        recs = _remove_dupes(recs, input, bad_movies, hist_list, checked_list)
+        recs = _remove_dupes(recs, input, bad_movies, hist_list, checked_list + rejected_list)
         formatted_recs = [self._get_info(x) for x in recs]
         if scoring and val_list:
             print(f"The model recommended {_score_model(recs, val_list)} movies that were on the watchlist!\n")

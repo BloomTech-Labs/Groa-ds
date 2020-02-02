@@ -56,6 +56,7 @@ def lb_submit():
             return redirect(request.url)
 
         if request.files:
+            session.clear()
             file = request.files["file"]
             tag = str(np.random.uniform()) # make a temp folder with a random name
             with ZipFile(file, 'r') as zip:
@@ -114,7 +115,7 @@ def lb_recommend():
 
     # get recs based on ratings, watch history
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
-                        ratings_dict=weighting, n=100, harshness=1, scoring=True),
+                        ratings_dict=weighting, scoring=True),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes',
                         'Similarity Score','Movie ID'])
 
@@ -272,7 +273,7 @@ def imdb_submit():
             return redirect(request.url)
 
         if request.files:
-
+            session.clear()
             file = request.files["file"]
             try:
                 ratings = pd.read_csv(file, encoding='cp1252')
@@ -287,7 +288,7 @@ def imdb_submit():
             # dump ratings and reviews into database and then call model on username.
             # Said username is in the zipfile name<EZ>.
             return render_template('public/imdb_submission.html',
-                    name='Watched List', data=ratings.sort_values(by=['Date'],
+                    name='Watched List', data=ratings.sort_values(by=['Date Rated'],
                     ascending=False).head().to_html(index=False))
 
 @application.route('/imdb_recommendations',methods=['GET','POST'])
@@ -325,15 +326,15 @@ def submit():
 
     # get recs based on ratings, watch history
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
-                        ratings_dict=weighting, n=100, harshness=1, scoring=False),
+                        ratings_dict=weighting, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating',
                         '# Votes', 'Similarity Score','Movie ID'])
     def links(x):
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
     recs['URL'] = recs['URL'].apply(links)
-    recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' + \
-            recs['Movie ID'] + '>  Good idea<br>'
+    recs['Vote Up'] = '<input type="checkbox" name="downvote" value=' \
+        + recs['Movie ID'] + '> Good idea<br>'
     recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
         + recs['Movie ID'] + '>  Hard No<br>'
     id_list = recs['Movie ID'].to_list()
