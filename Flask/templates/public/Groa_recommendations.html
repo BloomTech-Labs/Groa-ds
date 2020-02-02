@@ -10,24 +10,28 @@
 
                 <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
                 <div class=page>
-                <h1>Groa recommends these movies!</h1>
+                <h1>Groa recommends these movies:</h1>
+            <form action='/export' method='POST'>
+                <input type="submit" value="Export to CSV">
+            </form>
             <form action='/resubmission' method='POST'>
-                <input type="submit" value="Resubmit with checked movies">
+                <input type="submit" value="Improve my recommendations">
                 {% block content %}
                     {{ data|safe }}
                 {% endblock %}
 
                 <h2>Hidden Gems you might enjoy</h2>
-                <input type="submit" value="Resubmit with checked movies">
+                <input type="submit" value="Improve my recommendations">
                 {% block hidden %}
                     {{ hidden_data|safe }}
                 {% endblock %}
 
-                <h2>Movies you might think are underrated</h2>
-                <input type="submit" value="Resubmit with checked movies">
+                <h2>Cult Movies (you might think they're underrated)</h2>
+                <input type="submit" value="Improve my recommendations">
                 {% block cult %}
                     {{ cult_data|safe }}
                 {% endblock %}
+                <input type="submit" value="Improve my recommendations">
             </form>
         </div>
     </div>

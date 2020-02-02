@@ -12,7 +12,53 @@
 ## Quick Rundown  <a name="sum"></a>
 This flask app's purpose is to serve as an environment for displaying recommendations to a user.
 ## Flask App Endpoints <a name="endpoints"></a>
-The app really does two things at this point. It let's you upload a file from either imdb or letterboxd and it will give you recommendations from the model.
+**/**: Landing Page. Description of the app and its purpose.
+
+**/letterboxd_upload**: User can upload a zipped file of Letterboxd export data.
+
+**/imdb_upload**: User can upload a ratings.csv file of IMDb ratings export data.
+
+**/letterboxd_submission**: 
+
+User can:
+   - see a summary of their movies.
+   - indicate the ranges of ratings they give to movies they like and dislike.
+   - choose to receive recommendations for hidden gems (well-regarded, under-discovered movies). Only available if the user provides reviews.
+   - choose to receive recommendations for cult movies (movies considered underrated by similar reviewers). Only available if the user provides reviews.
+   - choose whether the recommender should place special weight on movies the user has given especially high or low ratings.
+   - submit their choices to begin the recommendation process.
+
+**/imdb_submission**: 
+User can:
+   - see a summary of their movies.
+   - indicate the ranges of ratings they give to movies they like and dislike.
+   - choose whether the recommender should place special weight on movies the user has given especially high or low ratings.
+   - submit their choices to begin the recommendation process.
+
+**/letterboxd_recommendations**:
+User can:
+   - see a list of up to 100 movie recommendations from the w2v Recommender model (user-based collaborative filtering), complete with info about those movies.
+   - see, if requested, a list of hidden gems and/or cult movies recommended by the r2v Recommender model (review-based).
+   - download a CSV of their recommendations via a popup window.
+   - give positive and negative feedback on the recommendations, and submit the feedback for an improved list.
+   
+ **/imdb_recommendations**:
+ User can:
+   - see a list of up to 100 movie recommendations from the w2v Recommender model (user-based collaborative filtering), complete with info about those movies.
+   - download a CSV of their recommendations via a popup window.
+   - give positive and negative feedback on the recommendations, and submit the feedback for an improved list.
+
+**/resubmission**:
+User can:
+   - see an updated list of up to 500 movie recommendations from the w2v Recommender model (user-based collaborative filtering), complete with info about those movies.
+   - download a CSV of their recommendations.
+   - continue to submit feedback for new recommendations, indefinitely.
+   
+**/userlookup**:
+User can:
+   - enter IMDb username with the aid of an autocompleting list of usernames in the database.
+   - view the watch history of an IMDb user if they exist in the database.
+
 ## Run Locally <a name="local"></a>
 ### Step 1:
 Before starting anything, make sure to activate the virtual environment. [Set up your virtual environment](https://www.liquidweb.com/kb/how-to-setup-a-python-virtual-environment-on-windows-10/) and then [install the needed imports from the requirements file](https://stackoverflow.com/questions/48787250/set-up-virtualenv-using-a-requirements-txt-generated-by-conda). From then on, call source <\your virtual environment folder>\/Scripts/activate to start up the environment if your are in Windows. Other systems should call <\your virtual environment folder>\/bin/activate.
