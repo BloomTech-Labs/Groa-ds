@@ -1,6 +1,6 @@
 {% extends "public/templates/public_template.html" %}
 
-{% block title %}Groa Recommendations{% endblock %}
+{% block title %}User reviews{% endblock %}
 
 {% block main %}
 
@@ -11,7 +11,7 @@
                 <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
                 <div class=page>
                 <h1>user reviews</h1>
-            <form action='/userreviews' method='POST'>            
+            <form action='/userlookup' method='post'>            
                 <input type="submit" value="Resubmit with checked movies">
                 {% block content %}
                     {{ data|safe }}

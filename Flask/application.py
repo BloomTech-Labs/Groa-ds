@@ -170,7 +170,7 @@ def resubmit():
     val_list = json.loads(session['val_list'])
     ratings_dict = json.loads(session['ratings_dict'])
 
-    difference_list = #set().difference(id_list) 
+    #difference_list = #set().difference(id_list) 
    
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
@@ -304,12 +304,12 @@ def watchhistory():
     '''
     #display scraped data? display whether they've actually reviewed it and if not, have a link to redirect to review page?
 
-@application.route('/userlookup')
+@application.route('/userlookup',methods = ["GET","POST"])
 def userlookup():
   
     users = read_users("Usernames.txt")  
 
-    users = get_imdb_users()
+    #users = get_imdb_users()
 
     return render_template('public/user_search.html',users = users)
 

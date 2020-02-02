@@ -66,11 +66,7 @@ def connect_to_DB():
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-<<<<<<< HEAD
-    password  = 'lambdaschoolgroa',
-=======
-    password  = os.getenv('DB_PASSWORD'),
->>>>>>> refs/remotes/origin/Flask
+    password  = os.getenv('PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
@@ -174,9 +170,9 @@ def read_users(path):
 
     return users
 
-name = "SnoopyStyle"
-df = imdb_user_lookup(name)
-print(df.head(10))
+#name = "SnoopyStyle"
+#df = imdb_user_lookup(name)
+#print(df.head(10))
 
 
 
