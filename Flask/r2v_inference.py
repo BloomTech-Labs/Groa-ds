@@ -62,21 +62,11 @@ class r2v_Recommender():
             reviews: string
                 string of concatenated user reviews.
 
-            good_movies : iterable
-                list of movies that the user likes.
-
-            bad_movies : iterable
-                list of movies that the user dislikes.
-
             hist_list : iterable
                 list of movies the user has seen.
 
             n : int
                 number of recommendations to return.
-
-            min_dev : float, int
-                minimum standard deviation parameter for finding cult movies.
-                higher min_dev --> fewer cult movies returned.
 
             max_votes : int
                 maximum number of votes for a movie to be considered a hidden gem.
@@ -84,7 +74,7 @@ class r2v_Recommender():
         Returns
         -------
         Two lists of tuples: hidden_gems and cult_movies
-        (Title, Year, URL, # Votes, Avg. Rating, User Rating, Reviewer, Review)
+        (Title, Year, URL, # Votes, Avg. Rating, User Rating, Reviewer, Review, Movie ID)
         """
 
         clf = self._get_model()
@@ -143,11 +133,13 @@ class r2v_Recommender():
                 hidden_recs = self.cursor_dog.fetchall()
                 hidden_recs = [list(x) for x in hidden_recs]
                 for i in hidden_recs:
-                    i[2] = f"https://www.imdb.com/title/tt{i[2]}/"
+                    i.append(i[2]) # add ID to the end
+                    i[2] = f"https://www.imdb.com/title/tt{i[2]}/" # add URL
                 hidden_recs = [tuple(x) for x in hidden_recs]
-            except:
+            except Exception as e:
+                print(e)
                 hidden_recs = [("No hidden gems found! Better luck next time.",
-                                    None, None, None, None, None, None, None)]
+                                None, None, None, None, None, None, None, None)]
             return hidden_recs
 
         def cult_movies(sims, n=10):
@@ -188,11 +180,13 @@ class r2v_Recommender():
                 cult_recs = self.cursor_dog.fetchall()
                 cult_recs = [list(x) for x in cult_recs]
                 for i in cult_recs:
-                    i[2] = f"https://www.imdb.com/title/tt{i[2]}/"
+                    i.append(i[2]) # add ID to the end
+                    i[2] = f"https://www.imdb.com/title/tt{i[2]}/" # add URL
                 cult_recs = [tuple(x) for x in cult_recs]
-            except:
+            except Exception as e:
+                print(e)
                 cult_recs = [("No cult movies found! Better luck next time.",
-                                    None, None, None, None, None, None, None)]
+                                None, None, None, None, None, None, None, None)]
             return cult_recs
 
         sims = similar_users(reviews, n_sims=100)
