@@ -9,7 +9,7 @@ import psycopg2
 # from getpass import getpass
 
 # self import
-from psycopg2_blob import seventoten,query2,id_to_title,get_imdb_users
+from psycopg2_blob import seventoten,query2,id_to_title,get_imdb_users,imdb_user_lookup,read_users
 from w2v_inference import *
 
 
@@ -243,10 +243,17 @@ def watchhistory():
 
 @application.route('/userlookup')
 def userlookup():
-
-    users = get_imdb_users()
-    
+  
+    users = read_users("Usernames.txt")  
     return render_template('public/user_search.html',users = users)
+
+@application.route('/userreviews',methods = ["GET","POST"])
+def userreviews():
+    name = request.form['Username']
+    df = imdb_user_lookup(name)
+    return render_template('public/user_reviews.html', data=df.to_html(index=False))
+
+
 
 if __name__ == "__main__":
     application.run(port=5000, debug=True)
