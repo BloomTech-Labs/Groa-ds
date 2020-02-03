@@ -7,24 +7,41 @@
 <div class="container">
     <div class="row">
         <div class="col">
-
+            <br>
             <h1>Letterboxd Upload</h1>
             <hr>
-            
-            <form action="/upload" method="POST" enctype="multipart/form-data">
-            
+            <p>If you've used Letterboxd to rate movies, you can upload your
+              zipped user data file to Gróa to get
+              endless custom movie recommendations.
+              <br>We do not keep a copy of
+              this data, and it is deleted from our server at the end of your
+              session.</p>
+              <br>
+            <h5>To get this file and upload it here, follow these steps:</h5>
+              <br>
+              <p>1. Login to <b><a href="www.letterboxd.com">Letterboxd</a></b>.</p>
+              <p>2. Click on your username and select <b>"Settings"</b> from the
+                dropdown menu.</p>
+              <p>3. Go to the <b>"Import & Export"</b> tab, then click
+                <b>"Export Your Data"</b>. Save the
+                file somewhere convenient, like your <b>"Downloads"</b> folder.</p>
+              <p>4. Click on the <b>"Browse"</b> button below, navigate to the file,
+                and double-click to upload.</p>
+              <p>5. Finally, click <b>"Upload File"</b> below.</p>
+              <br>
+            <form action="/letterboxd_submission" method="POST" enctype="multipart/form-data">
+
                 <div class="form-group">
-                    <label>Select file</label>
                     <div class="custom-file">
                       <input type="file" class="custom-file-input" name="file" id="file">
-                      <label class="custom-file-label" for="file">Select file...</label>
+                      <label class="custom-file-label" for="file">Select .zip file...</label>
                     </div>
                   </div>
-          
+
                   <button type="submit" class="btn btn-primary">Upload File</button>
-                  
+
                   <pre>
-                      
+
                     {{ df }}
 
                   </pre>

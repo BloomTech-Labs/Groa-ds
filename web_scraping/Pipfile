@@ -10,6 +10,16 @@ requests = "*"
 beautifulsoup4 = "*"
 pandas = "*"
 psycopg2 = "*"
+aws2 = "*"
+decouple = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7.5"
+=======
+python-decouple = "*"
+
+
+
+[requires]
+python_version = "3.7.4"
+>>>>>>> ericscrape

@@ -1,0 +1,44 @@
+{% extends "public/templates/public_template.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block main %}
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+
+            <h1>What Is Gróa?</h1>
+            <p>The companies which have the resources to create an elegant Movie Recommendation Engine have a 
+                profit motive aligned with recommending high cost proprietary content rather than films their customers would genuinely enjoy.
+                Existing web sites geared towards providing a recommendation rely entirely on basic rating 
+                models which are weighted heavily towards popular films and generally do a poor job identifying unique outliers.
+                Gróa will use NLP to create unique recommendations based upon the way 
+                in which users talk about movies rather than the reductive 1-5 or 1-10 rating system.</p>
+
+            <br><br>
+            <h1>How can I use Gróa?</h1>
+            
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <h5><a class="nav-link" href="/imdb_upload">IMDB Upload</a></h5>
+                        <p>User can upload a ratings.csv file of IMDb ratings export data.</p>
+                    </li>
+                    <br>
+                    <li class="nav-item">
+                        <h5><a class="nav-link" href="/letterboxd_upload">Letterboxd Upload</a></h5>
+                        <p>User can upload a zipped file of Letterboxd export data.</p>
+                    </li>
+                    <br>
+                    <li class="nav-item">
+                        <h5><a class="nav-link" href="/user_search">Search for User</a></h5>
+                        <p>User can search for a username from the database to view reviews written by that user.</p>
+                    </li>
+                </ul>                
+            <hr>
+            
+        </div>
+    </div>
+</div>
+
+{% endblock %}

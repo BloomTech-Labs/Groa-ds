@@ -1,0 +1,54 @@
+{% extends "public/templates/public_template.html" %}
+
+{% block title %}Gróa Recommendations{% endblock %}
+
+{% block main %}
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+            <div class=page>
+                  <h1>Gróa has recommendations.</h1>
+                  <p>Here are some movies you might enjoy, based on your ratings
+                    and watch history. Gróa uses public data from over 17,000
+                    individual users' ratings to find movies you might enjoy.</p>
+                  <br><h5> Click on the IMDb links below to explore your recommendations
+                    (open in a new tab with CTRL-click).
+                  </h5>
+                  <br><p> If you have fewer than 100 movies
+                    rated, you might find that the recommendations need improvement.
+                    Register your approval or disapproval using the check boxes on
+                    the right, and then press <b>"Improve my recommendations"</b> to get
+                    an updated list.
+                    <br><b>Do this as many times as you like for endless
+                    recommendations.</b> When you're done, you can download all your
+                    approved recommendations as a .CSV spreadsheet.
+                  </p>
+                <form action='/export_recs' method='POST'>
+                    <input type="submit" value="Export my movie recs to CSV">
+                </form>
+                <form action='/resubmission' method='POST'>
+                    <input type="submit" value="Improve my recommendations">
+                    {% block content %}
+                        {{ data|safe }}
+                    {% endblock %}
+
+                    <h2>Hidden Gems you might enjoy</h2>
+                    <input type="submit" value="Improve my recommendations">
+                    {% block hidden %}
+                        {{ hidden_data|safe }}
+                    {% endblock %}
+
+                    <h2>Cult Movies (you might think they're underrated)</h2>
+                    <input type="submit" value="Improve my recommendations">
+                    {% block cult %}
+                        {{ cult_data|safe }}
+                    {% endblock %}
+                    <input type="submit" value="Improve my recommendations">
+                </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
