@@ -1,30 +1,23 @@
-<!DOCTYPE html>
-<html>
-<body>
+{% extends "public/templates/public_template.html" %}
 
-<form action="/action_page.php" id="usrform">
-  Username: <input type="text" name="usrname"><br><br>
-  Date:<input type="date" name="date" ><br><br>
-  Movie Title: <input type="text" name="movie_title"><br><br>
-  Rating: <select name="rating">
-    <option value="10 stars">10</option>
-    <option value="9 stars">9</option>
-    <option value="8 stars">8</option>
-    <option value="7 stars">7</option>
-    <option value="6 stars">6</option>
-    <option value="5 stars">5</option>
-    <option value="4 stars">4</option>
-    <option value="3 stars">3</option>
-    <option value="2 stars">2</option>
-    <option value="1 stars">1</option>
-  </select>
-  
-</form>
-<br>
+{% block title %}User reviews{% endblock %}
 
-<textarea rows="4" cols="50" name="comment" form="usrform">
-Enter review here...</textarea>
-<br>
-<input type="submit">
-</body>
-</html>
+{% block main %}
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+
+                <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+                <div class=page>
+                <h1>Reviews by User</h1>
+            
+                {% block content %}
+                    {{ data|safe }}
+                {% endblock %}
+            
+        </div>
+    </div>
+</div>
+
+{% endblock %}
