@@ -7,15 +7,15 @@
 <div class="container">
     <div class="row">
         <div class="col">
-
-                <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
-                <div class=page>
-                <h1>Here are your new recommendations!</h1>
-                <form action='/export' method='POST'>
-                    <input type="submit" value="Export to CSV">
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+            <div class=page>
+                  <h1>Improved Recommendations</h1>
+                <form action='/export_recs' method='POST'>
+                    <input type="submit" name="button" value="Export my movie recs to CSV">
+                    <input type="submit" name="button" value="Export only my upvoted movies to CSV">
                 </form>
                 <form action='/resubmission' method='POST'>
-                    <input type="submit" value="Resubmit with checked movies">
+                    <input type="submit" value="Improve my recommendations again">
                     {% block content %}
                         {{ data|safe }}
                     {% endblock %}

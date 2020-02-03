@@ -71,7 +71,6 @@ def lb_submit():
             watchlist = pd.read_csv(f'temp{tag}/watchlist.csv')
 
             session['ratings'] = ratings.to_json()
-            print("got ratings")
             session['reviews'] = reviews.to_json()
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
@@ -240,6 +239,7 @@ def resubmit():
 
     session['id_list'] = json.dumps(id_list2)
     session['checked_list'] = json.dumps(checked_list)
+    print('checked_list saved:', checked_list)
     session['rejected_list'] = json.dumps(rejected_list)
     session['recs'] = recs.to_json()
     recs.drop(columns='Movie ID')
@@ -391,15 +391,31 @@ def userlookup():
     #users = get_imdb_users()
     return render_template('public/user_search.html',users = users)
 
-@application.route('/export', methods=['GET', 'POST'])
+@application.route('/export_recs', methods=['POST'])
 def download_recs():
     """Creates a download popup"""
     try:
         tag = str(np.random.uniform())[2:]
         os.makedirs('exports', exist_ok=True) # make temp dir with random name
-        my_path = f'exports/Groa_recs{tag}.csv'
-        recs_df = pd.read_json(session['recs'])
-        recs_df = recs_df.drop(columns=['Vote Up', 'Vote Down'])
+        if "upvote" in request.form['button']:
+            my_path = f'exports/Groa_upvotes{tag}.csv'
+            try:
+                checked_list = json.loads(session['checked_list'])
+            except:
+                checked_list = []
+            checked_list.extend(request.form.getlist('upvote')) # log upvotes
+            s = Recommender('w2v_limitingfactor_v1.model')
+            s.connect_db()
+            checked_list = [fill_id(x) for x in checked_list]
+            checked_info = [s._get_info(x) for x in checked_list]
+            recs_df = pd.DataFrame(checked_info,
+                                    columns=['Title', 'Year', 'URL',
+                                    'Avg. Rating', '# Votes','Blank', 'ID'])
+            recs_df = recs_df.drop(columns=['Blank', 'ID']) # drop ID because
+        else:
+            my_path = f'exports/Groa_recs{tag}.csv'
+            recs_df = pd.read_json(session['recs'])
+            recs_df = recs_df.drop(columns=['Vote Up', 'Vote Down'])
         recs_df.to_csv(my_path, index=False)
         return_data = io.BytesIO() # write file to memory so it can be deleted
         with open(my_path, 'rb') as myfile:
@@ -410,7 +426,6 @@ def download_recs():
                          attachment_filename='Groa_recs.csv')
     except Exception as e:
         print(e)
-
 
 @application.route('/userreviews',methods = ["GET","POST"])
 def userreviews():
