@@ -78,11 +78,7 @@ input[type=submit] {
 <p>Start typing:</p>
 
 <!--Make sure the form has the autocomplete function switched off:-->
-<<<<<<< HEAD
-<form autocomplete="off" action="/userreviews" method = "POST">
-=======
-<form autocomplete="off" action="/user_reviews">
->>>>>>> e58f7137dac689f63485676f0a775c16df1b152b
+<form autocomplete="off" action="/user_reviews" method = "POST">
   <div class="autocomplete" style="width:300px;">
     <input id="myInput" type="text" name="Username" placeholder="username">
   </div>
@@ -111,7 +107,7 @@ function autocomplete(inp, arr) {
       for (i = 0; i < arr.length; i++) {
       	/* add the following: */
       	/*stops adding items if reached given size*/
-      	if (a.childElementCount >= 3) {
+      	if (a.childElementCount >= 5) {
         	break
         }
         /*check if the item starts with the same letters as the text field value:*/

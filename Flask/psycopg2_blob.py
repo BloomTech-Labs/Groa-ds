@@ -66,7 +66,7 @@ def connect_to_DB():
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
-    password  = os.getenv('PASSWORD'),
+    password  = os.getenv('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
