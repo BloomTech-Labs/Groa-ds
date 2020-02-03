@@ -445,7 +445,7 @@ class Scraper():
         self.start_timer()
         # Start the process described
         print("Updating...")
-        for id in unique_movie_ids[:1000]:
+        for id in unique_movie_ids:
             try:
                 Nan_count = 0
                 review_count = 0
@@ -686,7 +686,6 @@ class Scraper():
                             dates = str(extract[3])
                             date.append(dates[:10])
 
-
                     if soup.find('a', class_="next"):
                         print('yep, more reviews')
                         page_count += 1
@@ -803,7 +802,7 @@ class Scraper():
         connection.close()
         print("Insertion Complete")
 
-    def scrape_finder():
+    def scrape_finder(self):
         """
         Grabs all the names and urls of all the movies on Netflix.
         Finder.com has all the movies on Netflix on a single page.
@@ -856,77 +855,11 @@ if __name__ == "__main__":
     scraper_instance = input("Which scraper instance is this? ")
     s = Scraper(start,end,max_iter,scraper_instance)
     website = checker("Are you scraping IMDB?")
-    if website == "n" or website == "no":
-        website2 = checker("Are you scraping Letterboxd?")
-    mode = checker("Are you starting a new database (y/n): \n")
-    if mode == "y" or mode == "yes":
-        ids = s.get_ids()
-        if website == "y" or website == "yes":
-            s.scrape(ids)
-        elif website == "n" or website == "no":
-            if website2 == "y" or website2 == "yes":
-                s.scrape_letterboxd(ids)
-            elif website2 == "n" or website2 == "no":
-                s.scrape_finder()
-    elif mode == "n" or mode == "no":
-        pull = checker("Are you pulling new IDs (y/n): \n")
-
-        # Asks if you would like to pull review/movie IDs from the data base
-        if pull == "y" or pull == "yes":
-
-            # if you are pulling, would you like to save them to a file for faster retrieval (debugging purposes)
-            saved = checker("Do you want to save this pull to a file (y/n)? \n")
-
-            # yes means that the IDs will be saved to a file and the file will be automatically read to load the IDs
-            if saved == "y" or saved == "yes":
-                load = True
-                s.pull_ids()
-
-            # no means that the IDs are stored in a list and the class will use the list instead
-            # unless a file already exist with the IDs on it
-            elif saved == 'n' or saved == 'no':
-                load = checker("Is there a file that already exist with the IDs (y/n)? \n")
-                ids = s.pull_ids(save = False)
-
-            # if the IDs were saved to a file before the program was termintated, load the IDs and start updating the database
-            if load == True:
-                s.load_ids()
-                if website == "y" or website =="yes":
-                    s.update()
-                elif website == "n" or website =="no":
-                    print("This feature is not yet implemented")
-                # if there is already a file that exist, use that file
-            elif load == "y" or load == "yes":
-                path = input("Enter the filename or file path: \n")
-                try:
-                    ids = s.load_ids(path = path)
-                    if website == "y" or website =="yes":
-                        s.update(ids=ids)
-                    elif website == "n" or website =="no":
-                        print("This feature is not yet implemented")
-                except Exception:
-                    raise ValueError("File Not Found")
-
-                # if a file doesn't exist it will use the IDs already in memory
-            elif load == "n" or load == "no":
-                print("Moving on with the ID's stored in memory")
-                if website == "y" or website =="yes":
-                    s.update(ids=ids)
-                elif website == "n" or website =="no":
-                    print("This feature is not yet implemented")
-        # you don't want to pull new reviews
-        else:
-            # but there is a file that already contains the IDs needed
-            load = checker("Is there a file that already exist with the IDs (y/n)? \n")
-            if load == "y" or load == "yes":
-                path = input("Enter the filename or file path: \n")
-                try:
-                    ids = s.load_ids(path = path)
-                    if website == "y" or website =="yes":
-                        s.update(ids=ids)
-                    elif website == "n" or website =="no":
-                        print("This feature is not yet implemented")
-                except Exception:
-                    raise ValueError("File Not Found")
-            else:
-                print("There are no review/movie IDs in memory or saved to a file.")
+    if website == "y" or website == "yes":
+        update = checker("Do you want to reject reviews already in the database?")
+        if update == "y" or update == "yes":
+            ids = s.pull_ids(save=False)
+            s.update(ids)
+        elif update == "n" or update == "no":
+            id_list = s.get_ids()
+            s.scrape(id_list)
