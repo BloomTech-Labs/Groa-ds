@@ -1,0 +1,21 @@
+IMDB:give imdb username, search database for reviews with that username. Then do the modeling on those reviews.
+
+Letterboxd: upload zip file, unzip, retrieve reviews and ratings files
+
+test list: {"list":"3140100,3147312,5534434,0095215,8504014,8535180,0095583,1591095,0095925"}
+
+Things we need from front end:
+- Username (IMDb and Letterboxd(hopefully)) -- Page: Import Reviews (maybe homepage)
+- Manually put in a review --- Page:Submit Reviews (needs movie title, review, (review title) title predictor dropdown(film not here)?
+    - user input: username, user_rating, review_title
+    - dropdown: original_title or primary_title 
+- View recommendations from model - persist on the recommendations we have served to each user ((issue for future web team))
+    - have a page that returns recommendations
+    - Whether they like or dislike recommendations (thumbs up or down) (either add to watchlist or won't watch)
+- View watch history
+    - Table? Include "results for username watch history" as title, columns: primary_title, review_date, review_title (clickable link to full review text)
+    - make it clickable so you can mix and match which movies they want to server to the model
+    - feature it as thumbnails
+- Serve users their previous reviews (show them what they've already reviewed from other places.)
+- import ratings and use 7-10 as stuff for preliminary recommendation
+    -then give list and give options for serving to recommender
