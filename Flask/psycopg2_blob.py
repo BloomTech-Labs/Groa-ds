@@ -134,7 +134,7 @@ def imdb_user_lookup(name):
     title = pd.read_csv('title_basics_small.csv')
     title.drop(['primaryTitle','startYear'],axis = 1,inplace = True)
     match = title.to_dict()
-    #match['originalTitle'][305322]
+    
 
     # theres probably a faster way to do this part but for now this will have to do
     ################################################################################

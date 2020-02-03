@@ -1,0 +1,32 @@
+{% extends "public/templates/public_template.html" %}
+
+{% block title %}IMDB Upload{% endblock %}
+
+{% block main %}
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+
+            <h1>IMDB Upload</h1>
+            <hr>
+            
+            <form action="/uploader" method="POST" enctype="multipart/form-data">
+            
+                <div class="form-group">
+                    <label>Select file</label>
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" name="file" id="file">
+                      <label class="custom-file-label" for="file">Select file...</label>
+                    </div>
+                  </div>
+          
+                  <button type="submit" class="btn btn-primary">Upload File</button>
+                  
+                  
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

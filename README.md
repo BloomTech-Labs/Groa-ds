@@ -1,6 +1,6 @@
 # Gróa
 
-In the current iteration this project does not have front end components. When those elements go live they will be linked here.
+You can check out the [live demo of Gróa here](http://groa-env.7med3gpage.us-west-1.elasticbeanstalk.com/).
 
 ## Contributors
 
@@ -10,15 +10,6 @@ In the current iteration this project does not have front end components. When t
 |                 [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/)                 |            [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/honda0306)             |           [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/Mister-Corn)            |          [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/NandoTheessen)           |            [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/moviedatascience)             |
 | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/ericdavidsmith91/) |
 
-
-
-
-![MIT](https://img.shields.io/packagist/l/doctrine/orm.svg)
-![Typescript](https://img.shields.io/npm/types/typescript.svg?style=flat)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/b5c4db1c-b10d-42c3-b157-3746edd9e81d/deploy-status)](netlify link goes in these parenthesis)
-[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
-
-🚫 more info on using badges [here](https://github.com/badges/shields)
 
 ## Project Overview
 
@@ -45,21 +36,20 @@ Movie Recommendation Engine will use NLP to create unique recommendations based 
 - EC2
 - S3 Bucket
 - RDS
-- SageMaker
+- Elastic Beanstalk
 
 #### Machine Learning:
 
-- [Huggingface Transformers](https://github.com/huggingface/transformers)
-- Sklearn
+- [Gensim](https://radimrehurek.com/gensim/)
+- [Sklearn](https://scikit-learn.org/stable/index.html)
 
 #### Data Collection/Manipulation:
 
 - [Pandas](https://pypi.org/project/pandas/)
-- [Numpy]
-- [SciPy]
-- [IMDbPy]
-- [Psycopg2]
-- [BeautifulSoup]
+- [Numpy](https://numpy.org/)
+- [SciPy](https://www.scipy.org)
+- [Psycopg2](https://pypi.org/project/psycopg2)
+- [BeautifulSoup](https://pypi.org/project/beautifulsoup4/)
 
 ### Predictions
 
