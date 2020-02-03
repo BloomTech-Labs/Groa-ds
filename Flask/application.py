@@ -447,7 +447,7 @@ def download_recs():
 def user_reviews():
     name = request.form['Username']
     df = imdb_user_lookup(name)
-    return render_template('public/user_reviews.html', data=df.head(10).to_html(index=False))
+    return render_template('public/user_reviews.html', data=df.head(10).to_html(index=False), name=name)
 
 
 if __name__ == "__main__":

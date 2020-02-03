@@ -97,59 +97,26 @@ def imdb_user_lookup(name):
     takes in a username and searches the data base for all of the reviews made by that user and
     returns a dataframe.
     '''
-    cursor = connect_to_DB()
+    connection = psycopg2.connect(
+    database  = "postgres",
+    user      = "postgres",
+    password  = os.getenv('DB_PASSWORD'),
+    host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
+    port      = '5432')
     print("connected to database")
-    query = f"SELECT * From reviews WHERE username='{name}'"
-    cursor.execute(query)
-    results = cursor.fetchall()
-    cursor.close()
-    print("connection closed")
-    movie_id = []
-    date = []
-    rating = []
-    username = []
-    review = []
-    title = []
-    for result in results:
-        movie_id.append(result[0])
-        date.append(result[1])
-        rating.append(result[2])
-        username.append(str(result[5])) 
-        review.append(result[6])
-        title.append(result[7])
+    query = f"""SELECT m.primary_title, m.start_year, r.review_date,
+       r.user_rating, r.review_title, r.review_text
+       FROM movies m
+       JOIN reviews r ON m.movie_id = r.movie_id
+       WHERE username='{name}'"""
+    df = pd.read_sql_query(query, connection)
     
-    print("Lists created")
+    df['review_date'] = pd.to_datetime(df['review_date'])
+    df['review_date'] = df['review_date'].dt.strftime('%Y-%m-%d').astype(str)
+        
+    df.columns = ['Movie Title','Year Released','Date Reviewed','User Rating',
+    'Review Title','Review Text']
     
-
-    df = pd.DataFrame(
-            {
-                'movie_id': movie_id,
-                'reviews': review,
-                'rating': rating,
-                'titles': title,
-                'username': username,
-                'date': date
-                })
-
-    title = pd.read_csv('title_basics_small.csv')
-    title.drop(['primaryTitle','startYear'],axis = 1,inplace = True)
-    match = title.to_dict()
-    
-
-    # theres probably a faster way to do this part but for now this will have to do
-    ################################################################################
-    movie_ids = df["movie_id"].tolist()                                            
-    for id in movie_ids:
-        try:
-            value = match['originalTitle'][int(id)]
-            #print(id,value)
-            df.replace(to_replace = int(id),value = value,inplace = True)
-        except:
-            continue
-    ################################################################################
-
-    df['date'] = pd.to_datetime(df['date'])
-    df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
     print("values replaced")
     return df
      
