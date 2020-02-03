@@ -27,7 +27,7 @@ class Scraper():
     up. Necessary environment variables are PASSWORD, HOST, PORT, and FILENAME.
     """
 
-    def __init__(self,start,end,max_iter, scraper_instance):
+    def __init__(self, start, end, max_iter, scraper_instance):
         self.start = start
         self.end = end + 1
         self.current_ids = []
@@ -65,10 +65,11 @@ class Scraper():
         for a csv formatted after the tarball released by IMDB.com. Returns a
         list
         '''
-        df = pd.read_csv(self.filename,encoding = 'ascii',header = None)
+        df = pd.read_csv(self.filename, encoding='ascii', header=None)
 
-        # get all the rows from the second column and then select only the ones from the start and end positions
-        id_list = [row for row in df.iloc[:,1]]
+        # get all the rows from the second column and then select only
+        # the ones from the start and end positions
+        id_list = [row for row in df.iloc[:, 1]]
         self.all_ids = id_list
 
         id_list = id_list[self.start:self.end]
@@ -76,40 +77,44 @@ class Scraper():
 
         # lets the class know the range of ID's its grabbing at a time
         if self.start > self.end:
-            raise ValueError("The start position needs to be less than the end position")
+            raise ValueError("The start position needs to be \
+less than the end position")
         self.range = abs(self.end - self.start)
 
         return id_list
 
-    def show(self,lst):
+    def show(self, lst):
         '''
         Outputs any list in a formatted output.
         '''
-        for count,index in enumerate(lst):
+        for count, index in enumerate(lst):
             print(f"{count+1}) {index}")
 
-    def create_log(self,movie_name, num_review, num_nan, elapsed):
+    def create_log(self, movie_name, num_review, num_nan, elapsed):
         """
         Creates a log for each movie scraped.
-        Takes info generated within imdb_scraper to produce a log file to return
-        a log of the movie name, the number of reviews, and the time taken
+
+        Takes info generated within imdb_scraper to produce a log file to
+        return a log of the movie name, the number of reviews,
+        and the time taken
         """
         directory = os.getcwd()
         os.chdir(directory)
-        movie_name = movie_name.replace("-"," ")
+        movie_name = movie_name.replace("-", " ")
         with open(f'Logfile{self.scraper_instance}.txt', 'a+') as file:
-            file.write("---------------------------------------------------------------------\n")
+            file.write("--------------------------------------------------\n")
             file.write(str(datetime.now()) + "\n")
             file.write(f"Movie: {movie_name}\n")
             file.write(f"This movie has {num_review} reviews\n")
-            file.write(f"Out of {num_review} reviews there were {num_nan} with NaN ratings\n")
-            file.write(f"Finished Scraping {movie_name} in {round(elapsed,2)} seconds\n")
-            file.write("----------------------------------------------------------------------")
+            file.write(f"Out of {num_review} reviews there were \
+                         {num_nan} with NaN ratings\n")
+            file.write(f"Finished Scraping {movie_name} in \
+                         {round(elapsed,2)} seconds\n")
+            file.write("--------------------------------------------------")
             file.write("\n")
 
-
-    def make_dataframe(self,movie_id, reviews, rating, titles, username,
-                   found_useful_num, found_useful_den, date, review_id):
+    def make_dataframe(self, movie_id, reviews, rating, titles, username,
+                       found_useful_num, found_useful_den, date, review_id):
         """
         Creates a pandas dataframe from the scrape or update functions.
         """
@@ -129,9 +134,10 @@ class Scraper():
         df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
         return df
 
-    def scrape(self,id_list = None):
+    def scrape(self, id_list=None):
         """
         Scrapes imbd.com for review pages.
+
         create_log, make_dataframe, and insert_rows are intended to be used
         inside this function. Takes in the id of the movie in "ttxxxxxxx"
         format, robust to different numbers of numerals. Fails gracefully on
@@ -152,12 +158,13 @@ class Scraper():
         iteration_counter = 0
         broken = []
 
-        for count,id in enumerate(id_list):
+        for count, id in enumerate(id_list):
             try:
                 t1 = time.perf_counter()
                 Nan_count = 0
                 review_count = 0
                 movie_title = ''
+
                 # self.locate(id)
 
                 url_short = f'http://www.imdb.com/title/{id}/'
@@ -168,7 +175,8 @@ class Scraper():
                 if response.status_code != 200:
                         response = requests.get(url_reviews)
                         if response.status_code != 200:
-                            print(f"call to {url_reviews} failed with status code {response.status_code}!")
+                            print(f"call to {url_reviews} failed with status \
+code {response.status_code}!")
                             continue
                 soup = BeautifulSoup(response.text, 'html.parser')
                 items = soup.find_all(class_='lister-item-content')
@@ -176,9 +184,11 @@ class Scraper():
                 while True:
 
                     if iteration_counter >= self.max_iter_count:
-                        df = self.make_dataframe(movie_id, reviews, rating, titles,
-                                                 username, found_useful_num,
-                                                 found_useful_den, date, review_id)
+                        df = self.make_dataframe(movie_id, reviews, rating,
+                                                 titles, username,
+                                                 found_useful_num,
+                                                 found_useful_den,
+                                                 date, review_id)
                         self.insert_rows(df)
                         movie_id.clear()
                         rating.clear()
@@ -244,7 +254,9 @@ class Scraper():
                     os.remove(f"Logfile{self.scraper_instance}.txt")
 
                 # log the movie
-                self.create_log(id, review_count, Nan_count, finish)
+
+                # self.create_log(id, review_count, Nan_count, finish)
+
                 # for loop ends here
 
             # catches any error and lets you know which ID was the last one scraped
@@ -254,10 +266,11 @@ class Scraper():
 
         # create DataFrame
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
-                            found_useful_num, found_useful_den, date, review_id)
+                                 found_useful_num, found_useful_den, date,
+                                 review_id)
         self.insert_rows(df)
 
-        #total time it took to scrape each review
+        # total time it took to scrape each review
         t3 = time.perf_counter()
         total = t3 - t
         print(f"Scraped {count + 1} movies in {round(total,2)} seconds")
@@ -266,7 +279,7 @@ class Scraper():
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
 
-    def locate(self,last_id):
+    def locate(self, last_id):
         '''
         This function takes in the last id used for scraping and tells you its
         index in the master list of movie ids and the curent ids being used. it
@@ -274,8 +287,8 @@ class Scraper():
         '''
         self.pickup = self.all_ids.index(last_id)
 
-        #writes the last used ID to a file
-        with open("pickup.txt",'w') as file:
+        # writes the last used ID to a file
+        with open("pickup.txt", 'w') as file:
             file.write(str(self.pickup+1))
             file.write("\n")
             file.write(str(self.end))
@@ -284,21 +297,22 @@ class Scraper():
         """
         Connects to the database and inserts reviews as new rows.
         Takes a dataframe and formats it into a very long string to convert to
-        SQL. Connects to the database, executes the query, and closes the cursor
-        and connection.
+        SQL. Connects to the database, executes the query, and closes the
+        cursor and connection.
         """
         # convert rows into tuples
         row_insertions = ""
         for i in list(df.itertuples(index=False)):
-            row_insertions += str((str(i.username.replace("'", "").replace('"', '')),
-                                i.movie_id,
-                                i.date,
-                                str(i.reviews.replace("'", "").replace('"', '')),
-                                str(i.titles.replace("'", "").replace('"', '')),
-                                int(i.rating),
-                                i.helpful_num,
-                                i.helpful_denom,
-                                i.review_id)) + ", "
+            row_insertions += str((
+                              str(i.username.replace("'", "").replace('"', '')),
+                              i.movie_id,
+                              i.date,
+                              str(i.reviews.replace("'", "").replace('"', '')),
+                              str(i.titles.replace("'", "").replace('"', '')),
+                              int(i.rating),
+                              i.helpful_num,
+                              i.helpful_denom,
+                              i.review_id)) + ", "
 
         # remove hanging comma
         row_insertions = row_insertions[:-2]
@@ -322,27 +336,23 @@ class Scraper():
         connection.close()
         print("Insertion Complete")
 
-    def pull_ids(self,save = True,filename = False):
+    def pull_ids(self, save=True, filename=False):
         '''
         Connects to the database and returns all of the review ids as a list.
         '''
         self.start_timer()
         print("Connecting to database...")
         try:
-            # connect to the database and qurey the data base for the review/movie id
-            cursor,_ = self.connect_to_database()
+            # connect to the database and query it for the review/movie ids
+            cursor, _ = self.connect_to_database()
             print("Connected.")
             query = "SELECT review_id, movie_id FROM reviews"
             cursor.execute(query)
-
             # put all of the review/movie ids into a list (a list of tuples)
             print("Fetching IDs...")
             self.ids = cursor.fetchall()
             cursor.close()
             print("Done.")
-
-
-
         except Exception as e:
             print(e)
 
@@ -356,21 +366,17 @@ class Scraper():
             # if you pass in a filename, use that otherwise use the default
             filename = input("Enter a filename: ") if filename else "review_ids.csv"
 
-            with open(filename,'w') as file:
-                for rev,mov in self.ids:
-                    #print(type(rev))
-                    #print(rev[:5])
-                    #print(mov[:5])
+            with open(filename, 'w') as file:
+                for rev, mov in self.ids:
+                    # print(type(rev))
+                    # print(rev[:5])
+                    # print(mov[:5])
                     file.write(str(rev + "," + mov) + "\n")
-
             finished = self.end_timer()
             finish = self.convert_time(finished)
-
             # class variable used to load the file before program is terminated
-            self.load_path = os.path.join(os.getcwd(),filename)
+            self.load_path = os.path.join(os.getcwd(), filename)
             print(f"File saved to {self.load_path} and was saved in {finish}")
-
-
 
         print(f"Retrieved {cursor.rowcount} review/movie ID's in {elapsed}")
         print(f"The ID's are stored as {type(self.ids)}")
@@ -382,27 +388,25 @@ class Scraper():
     def start_timer(self):
         """
         Starts a timer.
-        TODO chsnge the class variable
         """
         self.begin = time.perf_counter()
 
     def end_timer(self):
         '''
         Ends the timer started by start_timer.
-        TODO change the class variable
         '''
         self.done = time.perf_counter()
         self.elapsed = self.done - self.begin
         return self.elapsed
 
-    def convert_time(self,elapsed):
+    def convert_time(self, elapsed):
         '''
         Converts seconds into HH:MM:SS format.
         '''
         e = str(timedelta(seconds=elapsed))
         return e
 
-    def update(self,ids = None):
+    def update(self, ids=None):
         '''
         Scrapes IMDB for reviews, then adds those not already in the database.
         Process:
@@ -422,10 +426,10 @@ class Scraper():
         movie_ids = []
 
         # seperate reviews and movies
-        for rid,mid in ids:
+        for rid, mid in ids:
             review_ids.append(str(rid))
             movie_ids.append(str(mid))
-        # only unique movie
+        # only unique movies
         unique_movie_ids = set(movie_ids)
         unique_movie_ids = list(unique_movie_ids)
         unique_movie_ids.sort()
@@ -454,13 +458,15 @@ class Scraper():
                 id = "tt" + id
                 url_short = f'http://www.imdb.com/title/{id}/'
                 # sort the reviews by date
-                url_reviews = url_short + 'reviews?sort=submissionDate&dir=desc&ratingFilter=0'
+                url_reviews = url_short + 'reviews?sort=submissionDate&dir=\
+desc&ratingFilter=0'
                 time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
                         response = requests.get(url_reviews)
                         if response.status_code != 200:
-                            print(f"call to {url_reviews} failed with status code {response.status_code}!")
+                            print(f"call to {url_reviews} failed with status \
+code {response.status_code}!")
                             continue
                 soup = BeautifulSoup(response.text, 'html.parser')
                 # items holds all the HTML for the webpage
@@ -490,10 +496,11 @@ class Scraper():
                         raw_revid = (item.find(class_="title").get("href"))
                         match = re.search(r'rw\d+', raw_revid)
                         review_id = match.group()
-                        #print(f"review ID from IMBd: {review_id}")
-                        # check whether or not the review ID is in the database (steps 2 and 3)
+                        # print(f"review ID from IMBd: {review_id}")
+                        # check whether or not the review ID is in the database
                         if review_id not in review_ids:
-                            print(f"Updating {id} at index {unique_movie_ids.index(num)} in the database for review ID {review_id}")
+                            print(f"Updating {id} at index \
+{unique_movie_ids.index(num)} in the database for review ID {review_id}")
                             review_count += 1
 
                             # populate lists
@@ -538,14 +545,15 @@ class Scraper():
                     # while loop ends here
 
             except Exception as e:
-                print(e,"In update function")
+                print(e, "In update function")
                 continue
 
         print("Updated.")
-         # create DataFrame
+        # create DataFrame
         df = self.make_dataframe(movie_id, reviews, rating, titles, username,
-                            found_useful_num, found_useful_den, date, review_id)
-        df.drop_duplicates(inplace = True)
+                                 found_useful_num, found_useful_den,
+                                 date, review_id)
+        df.drop_duplicates(inplace=True)
 
         self.insert_rows(df)
 
@@ -553,30 +561,38 @@ class Scraper():
         elapsed = self.convert_time(elapsed)
         print(f"finished in {elapsed}")
 
-    def load_ids(self,path = None):
+    def load_ids(self, path=None):
         '''
+        Loads ids from a saved file.
+
         This function can only be ran before the program is terminated.
-        It uses the class variable self.load_path to locate the saved file with the
-        review/movie IDs and automatically loads the data from that file back into
-        the class variable self.ids.
+        It uses the class variable self.load_path to locate the saved file
+        with the review/movie IDs and automatically loads the data from
+        that file back into the class variable self.ids.
         '''
 
         path = self.load_path if path is None else path
 
-        df = pd.read_csv(path,header = None)
+        df = pd.read_csv(path, header=None)
         self.ids = df.values.tolist()
         return self.ids
 
-    def scrape_letterboxd(self, id_list = None):
+    def scrape_letterboxd(self, id_list=None):
         """
         Scrapes letterboxd.com for review pages.
+
+        Works very similarly to the basic scrape function. Takes in ids from
+        imdb and checks to see if they exist on letterboxd. If not, it will
+        hit an exception and move on. Movies with no reviews also hit an
+        exception. This is much slower than imbd due to differing website
+        design.
         """
         id_list = self.current_ids if id_list is None else id_list
         t = time.perf_counter()
         movie_id = []
         rating = []
         reviews = []
-        username =[]
+        username = []
         likes = []
         date = []
         review_id = []
@@ -584,41 +600,42 @@ class Scraper():
         broken = []
         page_count = 0
 
-        for count,id in enumerate(id_list):
+        for count, id in enumerate(id_list):
             print("----------------------------------------")
             try:
                 t1 = time.perf_counter()
 
                 review_count = 0
+
                 # self.locate(id)
+
                 url_initial = f"https://www.letterboxd.com/imdb/{id}"
-                time.sleep(randint(3,6))
+                time.sleep(randint(3, 6))
                 initial_response = requests.get(url_initial)
                 title = ""
                 try:
                     soup = BeautifulSoup(initial_response.text, 'html.parser')
                     title = soup.find(class_="headline-1 js-widont prettify").get_text()
-                    title = title.replace(" ","-").lower()
-                    #print(title)
+                    title = title.replace(" ", "-").lower()
 
                 except Exception as e:
-                    print(f"Unable to find a title for this movie at index: {self.all_ids.index(id)}")
+                    print(f"Unable to find a title for this movie at index: \
+{self.all_ids.index(id)}")
                     print("This is normal and expected behavior")
                     raise Exception(e)
-
-
                 url_reviews = initial_response.url + 'reviews/by/activity/'
                 print(url_reviews)
                 # initially, I wanted to make this sorted by recency, but if
                 # there are fewer than 12 reviews only sorting by popular is
                 # available
-                time.sleep(randint(3,6))
+                time.sleep(randint(3, 6))
                 response = requests.get(url_reviews)
                 if response.status_code != 200:
-                        time.sleep(randint(3,6))
+                        time.sleep(randint(3, 6))
                         response = requests.get(url_reviews)
                         if response.status_code != 200:
-                            print(f"call to {url_reviews} failed with status code {response.status_code}!")
+                            print(f"call to {url_reviews} failed with status \
+code {response.status_code}!")
                             continue
 
                 soup = BeautifulSoup(response.text, 'html.parser')
@@ -629,7 +646,9 @@ class Scraper():
                 print(f"ID: {id} at index {self.all_ids.index(id)}")
                 while True:
                     if iteration_counter >= self.max_iter_count:
-                        df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
+                        df = self.letterboxd_dataframe(movie_id, review_id,
+                                                       rating, reviews, date,
+                                                       username)
                         self.letterboxd_insert(df)
                         movie_id.clear()
                         rating.clear()
@@ -646,13 +665,14 @@ class Scraper():
                         append = body['data-full-text-url']
                         if item.find(class_="reveal js-reveal") or item.find(class_="collapsed-text"):
                             text_url = 'https://www.letterboxd.com' + append
-                            time.sleep(randint(3,4))
+                            time.sleep(randint(3, 4))
                             fulltext = requests.get(text_url)
                             if fulltext.status_code != 200:
-                                time.sleep(randint(3,6))
+                                time.sleep(randint(3, 6))
                                 fulltext = requests.get(text_url)
                                 if fulltext.status_code != 200:
-                                    print(f"call to {text_url} failed with status code {fulltext.status_code}!")
+                                    print(f"call to {text_url} failed with \
+status code {fulltext.status_code}!")
                                     continue
                             fulltext = re.sub(r'\<[^>]*\>', "", fulltext.text)
                             reviews.append(fulltext)
@@ -665,16 +685,13 @@ class Scraper():
                         review_id.append(append)
 
                         try:
-                            rating1 = str(item.find(class_ ="attribution"))
-                            found = re.search(r'rating -green rated-\d+',rating1)
+                            rating1 = str(item.find(class_="attribution"))
+                            found = re.search(r'rating -green rated-\d+', rating1)
                             found = found.group()
                             text = found.split("-")
                             rate = int(text[-1])
-                            #print(rate,type(rate))
-                            print(f"Rating found for this review ID: {append}")
                             rating.append(rate)
                         except Exception:
-                            print(f"Unable to find ratings for this review ID: {append}")
                             rating.append(11)
                         username.append(item.find(class_="name").get_text())
                         if item.find('span', '_nobr').get_text():
@@ -687,17 +704,17 @@ class Scraper():
                             date.append(dates[:10])
 
                     if soup.find('a', class_="next"):
-                        print('yep, more reviews')
                         page_count += 1
                         url_more = url_reviews + 'page/' + str(page_count+1) + '/'
                         print(url_more)
-                        time.sleep(randint(3,6))
+                        time.sleep(randint(3, 6))
                         response = requests.get(url_more)
                         if response.status_code != 200:
-                            time.sleep(randint(3,6))
+                            time.sleep(randint(3, 6))
                             response = requests.get(url_more)
                             if response.status_code != 200:
-                                print(f"call to {url_more} failed with status code {response.status_code}!")
+                                print(f"call to {url_more} failed with status \
+code {response.status_code}!")
                                 continue
                         soup = BeautifulSoup(response.text, 'html.parser')
                         items = soup.find_all(class_='film-detail')
@@ -709,29 +726,24 @@ class Scraper():
 
                 t2 = time.perf_counter()
                 finish = t2-t1
+
                 # if count == 0 and os.path.exists(f"Logfile{self.scraper_instance}.txt"):
                 #     os.remove(f"Logfile{self.scraper_instance}.txt")
                 # print("Logging")
                 # self.create_log(title,review_count,None,finish)
+
             except Exception as e:
                 broken.append(id)
                 print(sys.exc_info()[1])
                 continue
 
-
         try:
-            df = self.letterboxd_dataframe(movie_id,review_id,rating,reviews,date,username)
+            df = self.letterboxd_dataframe(movie_id, review_id, rating,
+                                           reviews, date, username)
             self.letterboxd_insert(df)
         except Exception as e:
-            print("An error occured that may be caused by arrays with uneven lengths.")
-            print(f"Movie ID: {len(movie_id)}")
-            print(f"Reviews: {len(reviews)}")
-            print(f"Review ID: {len(review_id)}")
-            print(f"date: {len(date)}")
-            print(f"Username: {len(username)}")
-            print(f"Ratings: {len(rating)}")
+            print("error while creating dataframe or inserting into database")
             raise Exception(e)
-
 
         t3 = time.perf_counter()
         total = t3 - t
@@ -739,11 +751,11 @@ class Scraper():
         print('All done!\n')
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
+        if len(broken) == 0:
+            print("none")
 
-
-
-    def letterboxd_dataframe(self,movie_id,review_id,
-                             ratings,reviews,date,username):
+    def letterboxd_dataframe(self, movie_id, review_id,
+                             ratings, reviews, date, username):
         """
         Used in scrape_letterboxd to make and return a dataframe.
         """
@@ -763,26 +775,23 @@ class Scraper():
         print(df['review_date'])
         return df
 
-
     def letterboxd_insert(self, df):
         """
         Connects to the database and inserts reviews as new rows.
+
         Takes a dataframe and formats it into a very long string to convert to
-        SQL. Connects to the database, executes the query, and closes the cursor
-        and connection.
+        SQL. Connects to the database, executes the query, and closes
+        the cursor and connection.
         """
         # convert rows into tuples
         row_insertions = ""
         for i in list(df.itertuples(index=False)):
             row_insertions += str((i.movie_id,
-                                  i.review_date,
-                              int(i.user_rating),
-                              str(i.review_text.replace("'", "").replace('"', '')),
-                                  i.review_id,
-                              str(i.username.replace("'", "").replace('"', '')))) + ", "
-
-
-
+                                   i.review_date,
+                               int(i.user_rating),
+                               str(i.review_text.replace("'", "").replace('"', '')),
+                                   i.review_id,
+                               str(i.username.replace("'", "").replace('"', '')))) + ", "
         # remove hanging comma
         row_insertions = row_insertions[:-2]
         cursor_boi, connection = self.connect_to_database()
@@ -794,7 +803,6 @@ class Scraper():
                                                   review_id,
                                                   username)
                                                   VALUES """ + row_insertions + ";"
-
         # execute query
         cursor_boi.execute(query)
         connection.commit()
@@ -824,12 +832,13 @@ class Scraper():
             row_insertions += str((i.title, i.url)) + ", "
         row_insertions = row_insertions[:-2]
         cursor_boi, connection = self.connect_to_database()
-        query = """INSERT INTO netflix_urls(title, url) VALUES """ + row_insertions + ";"
+        query = "INSERT INTO netflix_urls(title, url) VALUES " + row_insertions + ";"
         cursor_boi.execute(query)
         connection.commit()
         cursor_boi.close()
         connection.close()
         print("Insertion Complete")
+
 
 def checker(str):
     """
@@ -837,8 +846,8 @@ def checker(str):
     """
     valid_inputs = ['y', 'yes', 'n', 'no']
     var = input(str).lower()
-    while var in valid_inputs == False:
-        print("That's not a valid input!")
+    while not var in valid_inputs:
+        print("Valid inputs for this question are y, n, yes, and no.")
         var = input(str).lower()
     return var
 
@@ -846,17 +855,19 @@ if __name__ == "__main__":
     start = int(input("Start at which row? "))
     end = int(input("End at which row? (Inclusive)"))
     if start > end:
-        raise ValueError("The starting position needs to be less than or equal to end position.")
+        raise ValueError("The starting position needs to be less than or \
+equal to the end position.")
 
     max_iter = int(input("Maximum iterations? "))
     if max_iter < 1:
         raise ValueError("Maximum iterations must be positive.")
 
     scraper_instance = input("Which scraper instance is this? ")
-    s = Scraper(start,end,max_iter,scraper_instance)
+    s = Scraper(start, end, max_iter, scraper_instance)
     website = checker("Are you scraping IMDB?")
     if website == "y" or website == "yes":
-        update = checker("Do you want to reject reviews already in the database?")
+        update = checker("Do you want to reject reviews already \
+in the database?")
         if update == "y" or update == "yes":
             ids = s.pull_ids(save=False)
             s.update(ids)
