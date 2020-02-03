@@ -1,0 +1,39 @@
+{% extends "public/templates/public_template.html" %}
+
+{% block title %}Groa Recommendations{% endblock %}
+
+{% block main %}
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+            <div class=page>
+                  <h1>Groa recommends these movies:</h1>
+                <form action='/export_recs' method='POST'>
+                    <input type="submit" value="Export my movie recs to CSV">
+                </form>
+                <form action='/resubmission' method='POST'>
+                    <input type="submit" value="Improve my recommendations">
+                    {% block content %}
+                        {{ data|safe }}
+                    {% endblock %}
+
+                    <h2>Hidden Gems you might enjoy</h2>
+                    <input type="submit" value="Improve my recommendations">
+                    {% block hidden %}
+                        {{ hidden_data|safe }}
+                    {% endblock %}
+
+                    <h2>Cult Movies (you might think they're underrated)</h2>
+                    <input type="submit" value="Improve my recommendations">
+                    {% block cult %}
+                        {{ cult_data|safe }}
+                    {% endblock %}
+                    <input type="submit" value="Improve my recommendations">
+                </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
