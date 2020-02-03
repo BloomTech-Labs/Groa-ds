@@ -45,21 +45,20 @@ Movie Recommendation Engine will use NLP to create unique recommendations based 
 - EC2
 - S3 Bucket
 - RDS
-- SageMaker
+- Elastic Beanstalk
 
 #### Machine Learning:
 
-- [Huggingface Transformers](https://github.com/huggingface/transformers)
-- Sklearn
+- [Gensim](https://radimrehurek.com/gensim/)
+- [Sklearn](https://scikit-learn.org/stable/index.html)
 
 #### Data Collection/Manipulation:
 
 - [Pandas](https://pypi.org/project/pandas/)
-- [Numpy]
-- [SciPy]
-- [IMDbPy]
-- [Psycopg2]
-- [BeautifulSoup]
+- [Numpy](https://numpy.org/)
+- [SciPy](https://www.scipy.org)
+- [Psycopg2](https://pypi.org/project/psycopg2)
+- [BeautifulSoup](https://pypi.org/project/beautifulsoup4/)
 
 ### Predictions
 
