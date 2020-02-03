@@ -1,6 +1,6 @@
 # Gróa
 
-You can check out the [live demo of Gróa here](http://groa.us/).
+You can check out the [live demo of Gróa here](http://www.groa.us/).
 
 ## Contributors
 
