@@ -187,24 +187,24 @@ class Recommender(object):
             self.model = w2v_model
         return self.model
 
-    def _get_info(self, id):
+    def _get_info(self, id, score=None):
         """Takes an id string and returns the movie info with a url."""
         try:
             info_query = f"""
             select m.primary_title, m.start_year, r.average_rating, r.num_votes
             from movies m
             join ratings r on m.movie_id = r.movie_id
-            where m.movie_id = '{id[0]}'"""
+            where m.movie_id = '{id}'"""
             self.cursor_dog.execute(info_query)
         except Exception as e:
-            return tuple([f"Movie title unknown. ID:{id[0]}", None, None, None, None, None, id[0]])
+            return tuple([f"Movie title unknown. ID:{id}", None, None, None, None, None, id])
 
         t = self.cursor_dog.fetchone()
         if t:
-            title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id[0]}/", t[2], t[3], id[1], id[0]])
+            title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id}/", t[2], t[3], score, id])
             return title
         else:
-            return tuple([f"Movie title not retrieved. ID:{id[0]}", None, None, None, None, None, id[0]])
+            return tuple([f"Movie title not retrieved. ID:{id}", None, None, None, None, None, id])
 
     def predict(self, input, bad_movies=[], hist_list=[], val_list=[],
                 ratings_dict = {}, checked_list=[], rejected_list=[],
@@ -288,7 +288,7 @@ class Recommender(object):
                 for i in feedback_list:
                     try:
                         f_vec = clf[i]
-                        movie_vec.append(f_vec*3) # heavily weight feedback
+                        movie_vec.append(f_vec*1.8) # weight feedback by adding multiplier here
                     except KeyError:
                         continue
             return np.mean(movie_vec, axis=0)
@@ -299,9 +299,9 @@ class Recommender(object):
                 v = _remove_dislikes(bad_movies, v, harshness=harshness)
             return clf.similar_by_vector(v, topn= n+1)[1:]
 
-        def _remove_dupes(recs, input, bad_movies, hist_list=[], checked_list=[]):
+        def _remove_dupes(recs, input, bad_movies, hist_list=[], feedback_list=[]):
             """remove any recommended IDs that were in the input list"""
-            all_rated = input + bad_movies + hist_list + checked_list
+            all_rated = input + bad_movies + hist_list + feedback_list
             nonlocal dupes
             dupes = [x for x in recs if x[0] in input]
             return [x for x in recs if x[0] not in all_rated]
@@ -320,15 +320,15 @@ class Recommender(object):
 
         aggregated = _aggregate_vectors(input, checked_list)
         recs = _similar_movies(aggregated, bad_movies, n=n)
-        recs = _remove_dupes(recs, input, bad_movies, hist_list, checked_list)
-        formatted_recs = [self._get_info(x) for x in recs]
+        recs = _remove_dupes(recs, input, bad_movies, hist_list, checked_list + rejected_list)
+        formatted_recs = [self._get_info(x[0], x[1]) for x in recs]
         if scoring and val_list:
             print(f"The model recommended {_score_model(recs, val_list)} movies that were on the watchlist!\n")
             print(f"\t\t Average Rating: {sum([i[3] for i in formatted_recs if i[3] is not None])/len(formatted_recs)}\n")
         if show_vibes:
             print("You'll get along with people who like: \n")
             for x in dupes:
-                print(self._get_info(x))
+                print(self._get_info(x[0], x[1]))
             print('\n')
         if rec_movies:
             return formatted_recs
