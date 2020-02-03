@@ -1,6 +1,6 @@
 # Gróa
 
-You can check out the [live demo of Gróa here](http://groa-env.7med3gpage.us-west-1.elasticbeanstalk.com/).
+You can check out the [live demo of Gróa here](http://www.groa.us/).
 
 ## Contributors
 
