@@ -31,7 +31,7 @@ def index():
     return render_template("public/Homepage.html")
 
 @application.route("/letterboxd_upload", methods=["GET", "POST"])
-def letterboxd_upload():
+def lb_upload():
     '''
     allows you to upload your ratings csv that you got from imdb
     '''
@@ -308,7 +308,7 @@ def imdb_submit():
                     ascending=False).head().to_html(index=False))
 
 @application.route('/imdb_recommendations',methods=['GET','POST'])
-def submit():
+def imdb_recommend():
     '''
     Shows recommendations from your IMDB choices
     '''
@@ -372,8 +372,8 @@ def submit():
     return render_template('public/Groa_recommendations.html',
                             data=recs.to_html(index=False,escape=False))
 
-@application.route('/manualreview', methods=['GET', 'POST'])
-def review():
+@application.route('/manual_review', methods=['GET', 'POST'])
+def manual_review():
     '''
     Unfinished, lets a user input a review manually
     '''
@@ -390,8 +390,8 @@ def review():
         #dropdown of post sucessful!
 
 
-@application.route('/watchhistory')
-def watchhistory():
+@application.route('/watch_history')
+def watch_history():
     #checkout the twitoff app to do /watchhistory/user
 
     '''start scraper on user's rating page to get rated movies because
@@ -400,8 +400,8 @@ def watchhistory():
     '''
     #display scraped data? display whether they've actually reviewed it and if not, have a link to redirect to review page?
 
-@application.route('/userlookup',methods = ["GET","POST"])
-def userlookup():
+@application.route('/user_search',methods = ["GET","POST"])
+def user_search():
 
     users = read_users("Usernames.txt")
     #users = get_imdb_users()
@@ -443,8 +443,8 @@ def download_recs():
     except Exception as e:
         print(e)
 
-@application.route('/userreviews',methods = ["GET","POST"])
-def userreviews():
+@application.route('/user_reviews',methods = ["GET","POST"])
+def user_reviews():
     name = request.form['Username']
     df = imdb_user_lookup(name)
     return render_template('public/lookup_submission.html', data=df.head(10).to_html(index=False))

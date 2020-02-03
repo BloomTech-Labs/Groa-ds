@@ -105,7 +105,7 @@ Go to your EB environment and upload your flask zip file
 ### CLI Upload <a name="cli"></a>
 Coming Soon
 ## Built With <a name="dependency"></a>
-[Flask](https://flask.palletsprojects.com/en/1.1.x/)[Pandas](https://pandas.pydata.org/pandas-docs/stable/)[Gensim](https://radimrehurek.com/gensim/auto_examples/index.html)[Psycopg2](https://www.psycopg.org/docs/)[AWS Elastic Beanstalk](https://docs.aws.amazon.com/elastic-beanstalk/index.html)
+[Flask](https://flask.palletsprojects.com/en/1.1.x/), [Pandas](https://pandas.pydata.org/pandas-docs/stable/), [Gensim](https://radimrehurek.com/gensim/auto_examples/index.html), [Psycopg2](https://www.psycopg.org/docs/), [AWS Elastic Beanstalk](https://docs.aws.amazon.com/elastic-beanstalk/index.html)
 ## What's Next <a name="next"></a>
 
 

@@ -1,0 +1,36 @@
+{% extends "public/templates/public_template.html" %}
+
+{% block title %}Letterboxd Upload{% endblock %}
+
+{% block main %}
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+
+            <h1>Letterboxd Upload</h1>
+            <hr>
+            
+            <form action="/letterboxd_uploaded" method="POST" enctype="multipart/form-data">
+            
+                <div class="form-group">
+                    <label>Select file</label>
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" name="file" id="file">
+                      <label class="custom-file-label" for="file">Select file...</label>
+                    </div>
+                  </div>
+          
+                  <button type="submit" class="btn btn-primary">Upload File</button>
+                  
+                  <pre>
+                      
+                    {{ df }}
+
+                  </pre>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
