@@ -1,0 +1,84 @@
+{% extends "public/templates/public_template.html" %}
+
+{% block title %}IMDB Upload{% endblock %}
+
+{% block main %}
+<div class="container">
+    <div class="row">
+        <div class="col">
+          <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+          <div class=page>
+            <br>
+            <h1>Customize your recommendations</h1>
+            <h2>Tell Groa a bit more about yourself.</h2>
+            <br>
+            <h5>Your most recent ratings:</h5>
+            {% block content %}
+              {{ data|safe }}
+            {% endblock %}
+          </div>
+          <form action='/imdb_recommendations' method='post'>
+            <div class="slidecontainer">
+              <input type="range" min="1" max="10" value="6" class="slider" id="myRange" name="bad_rate">
+              <p>Highest star rating (out of 10) I give to movies I dislike: <span id="demo"></span></p>
+            </div>
+            <div class="slidecontainer">
+              <input type="range" min="1" max="10" value="8" class="slider2" id="myRange2" name="good_rate">
+              <p>Lowest star rating (out of 10) I give to movies I like: <span id="demo2"></span></p>
+            </div>
+           <!-- <div class="slidecontainer">
+              <input type="range" min="1920" max="2020" value="1920" class="slider3" id="myRange3" name="year_min">
+              <p>Minimum Year Value: <span id="demo3"></span></p>
+            </div>
+            <div class="slidecontainer">
+              <input type="range" min="1920" max="2020" value="2020" class="slider4" id="myRange4" name="year_max">
+              <p>Maximum Year Value: <span id="demo4"></span></p>
+            </div> -->
+            <!-- <input type="checkbox" name="hidden" value="hidden_gems_check">Add Hidden Gems to my search<br>
+            <input type="checkbox" name="cult" value="cult_movies_check">Add Cult movies to my search<br> -->
+            <!-- <input type="checkbox" name="Hidden Gems" value="Hidden gems">Add Hidden Gems to my search<br>
+            <input type="checkbox" name="Cult" value="Cult">Add Cult movies to my search<br> -->
+            <input type="checkbox" name="extra_weight" value="parabolic_weighting_check"> Give extra weight to my extreme ratings, like 1 or 10 stars (experimental)<br>
+
+
+
+            <input type="submit" value="Get Recommendations!">
+          </form>
+
+          <script>
+            var slider = document.getElementById("myRange");
+            var output = document.getElementById("demo");
+            output.innerHTML = slider.value;
+
+            slider.oninput = function() {
+              output.innerHTML = this.value;
+            }
+
+            var slider2 = document.getElementById("myRange2");
+            var output2 = document.getElementById("demo2");
+            output2.innerHTML = slider2.value;
+
+            slider2.oninput = function() {
+              output2.innerHTML = this.value;
+            }
+
+            var slider3 = document.getElementById("myRange3");
+            var output3 = document.getElementById("demo3");
+            output3.innerHTML = slider3.value;
+
+            slider3.oninput = function() {
+              output3.innerHTML = this.value;
+            }
+
+            var slider4 = document.getElementById("myRange4");
+            var output4 = document.getElementById("demo4");
+            output4.innerHTML = slider4.value;
+
+            slider4.oninput = function() {
+              output4.innerHTML = this.value;
+            }
+          </script>
+    </div>
+  </div>
+</div>
+{% endblock %}

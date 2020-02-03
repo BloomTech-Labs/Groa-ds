@@ -2,3 +2,6 @@
 Pipfile.lock
 .vscode/
 .env
+
+Flask/flask_session/*
+!Flask/flask_session/.keep

@@ -705,6 +705,7 @@ status code {fulltext.status_code}!")
                         except Exception:
                             rating.append(11)
                         username.append(item.find(class_="name").get_text())
+
                         if item.find('span', '_nobr').get_text():
                             dates = item.find('span', '_nobr').get_text()
                             date.append(dates)
