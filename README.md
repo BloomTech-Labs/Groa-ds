@@ -1,6 +1,6 @@
 # Gróa
 
-In the current iteration this project does not have front end components. When those elements go live they will be linked here.
+You can check out the [live demo of Gróa here](http://groa-env.7med3gpage.us-west-1.elasticbeanstalk.com/).
 
 ## Contributors
 
