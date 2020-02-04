@@ -4,11 +4,12 @@ import pandas as pd
 import psycopg2
 import re
 import os
+import time
 import warnings
 
 warnings.filterwarnings('ignore')
 
-
+my_time = time.time() # global time setter for timer_func() debugging purposes
 
 def fill_id(id):
     """Adds leading zeroes back if necessary. This makes the id match the database."""
@@ -157,6 +158,7 @@ class Recommender(object):
         self.model_path = model_path
         self.model = None
         self.cursor_dog = None
+        self.id_book = pd.read_csv('title_basics_small.csv')
 
     def connect_db(self):
         """connect to database, create cursor"""
@@ -205,6 +207,17 @@ class Recommender(object):
             return title
         else:
             return tuple([f"Movie title not retrieved. ID:{id}", None, None, None, None, None, id])
+
+    def get_most_similar_title(self, id, id_list):
+        """Get the title of the most similar movie to id from id_list"""
+        clf = self._get_model()
+        vocab = clf.wv.vocab
+        if id not in vocab:
+            return ""
+        id_list = [id for id in id_list if id in vocab] # ensure all in vocab
+        id_book = self.id_book
+        match = clf.wv.most_similar_to_given(id, id_list)
+        return id_book['primaryTitle'].loc[id_book['tconst'] == int(match)].values[0]
 
     def predict(self, input, bad_movies=[], hist_list=[], val_list=[],
                 ratings_dict = {}, checked_list=[], rejected_list=[],
@@ -332,3 +345,9 @@ class Recommender(object):
             print('\n')
         if rec_movies:
             return formatted_recs
+
+def timer_func(printme=""):
+    """Prints seconds passed since last checkpoint, for debugging purposes."""
+    global my_time
+    print(printme, "--- %s seconds ---" % (time.time() - my_time))
+    my_time = time.time()

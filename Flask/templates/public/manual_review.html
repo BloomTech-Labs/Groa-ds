@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <body>
-
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
 <form action="/action_page.php" id="usrform">
   Username: <input type="text" name="usrname"><br><br>
   Date:<input type="date" name="date" ><br><br>
@@ -18,7 +18,7 @@
     <option value="2 stars">2</option>
     <option value="1 stars">1</option>
   </select>
-  
+
 </form>
 <br>
 

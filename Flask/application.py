@@ -14,14 +14,15 @@ from psycopg2_blob import seventoten,query2,id_to_title,get_imdb_users,imdb_user
 from w2v_inference import *
 from r2v_inference import *
 
-
 application = Flask(__name__)
 application.secret_key = 'secret_bee'
 SESSION_TYPE = 'filesystem'
 application.config.from_object(__name__)
 Session(application)
 
-
+def links(x):
+    '''Changes URLs to actual links'''
+    return '<a href="%s">Go to the IMDb page</a>' % (x)
 
 @application.route("/")
 def index():
@@ -90,8 +91,8 @@ def lb_recommend():
     reviews = pd.read_json(session['reviews'])
     watched = pd.read_json(session['watched'])
     watchlist = pd.read_json(session['watchlist'])
-    bad_rate = float(request.form['bad_rate']) 
-    good_rate = float(request.form['good_rate']) 
+    bad_rate = float(request.form['bad_rate'])
+    good_rate = float(request.form['good_rate'])
     hidden = "hidden" in request.form # user requests hidden gems
     cult = "cult" in request.form # user requests cult movies
     extra_weight = "extra_weight" in request.form # user requests cult movies
@@ -104,7 +105,9 @@ def lb_recommend():
 
     # prep user watch history
     good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
-                                        ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
+                                        ratings, watched, watchlist,
+                                        good_threshold=good_rate,
+                                        bad_threshold=bad_rate)
 
     # pass dictionary of ratings if the user requests extra weighting
     if extra_weight:
@@ -121,10 +124,7 @@ def lb_recommend():
     # prep user reviews
     reviews = prep_reviews(reviews)
 
-    def links(x):
-        '''Changes URLs to actual links'''
-        return '<a href="%s">Go to the IMDb page</a>' % (x)
-
+    # make empty dataframes to return if either option is deselected
     hidden_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
             'User Rating', 'Reviewer', 'Review', 'Movie ID'])
     cult_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
@@ -151,6 +151,7 @@ def lb_recommend():
             hidden_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
                 + hidden_df['Movie ID'] + '>  Hard No<br>'
 
+    recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
     recs['URL'] = recs['URL'].apply(links)
     recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
         + recs['Movie ID'] + '>  Good idea<br>'
@@ -213,32 +214,29 @@ def resubmit():
     except:
         pass
     extra_weight = session['extra_weight']
-
     s = Recommender('w2v_limitingfactor_v1.model')
     s.connect_db()
-
     # pass dictionary of ratings if the user requests extra weighting
     if extra_weight:
         weighting = ratings_dict
     else:
         weighting = {}
 
+    stride = len(checked_list) + len(rejected_list) # number of recs to replace
+
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
                 ratings_dict=weighting, checked_list=checked_list,
                 rejected_list=rejected_list,
-                n=500, harshness=1, scoring=False),
+                n=100+stride, harshness=1, scoring=False),
                 columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes',
                 'Similarity Score','Movie ID'])
-    def links(x):
-        '''Changes URLs to actual links'''
-        return '<a href="%s">Go to the IMDb page</a>' % (x)
 
+    recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
     recs['URL'] = recs['URL'].apply(links)
     recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
             + recs['Movie ID'] + '>  Good idea<br>'
     recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
         + recs['Movie ID'] + '>  Hard No<br>'
-
     id_list2 = recs['Movie ID'].to_list()
     difference_list = list(set(id_list2).difference(set(id_list)))
     def bool_func(column,id_list):
@@ -253,17 +251,14 @@ def resubmit():
         b = ['NEW!' if x==True else '' for x in bool_list]
         return b
     recs['New Rec?'] = bool_func(recs['Movie ID'],difference_list)
-
     cols=recs.columns.to_list()
     recs=recs[cols[-1:]+cols[:-1]] #puts New Rec? column as column number 1 or number 0 if you're a computer
-
     session['id_list'] = json.dumps(id_list2)
     session['checked_list'] = json.dumps(checked_list)
     print('checked_list saved:', checked_list)
     session['rejected_list'] = json.dumps(rejected_list)
     session['recs'] = recs.to_json()
     recs.drop(columns='Movie ID')
-
     return render_template('public/re_recommendations.html',
                             data=recs.to_html(escape=False,index=False))
 
@@ -303,7 +298,7 @@ def imdb_submit():
             ratings['Const'] = ratings['Const'].str.strip('t')
             #dropping what I think to be extraneous
             ratings = ratings.drop(columns=['Title Type','Num Votes','Directors','Genres',
-                                    'URL','Release Date'])
+                                    'URL','Release Date'], errors='ignore')
             session['ratings'] = ratings.to_json()
             # dump ratings and reviews into database and then call model on username.
             # Said username is in the zipfile name<EZ>.
@@ -317,12 +312,12 @@ def imdb_recommend():
     Shows recommendations from your IMDB choices
     '''
 
-    
+
     ratings = pd.read_json(session['ratings'])
 
     bad_rate = int(request.form['bad_rate'])/2
     good_rate = int(request.form['good_rate'])/2
-    
+
     watched = None # IMDb user only uploads ratings
     watchlist = None
     #year_min=int(request.form['year_min'])
@@ -351,9 +346,8 @@ def imdb_recommend():
                         ratings_dict=weighting, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating',
                         '# Votes', 'Similarity Score','Movie ID'])
-    def links(x):
-        '''Changes URLs to actual links'''
-        return '<a href="%s">Go to the IMDb page</a>' % (x)
+
+    recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
     recs['URL'] = recs['URL'].apply(links)
     recs['Vote Up'] = '<input type="checkbox" name="downvote" value=' \
         + recs['Movie ID'] + '> Good idea<br>'
