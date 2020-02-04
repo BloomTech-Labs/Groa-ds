@@ -134,12 +134,8 @@ def read_users(path):
     users = []
     with open(path,'r') as file:
         users = file.readlines()
-
     return users
 
-#name = "SnoopyStyle"
-#df = imdb_user_lookup(name)
-#print(df.head(10))
 
 
 

@@ -315,8 +315,12 @@ def imdb_recommend():
 
     #need to configure input for current model but ulitmately may not need to for updated model
     ratings = pd.read_json(session['ratings'])
-    bad_rate = int(request.form['bad_rate'])/2
-    good_rate = int(request.form['good_rate'])/2
+    try:
+        bad_rate = int(request.form['bad_rate'])/2
+        good_rate = int(request.form['good_rate'])/2
+    except:
+        good_rate = float(request.form['lb_good_rate'])
+        bad_rate = float(request.form['lb_bad_rate'])
     watched = None # IMDb user only uploads ratings
     watchlist = None
     #year_min=int(request.form['year_min'])
@@ -372,41 +376,6 @@ def imdb_recommend():
     return render_template('public/Groa_recommendations.html',
                             data=recs.to_html(index=False,escape=False))
 
-@application.route('/manual_review', methods=['GET', 'POST'])
-def manual_review():
-    '''
-    Unfinished, lets a user input a review manually
-    '''
-    if request.method == 'POST':
-        #gets these things from user
-        title = request.form['title']
-        review_title = request.form['review_title']
-        review_text = request.form['review']
-        user_rating = request.form['rating']
-        username = request.form['username']
-        '''create new review entry, first querying movie_id from movie_title,
-        then adding the above, along with the day's date, into the reviews table.
-        It would be generating id and zeros for the two helpful things.'''
-        #dropdown of post sucessful!
-
-
-@application.route('/watch_history')
-def watch_history():
-    #checkout the twitoff app to do /watchhistory/user
-
-    '''start scraper on user's rating page to get rated movies because
-    for us, rating = watched. If user's ratings are private, return message to
-    please make ratings public. That's probably better than asking for their login info.
-    '''
-    #display scraped data? display whether they've actually reviewed it and if not, have a link to redirect to review page?
-
-@application.route('/user_search',methods = ["GET","POST"])
-def user_search():
-
-    users = read_users("Usernames.txt")
-    #users = get_imdb_users()
-    return render_template('public/user_search.html',users = users)
-
 @application.route('/export_recs', methods=['POST'])
 def download_recs():
     """Creates a download popup"""
@@ -443,11 +412,46 @@ def download_recs():
     except Exception as e:
         print(e)
 
+@application.route('/user_search',methods = ["GET","POST"])
+def user_search():
+
+    users = read_users("Usernames.txt")
+    #users = get_imdb_users()
+    return render_template('public/user_search.html',users = users)
+
 @application.route('/user_reviews',methods = ["GET","POST"])
 def user_reviews():
     name = request.form['Username']
     df = imdb_user_lookup(name)
     return render_template('public/user_reviews.html', data=df.head(10).to_html(index=False), name=name)
+
+@application.route('/manual_review', methods=['GET', 'POST'])
+def manual_review():
+    '''
+    Unfinished, lets a user input a review manually
+    '''
+    if request.method == 'POST':
+        #gets these things from user
+        title = request.form['title']
+        review_title = request.form['review_title']
+        review_text = request.form['review']
+        user_rating = request.form['rating']
+        username = request.form['username']
+        '''create new review entry, first querying movie_id from movie_title,
+        then adding the above, along with the day's date, into the reviews table.
+        It would be generating id and zeros for the two helpful things.'''
+        #dropdown of post sucessful!
+
+
+@application.route('/watch_history')
+def watch_history():
+    #checkout the twitoff app to do /watchhistory/user
+
+    '''start scraper on user's rating page to get rated movies because
+    for us, rating = watched. If user's ratings are private, return message to
+    please make ratings public. That's probably better than asking for their login info.
+    '''
+    #display scraped data? display whether they've actually reviewed it and if not, have a link to redirect to review page?
 
 
 if __name__ == "__main__":
