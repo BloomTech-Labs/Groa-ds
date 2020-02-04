@@ -47,6 +47,10 @@
                     {% endblock %}
                     <input type="submit" value="Improve my recommendations">
                 </form>
+                <form action='/export_recs' method='POST'>
+                    <input type="submit" name="button" value="Export my cult movie recs to CSV">
+                    <input type="submit" name="button" value="Export my hidden gems recs to CSV">
+                </form>
         </div>
     </div>
 </div>

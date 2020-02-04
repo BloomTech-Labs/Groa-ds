@@ -109,17 +109,21 @@ def imdb_user_lookup(name):
        FROM movies m
        JOIN reviews r ON m.movie_id = r.movie_id
        WHERE username='{name}'"""
-    df = pd.read_sql_query(query, connection)
-    
-    df['review_date'] = pd.to_datetime(df['review_date'])
-    df['review_date'] = df['review_date'].dt.strftime('%Y-%m-%d').astype(str)
-        
-    df.columns = ['Movie Title','Year Released','Date Reviewed','User Rating',
-    'Review Title','Review Text']
-    
-    print("values replaced")
-    return df
-     
+    try:
+        df = pd.read_sql_query(query, connection)
+
+        df['review_date'] = pd.to_datetime(df['review_date'])
+        df['review_date'] = df['review_date'].dt.strftime('%Y-%m-%d').astype(str)
+
+        df.columns = ['Movie Title','Year Released','Date Reviewed','User Rating',
+        'Review Title','Review Text']
+
+        print("values replaced")
+        return df
+    except Exception as e:
+        print(e)
+        return pd.DataFrame(columns=['No User Found!'])
+
 
 def save_users():
     users = get_imdb_users()
@@ -135,7 +139,3 @@ def read_users(path):
     with open(path,'r') as file:
         users = file.readlines()
     return users
-
-
-
-

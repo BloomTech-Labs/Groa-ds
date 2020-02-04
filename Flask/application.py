@@ -159,6 +159,10 @@ def lb_recommend():
     id_list = recs['Movie ID'].to_list()
 
     session.clear()
+    if hidden:
+        session['hidden_df'] = hidden_df.to_json()
+    if cult:
+        session['cult_df'] = cult_df.to_json()
     session['recs'] = recs.to_json()
     session['id_list'] = json.dumps(id_list)
     session['good_list'] = json.dumps(good_list)
@@ -239,7 +243,7 @@ def resubmit():
     difference_list = list(set(id_list2).difference(set(id_list)))
     def bool_func(column,id_list):
         '''
-        This function checks the "Movie ID" column against the id_list and 
+        This function checks the "Movie ID" column against the id_list and
         will give booleans on whether the ID in the column is present on the list.
         If it is present, then it changes the entry from True to NEW!.
         '''
@@ -248,8 +252,8 @@ def resubmit():
             bool_list.append(x in id_list)
         b = ['NEW!' if x==True else '' for x in bool_list]
         return b
-    recs['New Rec?'] = bool_func(recs['Movie ID'],difference_list) 
-    
+    recs['New Rec?'] = bool_func(recs['Movie ID'],difference_list)
+
     cols=recs.columns.to_list()
     recs=recs[cols[-1:]+cols[:-1]] #puts New Rec? column as column number 1 or number 0 if you're a computer
 
@@ -378,7 +382,7 @@ def imdb_recommend():
 def download_recs():
     """Creates a download popup"""
     try:
-        tag = str(np.random.uniform())[2:]
+        tag = str(np.random.uniform())[2:7]
         os.makedirs('exports', exist_ok=True) # make temp dir with random name
         if "upvote" in request.form['button']:
             my_path = f'exports/Groa_upvotes{tag}.csv'
@@ -394,7 +398,22 @@ def download_recs():
             recs_df = pd.DataFrame(checked_info,
                                     columns=['Title', 'Year', 'URL',
                                     'Avg. Rating', '# Votes','Blank', 'ID'])
-            recs_df = recs_df.drop(columns=['Blank', 'ID']) # drop ID because
+            # drop ID because Excel truncates numbers with leading zeroes
+            recs_df = recs_df.drop(columns=['Blank', 'ID'])
+        elif "cult" in request.form['button']:
+            my_path = f'exports/Groa_cult_movies{tag}.csv'
+            try:
+                recs_df = pd.read_json(session['cult_df'])
+            except Exception as e:
+                print(e)
+                return None
+        elif "hidden" in request.form['button']:
+            my_path = f'exports/Groa_hidden_gems{tag}.csv'
+            try:
+                recs_df = pd.read_json(session['hidden_df'])
+            except Exception as e:
+                print(e)
+                return None
         else:
             my_path = f'exports/Groa_recs{tag}.csv'
             recs_df = pd.read_json(session['recs'])
@@ -405,8 +424,7 @@ def download_recs():
             return_data.write(myfile.read())
         return_data.seek(0) # move cursor to start
         os.remove(my_path) # delete temp directory
-        return send_file(return_data, mimetype='text/csv',
-                         attachment_filename='Groa_recs.csv')
+        return send_file(return_data, mimetype='text/csv')
     except Exception as e:
         print(e)
 
