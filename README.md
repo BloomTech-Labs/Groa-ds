@@ -53,7 +53,7 @@ Movie Recommendation Engine will use NLP to create unique recommendations based 
 
 ### Predictions
 
-Based on the user's movie ratings and reviews, provide recommendations for movies to watch that they have never before considered watching. We can do this by vectorizing the user's Letterboxd or IMDb reviews and finding KNN matches from 22GB worth of movie reviews. Results can be filtered to remove movies the user has already watched, so long as they provide their data exported from one of those sites.
+Based on the user's movie ratings and reviews, provide recommendations for movies to watch that they have never before considered watching. We can do this by vectorizing the user's Letterboxd or IMDb reviews and finding cosine-similar matches from 22GB worth of movie reviews. Results can be filtered to remove movies the user has already watched, so long as they provide their data exported from one of those sites.
 
 ###  Explanatory Variables
 
