@@ -15,11 +15,4 @@ decouple = "*"
 
 [requires]
 python_version = "3.7.5"
-=======
 python-decouple = "*"
-
-
-
-[requires]
-python_version = "3.7.4"
->>>>>>> ericscrape
