@@ -90,8 +90,8 @@ def lb_recommend():
     reviews = pd.read_json(session['reviews'])
     watched = pd.read_json(session['watched'])
     watchlist = pd.read_json(session['watchlist'])
-    bad_rate = int(request.form['bad_rate']) / 2
-    good_rate = int(request.form['good_rate']) / 2
+    bad_rate = float(request.form['bad_rate']) 
+    good_rate = float(request.form['good_rate']) 
     hidden = "hidden" in request.form # user requests hidden gems
     cult = "cult" in request.form # user requests cult movies
     extra_weight = "extra_weight" in request.form # user requests cult movies
@@ -313,14 +313,12 @@ def imdb_recommend():
     Shows recommendations from your IMDB choices
     '''
 
-    #need to configure input for current model but ulitmately may not need to for updated model
+    
     ratings = pd.read_json(session['ratings'])
-    try:
-        bad_rate = int(request.form['bad_rate'])/2
-        good_rate = int(request.form['good_rate'])/2
-    except:
-        good_rate = float(request.form['lb_good_rate'])
-        bad_rate = float(request.form['lb_bad_rate'])
+
+    bad_rate = int(request.form['bad_rate'])/2
+    good_rate = int(request.form['good_rate'])/2
+    
     watched = None # IMDb user only uploads ratings
     watchlist = None
     #year_min=int(request.form['year_min'])
