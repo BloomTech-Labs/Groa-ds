@@ -104,7 +104,9 @@ def lb_recommend():
 
     # prep user watch history
     good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
-                                        ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
+                                        ratings, watched, watchlist,
+                                        good_threshold=good_rate,
+                                        bad_threshold=bad_rate)
 
     # pass dictionary of ratings if the user requests extra weighting
     if extra_weight:
@@ -125,6 +127,7 @@ def lb_recommend():
         '''Changes URLs to actual links'''
         return '<a href="%s">Go to the IMDb page</a>' % (x)
 
+    # make empty dataframes to return if either option is deselected
     hidden_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
             'User Rating', 'Reviewer', 'Review', 'Movie ID'])
     cult_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
@@ -151,6 +154,7 @@ def lb_recommend():
             hidden_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
                 + hidden_df['Movie ID'] + '>  Hard No<br>'
 
+    recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
     recs['URL'] = recs['URL'].apply(links)
     recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
         + recs['Movie ID'] + '>  Good idea<br>'
