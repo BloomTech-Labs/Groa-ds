@@ -8,6 +8,7 @@
     <div class="row">
         <div class="col">
             <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+            <br>
             <h1>What Is Gróa?</h1>
             <p>The companies which have the resources to create an elegant Movie Recommendation Engine have a
                 profit motive aligned with recommending high cost proprietary content rather than films their customers would genuinely enjoy.
@@ -21,17 +22,17 @@
 
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item">
-                        <h5><a class="nav-link" href="/imdb_upload">IMDB Upload</a></h5>
+                        <h5><a class="nav-link" id="imdb" href="/imdb_upload">IMDB Upload</a></h5>
                         <p>User can upload a ratings.csv file of IMDb ratings export data.</p>
                     </li>
                     <br>
                     <li class="nav-item">
-                        <h5><a class="nav-link" href="/letterboxd_upload">Letterboxd Upload</a></h5>
+                        <h5><a class="nav-link" id="letterboxd" href="/letterboxd_upload">Letterboxd Upload</a></h5>
                         <p>User can upload a zipped file of Letterboxd export data.</p>
                     </li>
                     <br>
                     <li class="nav-item">
-                        <h5><a class="nav-link" href="/user_search">Search for User</a></h5>
+                        <h5><a class="nav-link" id="user_search" href="/user_search">Search for User</a></h5>
                         <p>User can search for a username from the database to view reviews written by that user.</p>
                     </li>
                 </ul>

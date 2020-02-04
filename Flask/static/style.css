@@ -24,11 +24,21 @@ table.dataframe, .dataframe th, .dataframe td {
 }
 
 .female th {
-    background-color: #77dd77;
-    color: white;
+    /* background-color: #77dd77; */
+    /* color: white; */
 }
 
-tr:nth-child(odd)		{ background-color:#eee; }
-tr:nth-child(even)	{ background-color:#fff; }
+/* tr:nth-child(odd)		{ background-color:#eee; } */
+/* tr:nth-child(even)	{ background-color:#fff; } */
 
-tr:hover            { background-color: #ffff99;}
+/* tr:hover            { background-color: #ffff99;} */
+
+#imdb {
+  color: #F39C12
+}
+#letterboxd {
+  color: #00bc8c
+}
+#user_search {
+  color: #3498DB
+}
