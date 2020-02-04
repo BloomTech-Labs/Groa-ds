@@ -30,7 +30,7 @@ A future team could solve this problem by storing the standard deviation of each
 movie's ratings in the movies table."""
 
 def prep_reviews(df):
-    """Converts Letterboxd reviews dataframe to list of concatenated reviews."""
+    """Converts Letterboxd reviews dataframe to list of reviews."""
     reviews = df['Review'].tolist()
     for i in reviews:
         i = i.lower()
