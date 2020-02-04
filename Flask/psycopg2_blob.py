@@ -117,7 +117,13 @@ def imdb_user_lookup(name):
         'Review Title','Review Text']
 
         print("values replaced")
-        return df
+        df = df.replace(r'\\n',' ', regex=True) #remove the newlines from the reviews and review titles
+        
+        ratings_export=df[['User Rating','Movie Title','Year Released']].copy()
+        ratings_export.columns = ['Rating','Name','Year']
+        reviews_export=df.filter(['Review Text'],axis=1)
+        reviews_export.columns = ['Review']
+        return (df, ratings_export, reviews_export)
     except Exception as e:
         print(e)
         return pd.DataFrame(columns=['No User Found!'])

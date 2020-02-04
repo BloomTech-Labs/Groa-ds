@@ -432,8 +432,114 @@ def user_search():
 @application.route('/user_reviews',methods = ["GET","POST"])
 def user_reviews():
     name = request.form['Username']
-    df = imdb_user_lookup(name)
+    df,ratings,reviews = imdb_user_lookup(name)
+
+    session['ratings']=ratings.to_json()
+    session['reviews']=reviews.to_json()
+    
     return render_template('public/user_reviews.html', data=df.head(10).to_html(index=False), name=name)
+
+@application.route('/user_search_recommendations', methods=['GET', 'POST'])
+def user_search_recommend():
+    '''
+    Shows recommendations from your Letterboxd choices
+    '''
+    ratings = pd.read_json(session['ratings'])
+    reviews = pd.read_json(session['reviews'])
+    watched = None
+    watchlist = None
+    bad_rate = int(request.form['bad_rate'])/2
+    good_rate = int(request.form['good_rate'])/2
+    hidden = "hidden" in request.form # user requests hidden gems
+    cult = "cult" in request.form # user requests cult movies
+    extra_weight = "extra_weight" in request.form # user requests cult movies
+
+    # connect
+    s = Recommender('w2v_limitingfactor_v1.model')
+    s.connect_db()
+    r = r2v_Recommender('r2v_Botanist_v1.1000.5.model')
+    r.connect_db()
+
+    # prep user watch history
+    good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
+                                        ratings, watched, watchlist,
+                                        good_threshold=good_rate,
+                                        bad_threshold=bad_rate)
+
+    # pass dictionary of ratings if the user requests extra weighting
+    if extra_weight:
+        weighting = ratings_dict
+    else:
+        weighting = {}
+
+    # get recs based on ratings, watch history
+    recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
+                        ratings_dict=weighting, scoring=True),
+                        columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes',
+                        'Similarity Score','Movie ID'])
+
+    # prep user reviews
+    reviews = prep_reviews(reviews)
+
+    # make empty dataframes to return if either option is deselected
+    hidden_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+            'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+    cult_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+            'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+
+    if hidden or cult:
+        cult_results, hidden_results = r.predict(reviews, hist_list=hist_list)
+        if cult:
+            cult_df = pd.DataFrame(cult_results,
+                columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+                        'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+            cult_df['URL'] = cult_df['URL'].apply(links)
+            cult_df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
+                + cult_df['Movie ID'] + '>  Good idea<br>'
+            cult_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
+                + cult_df['Movie ID'] + '>  Hard No<br>'
+        if hidden:
+            hidden_df = pd.DataFrame(hidden_results,
+                columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+                        'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+            hidden_df['URL'] = hidden_df['URL'].apply(links)
+            hidden_df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
+                + hidden_df['Movie ID'] + '>  Good idea<br>'
+            hidden_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
+                + hidden_df['Movie ID'] + '>  Hard No<br>'
+
+    recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
+    recs['URL'] = recs['URL'].apply(links)
+    recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
+        + recs['Movie ID'] + '>  Good idea<br>'
+    recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
+        + recs['Movie ID'] + '>  Hard No<br>'
+    id_list = recs['Movie ID'].to_list()
+
+    session.clear()
+    if hidden:
+        session['hidden_df'] = hidden_df.to_json()
+    if cult:
+        session['cult_df'] = cult_df.to_json()
+    session['recs'] = recs.to_json()
+    session['id_list'] = json.dumps(id_list)
+    session['good_list'] = json.dumps(good_list)
+    session['bad_list'] = json.dumps(bad_list)
+    session['hist_list'] = json.dumps(hist_list)
+    session['val_list'] = json.dumps(val_list)
+    session['ratings_dict'] = json.dumps(ratings_dict)
+    session['good_rate'] = good_rate
+    session['bad_rate'] = bad_rate
+    session['hidden'] = hidden
+    session['cult'] = cult
+    session['extra_weight'] = extra_weight
+
+    recs = recs.drop(columns='Movie ID')
+
+    return render_template('public/Groa_recommendations.html',
+                            data = recs.to_html(index=False,escape=False),
+                            hidden_data = hidden_df.to_html(index=False,escape=False),
+                            cult_data = cult_df.to_html(index=False,escape=False))
 
 @application.route('/manual_review', methods=['GET', 'POST'])
 def manual_review():
