@@ -303,7 +303,7 @@ def imdb_submit():
             ratings['Const'] = ratings['Const'].str.strip('t')
             #dropping what I think to be extraneous
             ratings = ratings.drop(columns=['Title Type','Num Votes','Directors','Genres',
-                                    'URL','Release Date'])
+                                    'URL','Release Date'], errors='ignore')
             session['ratings'] = ratings.to_json()
             # dump ratings and reviews into database and then call model on username.
             # Said username is in the zipfile name<EZ>.
