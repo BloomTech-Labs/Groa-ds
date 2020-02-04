@@ -138,7 +138,7 @@ less than the end position")
         df['date'] = df['date'].dt.strftime('%Y-%m-%d').astype(str)
         return df
 
-    def scrape(self, id_list=None):
+    def scrape(self):
         """
         Scrapes imbd.com for user review pages.
 
@@ -415,7 +415,7 @@ code {response.status_code}!")
         e = str(timedelta(seconds=elapsed))
         return e
 
-    def update(self, ids=None):
+    def update(self):
         '''
         Scrapes IMDB for reviews, then adds only new reviews.
 
