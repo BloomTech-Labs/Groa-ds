@@ -1,30 +1,30 @@
-import requests
-from bs4 import BeautifulSoup
-from decouple import config
-import pandas as pd
-import re
-import time
+from datetime import datetime, timedelta
+from getpass import getpass
 import logging
 import os
-import psycopg2
-from getpass import getpass
-from datetime import datetime
-import pandas as pd
 from random import randint
-from datetime import timedelta
+import re
 import sys
+import time
 
+from bs4 import BeautifulSoup # 4.8.2
+from decouple import config # 3.3
+import pandas as pd # 0.25.0
+import psycopg2 # 2.8.4
+import requests # 2.22.0
+# python 3.7.5
 
 class Scraper():
     """
     Scrapes IMDB, Letterboxd, and finder.
-    Start parameter is inclusive, end parameter is exclusive. However, if you
-    are usng the questionnaire at the bottom of this file, the end parameter is
-    adjusted to be inclusive. max_iter controls how many loops can be run
-    before the program inserts into the database. This indirectly controls the
-    size and frequency of insertions. scraper_instance must be unique for each
-    instance of the program to ensure their log files do not mess each other
-    up. Necessary environment variables are PASSWORD, HOST, PORT, and FILENAME.
+
+    Start and end parameters are inclusive. max_iter controls how
+    many loops can be run before the program inserts into the
+    database. This indirectly controls the size and frequency of
+    insertions. scraper_instance must be unique for each instance
+    of the program to ensure their log files do not mess each other
+    up. Necessary environment variables are PASSWORD, HOST, PORT,
+    and FILENAME.
     """
 
     def __init__(self, start, end, max_iter, scraper_instance):
@@ -46,8 +46,10 @@ class Scraper():
     def connect_to_database(self):
         """
         Connects to the database.
-        Uses class variables set from the environment and takes no arguments
-        other than self. Returns a cursor object and a connection object.
+
+        Uses class variables set from the environment and takes no
+        arguments other than self. Returns a cursor object and a
+        connection object.
         """
         connection = psycopg2.connect(
             database = self.database,
@@ -60,10 +62,12 @@ class Scraper():
 
     def get_ids(self):
         '''
+        Looks for a csv and converts it to a list of movie ids.
+
         Takes in the path to a file to read into a dataframe.
-        Uses a class variable set from environment variable FILENAME to look
-        for a csv formatted after the tarball released by IMDB.com. Returns a
-        list
+        Uses a class variable set from environment variable
+        FILENAME to look for a csv formatted after the tarball
+        released by IMDB.com. Returns a list.
         '''
         df = pd.read_csv(self.filename, encoding='ascii', header=None)
 
@@ -136,12 +140,13 @@ less than the end position")
 
     def scrape(self, id_list=None):
         """
-        Scrapes imbd.com for review pages.
+        Scrapes imbd.com for user review pages.
 
-        create_log, make_dataframe, and insert_rows are intended to be used
-        inside this function. Takes in the id of the movie in "ttxxxxxxx"
-        format, robust to different numbers of numerals. Fails gracefully on
-        movies with no reviews, moving on without returning anything.
+        create_log, make_dataframe, and insert_rows are intended to be
+        used inside this function. Takes in the id of the movie in
+        "ttxxxxxxx" format, robust to different numbers of numerals.
+        Fails gracefully on movies with no reviews, moving on without
+        returning anything.
         """
         id_list = self.current_ids if id_list is None else id_list
 
@@ -235,7 +240,7 @@ code {response.status_code}!")
                         key = load['data-key']
                         # exists only if there is a "load More" button
                     except Exception:
-                        break  # End the while loop and go to next movie id
+                        break  # Go to next movie id
                     url_reviews = url_short + 'reviews/_ajax?paginationKey=' + key
                     time.sleep(randint(3, 6))
                     response = requests.get(url_reviews)
@@ -281,9 +286,10 @@ code {response.status_code}!")
 
     def locate(self, last_id):
         '''
-        This function takes in the last id used for scraping and tells you its
-        index in the master list of movie ids and the curent ids being used. it
-        also will tell you how many more ids there are left to scrape.
+        This function takes in the last id used for scraping and tells
+        you its index in the master list of movie ids and the curent ids
+        being used. it also will tell you how many more ids there are
+        left to scrape.
         '''
         self.pickup = self.all_ids.index(last_id)
 
@@ -296,9 +302,9 @@ code {response.status_code}!")
     def insert_rows(self, df):
         """
         Connects to the database and inserts reviews as new rows.
-        Takes a dataframe and formats it into a very long string to convert to
-        SQL. Connects to the database, executes the query, and closes the
-        cursor and connection.
+        Takes a dataframe and formats it into a very long string to
+        convert to SQL. Connects to the database, executes the query,
+        and closes the cursor and connection.
         """
         # convert rows into tuples
         row_insertions = ""
@@ -338,7 +344,10 @@ code {response.status_code}!")
 
     def pull_ids(self, save=True, filename=False):
         '''
-        Connects to the database and returns all of the review ids as a list.
+        Connects to the database and returns all ids as a list.
+
+        Returns a list of review and movie ids. Pass save=False if
+        you don't want to make a new file with the ids.
         '''
         self.start_timer()
         print("Connecting to database...")
@@ -348,7 +357,7 @@ code {response.status_code}!")
             print("Connected.")
             query = "SELECT review_id, movie_id FROM reviews"
             cursor.execute(query)
-            # put all of the review/movie ids into a list (a list of tuples)
+            # put all of the review/movie ids into a list of tuples
             print("Fetching IDs...")
             self.ids = cursor.fetchall()
             cursor.close()
@@ -408,18 +417,20 @@ code {response.status_code}!")
 
     def update(self, ids=None):
         '''
-        Scrapes IMDB for reviews, then adds those not already in the database.
+        Scrapes IMDB for reviews, then adds only new reviews.
+
         Process:
         1) Each unique movie ID is used to search IMBd for its movie, and
         the reviews are sorted by recency.
-        2) The top review will have its ID checked against review IDs in the
-        database to see if there is a match.
+        2) The top review will have its ID checked against review IDs in
+        the database to see if there is a match.
         3) If there isn't a match (meaning that the review ID is not yet
-        in the list of review IDs) that review will be saved and step 2 will
-        be repeated with the next review on the page.
-        4) Once the function comes across a review with its review ID already
-        in the database, it will be the last review scraped for that movie ID
-        and the whole process is repeated with the next unique movie ID.
+        in the list of review IDs) that review will be saved and step 2
+        will be repeated with the next review on the page.
+        4) Once the function comes across a review with its review ID
+        already in the database, it will be the last review scraped for
+        that movie ID and the whole process is repeated with the next
+        unique movie ID.
         '''
         ids = self.ids if ids is None else ids
         review_ids = []
@@ -497,7 +508,7 @@ code {response.status_code}!")
                         match = re.search(r'rw\d+', raw_revid)
                         review_id = match.group()
                         # print(f"review ID from IMBd: {review_id}")
-                        # check whether or not the review ID is in the database
+                        # check whether or not the review ID is in the DB
                         if review_id not in review_ids:
                             print(f"Updating {id} at index \
 {unique_movie_ids.index(num)} in the database for review ID {review_id}")
@@ -566,9 +577,9 @@ code {response.status_code}!")
         Loads ids from a saved file.
 
         This function can only be ran before the program is terminated.
-        It uses the class variable self.load_path to locate the saved file
-        with the review/movie IDs and automatically loads the data from
-        that file back into the class variable self.ids.
+        It uses the class variable self.load_path to locate the saved
+        file with the review/movie IDs and automatically loads the data
+        from that file back into the class variable self.ids.
         '''
 
         path = self.load_path if path is None else path
@@ -581,11 +592,11 @@ code {response.status_code}!")
         """
         Scrapes letterboxd.com for review pages.
 
-        Works very similarly to the basic scrape function. Takes in ids from
-        imdb and checks to see if they exist on letterboxd. If not, it will
-        hit an exception and move on. Movies with no reviews also hit an
-        exception. This is much slower than imbd due to differing website
-        design.
+        Works very similarly to the basic scrape function. Takes in ids
+        from imdb and checks to see if they exist on letterboxd. If
+        not, it will hit an exception and move on. Movies with no
+        reviews also hit an exception. This is much slower than imbd
+        due to differing website design.
         """
         id_list = self.current_ids if id_list is None else id_list
         t = time.perf_counter()
@@ -780,9 +791,9 @@ code {response.status_code}!")
         """
         Connects to the database and inserts reviews as new rows.
 
-        Takes a dataframe and formats it into a very long string to convert to
-        SQL. Connects to the database, executes the query, and closes
-        the cursor and connection.
+        Takes a dataframe and formats it into a very long string to
+        convert to  SQL. Connects to the database, executes the query,
+        and closes the cursor and connection.
         """
         # convert rows into tuples
         row_insertions = ""
@@ -858,11 +869,9 @@ if __name__ == "__main__":
     if start > end:
         raise ValueError("The starting position needs to be less than or \
 equal to the end position.")
-
     max_iter = int(input("Maximum iterations? "))
     if max_iter < 1:
         raise ValueError("Maximum iterations must be positive.")
-
     scraper_instance = input("Which scraper instance is this? ")
     s = Scraper(start, end, max_iter, scraper_instance)
     website = checker("Are you scraping IMDB?")
@@ -875,3 +884,10 @@ in the database?")
         elif update == "n" or update == "no":
             id_list = s.get_ids()
             s.scrape(id_list)
+    elif website == "n" or website == "no":
+        website2 = checker("Are you scraping Letterboxd?")
+        if website2 == "y" or website2 == "yes":
+            ids = s.get_ids()
+            s.scrape_letterboxd(ids)
+        elif website2 == "n" or website2 == "no":
+            s.scrape_finder()

@@ -4,137 +4,33 @@ General overview of our process, why we made certain choices, and what data is u
 
 
 ## Quick Rundown of the Scraper
+This scraper uses a list of IMDB movie IDs pulled from their publicly available tarball files at https://datasets.imdbws.com/ to return movie review and ratings. It can use this list of IDs to scrape not only IMDB.com itself, but also letterboxd.com. In addition, it can scrape a complete list of all movies on Netflix and their URLs from finder.com. The scraper can also insert the data it scrapes into a table on AWS RDS or be configured to insert into some other SQL database.
 
-As of (12/13/19) this scraper uses a list of movie IDs which were pulled from the tarbal files published by IMDb to return movie reviews and ratings.
+## Blockers
+As of 02/03/2020 IMDB, Letterboxd, and Finder scraping are supported. Currently, only IMDB supports the capability to compare inputs to the existing database and reject duplicates.
 
-In addition to reviews and ratings, the scraper pulls some information which will not be implemented in the initial skeleton model, but which may be used in the future model iterations.
-(Date of review, How many people found review helpful, etc.)
+## Installing
+The accompanying pipfile contains all of the necessary dependencies:
+Beautiful Soup 4.8.2
+python-decouple 3.3
+pandas 0.25.0
+psycopg2 2.8.4
+requests 2.22.0
 
-### Blockers
-
-#### 12/13/19
-- We hit a snag which prevents us from populating the RDS DB tables with data output from the scraper. We believe it is isolated to a misconfiguration of the psycopg2 (it was that we were not calling commit() properly)
-- Error getting thrown with movies where the "found this helpful" count was > 1k as IMDb put a comma in that value. Easy fix.
-- Hit a problem where we were getting a null value for the title. It's been hitting at a similar
-place for all the scrapers and I'm starting to think that it is a built in mechanism IMDb has
-to keep people from scraping. Some type of booby trap.
-- We also had a problem where one scraper died on a 404, so we installed a catch all in the form of:
-```
-try:
-    movie_title = (soup.find(class_ = "subnav_heading").get_text())
-except:
-    pass
-```
-- After splitting the scraper into 7 different files to load into 7 EC2 instances we are running into some timeout issues with SSH as well as some communication errors being thrown from IMDb. I think it's best if I split these further down into smaller chunks to cut down on the time spent for any one instance scraping.  
-
-
-
-
-### Installing
-
-In order to run you will need to setup an AWS RDS DB
-
-Start of walkthrough for launching EC2:
-(Download the keypair
-cd into the folder you have the keypair stored
-connect using the example provided by AWS
-type yes and press enter when prompted )
-
-#### Configure EC2 to run scraper
-
-Switch into root so we don't have to sudo call everything
-```
-sudo su
-```
-
-Update the yum package
-```
-yum update -y
-```
-
-Installing git
-```
-yum install git -y
-```
-
-Installing pip
-```
-yum -y install python-pip
-```
-
-Check to see you have the correct version
-```
-python -V
-```
-
-Installing python to the ec2 instance
-```
-yum install python3 python3-pip -y
-```
-
-Remove old version of python
-```
-sudo rm /usr/bin/python
-```
-
-Move the version of python you just downloaded into the default path
-```
-sudo ln -s /usr/bin/python3.7 /usr/bin/python
-```
-
-Check to see you have the correct version
-```
-python -V
-```
-
-Clone the repo which holds the scraper
-```
-git clone https://github.com/Lambda-School-Labs/Groa.git
-```
-
-CD into the repo
-```
-cd Groa/web_scraping
-```
-
-CD into the scraper folder
-
-```
-cd web_scraping
-```
-
-Installing pipenv
-```
-pip install pipenv
-```
-
-Installing pipenv with the current version of python
-```
-pipenv install --python /usr/bin/python
-```
-
-Launch the shell and enter
-```
-pipenv shell
-```
-
-Sync the shell to install dependencies
-```
-pipenv sync
-```
-
-
-The psycopg2 install always fails but you can install the binary pkg and it works
-```
-pip3 install psycopg2-binary
-```
+As of 02/03/2020 these are all the most recent versions of these modules. It is possible, but unlikely, that future versions may break the scraper.
 
 ## Deployment
 
-Run:
-```
-python scraper[].py
-```
+### Development
+To run the scraper locally, make a .env file with environment variables HOST, PORT, PASSWORD, and FILENAME. HOST, PORT, and PASSWORD should be the associated values for the database you are inserting into. FILENAME should be the path to the .csv file you will be reading the IMDB movie IDs from. You can run scraper.py directly and answer a few questions to configure the scraper.
+Start at which row? This is the index number in the .csv that the scraper will start from. Note that this starts at zero. Inclusive.
+End at which row? Last index number to read. Inclusive.
+Maximum iterations? Maximum number of webpages the scraper will read before inserting into the database. Increasing this number will slightly increase speed at a slight cost to stability. From experience 100-500 are good values.
+Which scraper instance is this? If you have logging features (explained below) enabled and are running multiple instances of scraper.py running at once, you need to give each instance a unique value in this field. Does not have to be a number.
+Are you scraping IMDB? Answer yes if you are scraping IMBD.
+Do you want to reject reviews already in the database? Answer yes for the update route, no for the scrape route. More on these below.
+
+
 
 ## Built With
 
