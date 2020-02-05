@@ -274,7 +274,7 @@ def resubmit():
         bool_list=[]
         for x in column:
             bool_list.append(x in id_list)
-        b = ['<p class="green">NEW!</p>' if x==True else '' for x in bool_list]
+        b = ['<p style="color: #00bc8c">NEW!</p>' if x==True else '' for x in bool_list]
         return b
 
     recs['New Rec?'] = bool_func(recs['Movie ID'],difference_list)

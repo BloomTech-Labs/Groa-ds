@@ -12,7 +12,7 @@
           <h3>Customize your recommendations.</h3>
           <br>
           <br>
-          <h5 class="orange">Your most recent ratings:</h5>
+          <h5 style="color: #F39C12">Your most recent ratings:</h5>
           {% block content %}
             {{ data|safe }}
           {% endblock %}
@@ -20,7 +20,7 @@
           <form action='/imdb_recommendations' method='post'>
               <br>
               <br>
-              <h5 class="green">What's a star worth to you?</h5>
+              <h5 style="color: #00bc8c">What's a star worth to you?</h5>
               <br>
             <div class="slidecontainer">
               <input type="range" min="1" max="10" value="6" class="slider" id="myRange" name="bad_rate">
@@ -45,7 +45,7 @@
             <input type="checkbox" name="Cult" value="Cult">Add Cult movies to my search<br> -->
             <br>
             <fieldset class="form-group">
-            <h5 class="blue">Any extra requests?</h5>
+            <h5 class="color: #3498DB">Any extra requests?</h5>
             <br>
             <div class="form-check">
               <label class="form-check-label">
