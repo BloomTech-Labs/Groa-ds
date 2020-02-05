@@ -1,4 +1,4 @@
-master_w2vfrom flask import Flask, session, render_template, request, flash, redirect, send_file
+from flask import Flask, session, render_template, request, flash, redirect, send_file
 from flask_session import Session
 import pandas as pd
 import math
@@ -21,8 +21,8 @@ SESSION_TYPE = 'filesystem'
 application.config.from_object(__name__)
 Session(application)
 
-master_w2v = 'w2v_limitingfactor_v1.model'
-master_r2v = 'r2v_Botanist_v1.1000.5.model'
+master_w2v = 'models/w2v_limitingfactor_v3.51.model'
+master_r2v = 'models/r2v_Botanist_v1.1000.5.model'
 
 def links(x):
     '''Changes URLs to actual links'''
@@ -104,7 +104,7 @@ def lb_recommend():
     # connect
     s = Recommender(master_w2v)
     s.connect_db()
-    r = r2v_Recommender('r2v_Botanist_v1.1000.5.model')
+    r = r2v_Recommender(master_r2v)
     r.connect_db()
 
     # prep user watch history
@@ -463,7 +463,7 @@ def user_search_recommend():
     # connect
     s = Recommender(master_w2v)
     s.connect_db()
-    r = r2v_Recommender('r2v_Botanist_v1.1000.5.model')
+    r = r2v_Recommender(master_r2v)
     r.connect_db()
 
     # prep user watch history
