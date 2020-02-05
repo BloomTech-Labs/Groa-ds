@@ -50,6 +50,7 @@ Movie Recommendation Engine will use NLP to create unique recommendations based 
 - [SciPy](https://www.scipy.org)
 - [Psycopg2](https://pypi.org/project/psycopg2)
 - [BeautifulSoup](https://pypi.org/project/beautifulsoup4/)
+- [Requests](https://2.python-requests.org/en/master/)
 
 ### Predictions
 
