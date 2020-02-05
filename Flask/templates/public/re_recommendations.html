@@ -1,42 +1,35 @@
-{% extends "public/templates/public_template.html" %}
-
-{% block title %}Gróa ReRecommendations{% endblock %}
-
-{% block main %}
+{% extends "public/templates/public_template.html" %} {% block title %}Gróa ReRecommendations{% endblock %} {% block main %}
 
 <div class="container">
     <div class="row">
         <div class="col">
-          <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+            <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
             <div class=page>
-                  <br>
-                  <h1>Gróa has even more recommendations.</h1>
-                  <p>Here are more movies you might enjoy, based on your ratings
-                    and watch history. Gróa uses public data from over 17,000
-                    individual users' ratings to find movies you might enjoy.</p>
-                  <br><h5> Click on the IMDb links below to explore your recommendations
-                    (open in a new tab with CTRL-click).
-                  </h5>
-                  <br><p> Register your approval or
-                    disapproval using the check boxes on
-                    the right, and then press <b>"Improve my recommendations"</b> to get
-                    an updated list.
-                    <br><b>Do this as many times as you like for endless
-                    recommendations.</b> When you're done, you can download all your
-                    approved recommendations as a .CSV spreadsheet.
-                  </p>
+                <br>
+                <h3>Gróa has even more recommendations.</h3>
+                <p>Here are some movies you might enjoy, based on your ratings and watch history. Gróa uses public data from over 17,000 individual users' ratings to find movies you might enjoy.</p>
+                <br>
+                <h4>Click on the IMDb links below to explore your recommendations (open in a new tab with CTRL-click).
+                </h4>
+                <br>
+                <p> You might find that the recommendations need improvement. Register your approval or disapproval using the check boxes on the right, and then press <b class="text-success">"Improve my recommendations"</b> to get an updated list.
+                    Do this as many times as you like for endless
+                    recommendations. When you're done, you can download all your approved recommendations as a .CSV spreadsheet.
+                </p>
+                <br>
                 <form action='/export_recs' method='POST'>
-                    <input type="submit" name="button" value="Export my movie recs to CSV">
-                    <input type="submit" name="button" value="Export only my upvoted movies to CSV">
+                    <input type="submit" class="btn btn-outline-primary" value="Export my movie recs to CSV">
+                    <br>
+                    <br>
+                    <input type="submit" class="btn btn-outline-secondary" name="button" value="Export only my upvoted movies to CSV">
                 </form>
+                <br>
                 <form action='/resubmission' method='POST'>
-                    <input type="submit" value="Improve my recommendations again">
-                    {% block content %}
-                        {{ data|safe }}
-                    {% endblock %}
+                    <input type="submit" class="btn btn-primary" value="Improve my recommendations again"> {% block content %} {{ data|safe }} {% endblock %}
+                    <br>
                 </form>
+            </div>
         </div>
     </div>
-</div>
 
-{% endblock %}
+    {% endblock %}

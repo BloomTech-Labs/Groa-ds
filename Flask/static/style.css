@@ -33,12 +33,11 @@ tr:nth-child(even)	{ background-color:#333; } */
 
 /* tr:hover            { background-color: #ffff99;} */
 
-#imdb {
+.orange, .upvote, #imdb {
   color: #F39C12
 }
-#letterboxd {
+.green, #letterboxd {
   color: #00bc8c
 }
-#user_search {
+.blue, .downvote, #user_search {
   color: #3498DB
-}

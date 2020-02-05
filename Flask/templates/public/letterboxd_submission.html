@@ -8,25 +8,29 @@
         <div class="col">
           <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
           <div class=page>
-            <br>
-            <h1>Customize your recommendations</h1>
-            <h2>Tell Gróa a bit more about yourself.</h2>
-            <br>
-            <h5>Your most recent ratings:</h5>
-            {% block content %}
-              {{ data|safe }}
-            {% endblock %}
-          </div>
+          <br>
+          <h3>Customize your recommendations.</h3>
+          <br>
+          <br>
+          <h5 class="orange">Your most recent ratings:</h5>
+          {% block content %}
+            {{ data|safe }}
+          {% endblock %}
+        </div>
           <form action='/letterboxd_recommendations' method='post'>
-            <div class="slidecontainer">
-
-              <input type="range" min="1" max="5" value="1" class="slider" id="myRange" name="bad_rate" step=".5">
+              <br>
+              <br>
+              <h5 class="green">What's a star worth to you?</h5>
+              <br>
+              <div class="slidecontainer">
+              <input type="range" min="1" max="5" value="3" class="slider" id="myRange" name="bad_rate" step=".5">
               <p>Highest star rating (out of 5) I give to movies I dislike: <span id="demo"></span></p>
             </div>
+            <br>
             <div class="slidecontainer">
-              <input type="range" min="1" max="5" value="5" class="slider2" id="myRange2" name="good_rate" step=".5">
+              <input type="range" min="1" max="5" value="3.5" class="slider2" id="myRange2" name="good_rate" step=".5">
               <p>Lowest star rating (out of 5) I give to movies I like: <span id="demo2"></span></p>
-
+            <br>
             </div>
            <!-- <div class="slidecontainer">
               <input type="range" min="1920" max="2020" value="1920" class="slider3" id="myRange3" name="year_min">
@@ -36,10 +40,32 @@
               <input type="range" min="1920" max="2020" value="2020" class="slider4" id="myRange4" name="year_max">
               <p>Maximum Year Value: <span id="demo4"></span></p>
             </div> -->
-              <input type="checkbox" name="hidden" value="hidden_gems_check"> Add Hidden Gems to my search<br>
-              <input type="checkbox" name="cult" value="cult_movies_check"> Add Cult movies to my search<br>
-              <input type="checkbox" name="extra_weight" value="parabolic_weighting_check"> Give extra weight to my extreme ratings, like 1 or 10 stars (experimental)<br>
-            <input type="submit" value="Submit to the model">
+              <br>
+              <fieldset class="form-group">
+              <h5 class="blue">Any extra requests?</h5>
+              <br>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input class="form-check-input" name="hidden" type="checkbox" value="hidden_gems_check" checked="">
+                  Search for hidden gems.
+                </label><p class="text-muted"><i>Movies with high ratings and low viewer count.</i></p>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input class="form-check-input" name="cult" type="checkbox" value="cult_movies_check" checked="">
+                  Search for cult movies.
+                </label><p class="text-muted"><i>Movies considered highly underrated by reviewers like you.</i></p>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input class="form-check-input" name="extra_weight" type="checkbox" value="parabolic_weighting_check" checked="">
+                  Give extra weight to my extreme ratings, like 1 or 10 stars (experimental).
+                </label><p class="text-muted"><i>Remember polynomials?</i></p>
+              </div>
+              <br>
+              </fieldset>
+            <button type="submit" class="btn btn-primary btn-lg" value="Submit to the model">Explore Recommendations</button>
+            <!-- <input type="submit" value="Submit to the model"> -->
           </form>
 
           <script>

@@ -1,6 +1,7 @@
 from flask import Flask, session, render_template, request, flash, redirect, send_file
 from flask_session import Session
 import pandas as pd
+import math
 import numpy as np
 from zipfile import ZipFile
 import json
@@ -22,7 +23,7 @@ Session(application)
 
 def links(x):
     '''Changes URLs to actual links'''
-    return '<a href="%s">Go to the IMDb page</a>' % (x)
+    return '<a href="%s">IMDb page</a>' % (x)
 
 @application.route("/")
 def index():
@@ -239,6 +240,7 @@ def resubmit():
         + recs['Movie ID'] + '>  Hard No<br>'
     id_list2 = recs['Movie ID'].to_list()
     difference_list = list(set(id_list2).difference(set(id_list)))
+
     def bool_func(column,id_list):
         '''
         This function checks the "Movie ID" column against the id_list and
@@ -248,8 +250,9 @@ def resubmit():
         bool_list=[]
         for x in column:
             bool_list.append(x in id_list)
-        b = ['NEW!' if x==True else '' for x in bool_list]
+        b = ['<p class="green">NEW!</p>' if x==True else '' for x in bool_list]
         return b
+
     recs['New Rec?'] = bool_func(recs['Movie ID'],difference_list)
     cols=recs.columns.to_list()
     recs=recs[cols[-1:]+cols[:-1]] #puts New Rec? column as column number 1 or number 0 if you're a computer
