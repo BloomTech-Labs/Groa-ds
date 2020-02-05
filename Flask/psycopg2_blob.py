@@ -9,7 +9,7 @@ def seventoten(username):
     and movie_ids of the user
     '''
     name = username
-    sql = f'''SELECT user_rating, movie_id FROM reviews WHERE username = '{name}'
+    sql = f'''SELECT user_rating, movie_id FROM reviews WHERE username = %s
               AND user_rating BETWEEN 7 AND 10'''
 
     connection = psycopg2.connect(
@@ -18,7 +18,7 @@ def seventoten(username):
     password  = os.getenv('DB_PASSWORD'),
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
-    dat = pd.read_sql_query(sql, connection)
+    dat = pd.read_sql_query(sql, connection, params=[username])
     connection = None
     return dat
 
@@ -27,7 +27,7 @@ def query2(username):
     accepting a username, this function will return all their reviewed movies as a nested list
     '''
     name = username
-    sql = f"SELECT movie_id FROM reviews WHERE username = '{name}'"
+    sql = f"SELECT movie_id FROM reviews WHERE username = %s"
 
     connection = psycopg2.connect(
     database  = "postgres",
@@ -36,7 +36,7 @@ def query2(username):
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, (username,))
     result = cursor.fetchall()
     rows=[[i[0]] for i in result]
     connection = None
@@ -47,7 +47,7 @@ def id_to_title(list):
     accepting a list of movie ids outputted from the model, this function
     will change those ids to titles
     '''
-    sql = f"SELECT title FROM movies WHERE movie_id IN '{list}'"
+    sql = f"SELECT title FROM movies WHERE movie_id IN %s"
     connection = psycopg2.connect(
     database  = "postgres",
     user      = "postgres",
@@ -55,7 +55,7 @@ def id_to_title(list):
     host      = "movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com",
     port      = '5432')
     cursor = connection.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, (list,))
     result = list(cursor.fetchall())
     connection = None
     return result
@@ -106,9 +106,9 @@ def imdb_user_lookup(name):
        r.user_rating, r.review_title, r.review_text
        FROM movies m
        JOIN reviews r ON m.movie_id = r.movie_id
-       WHERE username='{name}'"""
+       WHERE username=%s"""
     try:
-        df = pd.read_sql_query(query, connection)
+        df = pd.read_sql_query(query, connection, params=[name])
 
         df['review_date'] = pd.to_datetime(df['review_date'])
         df['review_date'] = df['review_date'].dt.strftime('%Y-%m-%d').astype(str)
@@ -118,7 +118,7 @@ def imdb_user_lookup(name):
 
         print("values replaced")
         df = df.replace(r'\\n',' ', regex=True) #remove the newlines from the reviews and review titles
-        
+
         ratings_export=df[['User Rating','Movie Title','Year Released']].copy()
         ratings_export.columns = ['Rating','Name','Year']
         reviews_export=df.filter(['Review Text'],axis=1)
