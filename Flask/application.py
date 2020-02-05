@@ -1,4 +1,4 @@
-from flask import Flask, session, render_template, request, flash, redirect, send_file
+master_w2vfrom flask import Flask, session, render_template, request, flash, redirect, send_file
 from flask_session import Session
 import pandas as pd
 import math
@@ -20,6 +20,9 @@ application.secret_key = 'secret_bee'
 SESSION_TYPE = 'filesystem'
 application.config.from_object(__name__)
 Session(application)
+
+master_w2v = 'w2v_limitingfactor_v1.model'
+master_r2v = 'r2v_Botanist_v1.1000.5.model'
 
 def links(x):
     '''Changes URLs to actual links'''
@@ -99,7 +102,7 @@ def lb_recommend():
     extra_weight = "extra_weight" in request.form # user requests cult movies
 
     # connect
-    s = Recommender('w2v_limitingfactor_v1.model')
+    s = Recommender(master_w2v)
     s.connect_db()
     r = r2v_Recommender('r2v_Botanist_v1.1000.5.model')
     r.connect_db()
@@ -215,7 +218,7 @@ def resubmit():
     except:
         pass
     extra_weight = session['extra_weight']
-    s = Recommender('w2v_limitingfactor_v1.model')
+    s = Recommender(master_w2v)
     s.connect_db()
     # pass dictionary of ratings if the user requests extra weighting
     if extra_weight:
@@ -327,7 +330,7 @@ def imdb_recommend():
     #year_max=int(request.form['year_max'])
     extra_weight = "extra_weight" in request.form # user requests extra weighting
     # connect
-    s = Recommender('w2v_limitingfactor_v1.model')
+    s = Recommender(master_w2v)
     s.connect_db()
 
     # prep user watch history
@@ -388,7 +391,7 @@ def download_recs():
             except:
                 checked_list = []
             checked_list.extend(request.form.getlist('upvote')) # log upvotes
-            s = Recommender('w2v_limitingfactor_v1.model')
+            s = Recommender(master_w2v)
             s.connect_db()
             checked_list = [fill_id(x) for x in checked_list]
             checked_info = [s._get_info(x) for x in checked_list]
@@ -458,7 +461,7 @@ def user_search_recommend():
     extra_weight = "extra_weight" in request.form # user requests cult movies
 
     # connect
-    s = Recommender('w2v_limitingfactor_v1.model')
+    s = Recommender(master_w2v)
     s.connect_db()
     r = r2v_Recommender('r2v_Botanist_v1.1000.5.model')
     r.connect_db()
