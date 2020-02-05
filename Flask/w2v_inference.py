@@ -127,7 +127,7 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
 
     ratings_dict = dict(list(good_dict.items()) + list(bad_dict.items()) + list(neutral_dict.items()))
 
-    if (watched_df is not None) and (watched_df !=[]):
+    if (watched_df is not None) and (not watched_df.empty):
         # Construct list of watched movies that aren't rated "good" or "bad"
         # First, get a set of identified IDs.
         rated_names = set(good_df.Name.tolist() + bad_df.Name.tolist() + neutral_list)
@@ -139,7 +139,7 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None,
         hist_list = hist_list + neutral_list
     else: hist_list = neutral_list
 
-    if (watchlist_df is not None) and (watchlist_df !=[]):
+    if (watchlist_df is not None) and (not watchlist_df.empty):
         try:
             watchlist_df = watchlist_df.dropna(axis=0, subset=['Name', 'Year'])
             val_list = df_to_id_list(watchlist_df, id_book)[0]

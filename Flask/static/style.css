@@ -28,8 +28,8 @@ table.dataframe, .dataframe th, .dataframe td {
     /* color: white; */
 }
 
-/* tr:nth-child(odd)		{ background-color:#eee; } */
-/* tr:nth-child(even)	{ background-color:#fff; } */
+/* tr:nth-child(odd)		{ background-color:#222; }
+tr:nth-child(even)	{ background-color:#333; } */
 
 /* tr:hover            { background-color: #ffff99;} */
 

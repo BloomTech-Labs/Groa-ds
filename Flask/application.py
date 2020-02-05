@@ -318,8 +318,8 @@ def imdb_recommend():
     bad_rate = int(request.form['bad_rate'])/2
     good_rate = int(request.form['good_rate'])/2
 
-    watched = None # IMDb user only uploads ratings
-    watchlist = None
+    watched = pd.DataFrame() # IMDb user only uploads ratings
+    watchlist = pd.DataFrame()
     #year_min=int(request.form['year_min'])
     #year_max=int(request.form['year_max'])
     extra_weight = "extra_weight" in request.form # user requests extra weighting
@@ -436,7 +436,7 @@ def user_reviews():
 
     session['ratings']=ratings.to_json()
     session['reviews']=reviews.to_json()
-    
+
     return render_template('public/user_reviews.html', data=df.head(10).to_html(index=False), name=name)
 
 @application.route('/user_search_recommendations', methods=['GET', 'POST'])
@@ -446,8 +446,8 @@ def user_search_recommend():
     '''
     ratings = pd.read_json(session['ratings'])
     reviews = pd.read_json(session['reviews'])
-    watched = None
-    watchlist = None
+    watched = pd.DataFrame()
+    watchlist = pd.DataFrame()
     bad_rate = int(request.form['bad_rate'])/2
     good_rate = int(request.form['good_rate'])/2
     hidden = "hidden" in request.form # user requests hidden gems
