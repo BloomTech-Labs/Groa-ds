@@ -1,11 +1,13 @@
 from flask import Flask, session, render_template, request, flash, redirect, send_file
 from flask_session import Session
+from time import sleep
 import pandas as pd
 import math
 import numpy as np
 from zipfile import ZipFile
 import json
 import os, shutil, io
+
 
 import psycopg2
 # from getpass import getpass
@@ -27,6 +29,21 @@ master_r2v = 'models/r2v_Botanist_v1.1000.5.model'
 def links(x):
     '''Changes URLs to actual links'''
     return '<a href="%s">IMDb page</a>' % (x)
+
+def highlight_watchlist(id_column, title_column, watchlist):
+    '''
+    This function checks the "Movie ID" column against the watchlist and
+    will give booleans on whether the ID in the column is present on the list.
+    If it is present, then it adds color styling.
+    '''
+    bool_list=[]
+    for x in id_column:
+        bool_list.append(str(x) in watchlist)
+        if str(x) in watchlist:
+            print("got a match!")
+    matched = list(zip(title_column, bool_list))
+    b = [f'<p style="color:#b59fe0">{title}</p>' if x==True else title for title, x in matched]
+    return b
 
 @application.route("/")
 def index():
@@ -80,6 +97,7 @@ def lb_submit():
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()
 
+            sleep(1) # wait for session to save
             shutil.rmtree(f'temp{tag}') # remove temp folder
 
             return render_template('public/letterboxd_submission.html',
@@ -145,6 +163,7 @@ def lb_recommend():
                 + cult_df['Movie ID'] + '>  Good idea<br>'
             cult_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
                 + cult_df['Movie ID'] + '>  Hard No<br>'
+            cult_df['Title'] = highlight_watchlist(cult_df['Movie ID'], cult_df['Title'], val_list)
         if hidden:
             hidden_df = pd.DataFrame(hidden_results,
                 columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
@@ -154,9 +173,11 @@ def lb_recommend():
                 + hidden_df['Movie ID'] + '>  Good idea<br>'
             hidden_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
                 + hidden_df['Movie ID'] + '>  Hard No<br>'
+            hidden_df['Title'] = highlight_watchlist(hidden_df['Movie ID'], hidden_df['Title'], val_list)
 
     recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
     recs['URL'] = recs['URL'].apply(links)
+    recs['Title'] = highlight_watchlist(recs['Movie ID'], recs['Title'], val_list)
     recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
         + recs['Movie ID'] + '>  Good idea<br>'
     recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
@@ -257,6 +278,7 @@ def resubmit():
         return b
 
     recs['New Rec?'] = bool_func(recs['Movie ID'],difference_list)
+    recs['Title'] = highlight_watchlist(recs['Movie ID'], recs['Title'], val_list)
     cols=recs.columns.to_list()
     recs=recs[cols[-1:]+cols[:-1]] #puts New Rec? column as column number 1 or number 0 if you're a computer
     session['id_list'] = json.dumps(id_list2)
