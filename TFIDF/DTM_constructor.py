@@ -1,25 +1,43 @@
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-import re
-import time
 import datetime
 import logging
+import time
 import os
-import sys
+import pandas as pd
 import pathlib
 import pickle
 import psycopg2
+import re
+import requests
 import spacy
-from getpass import getpass
+import sys
+from bs4 import BeautifulSoup
 from datetime import datetime
+from getpass import getpass
 from random import randint
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import NearestNeighbors
 from spacy.tokenizer import Tokenizer
 from spacy.lang.en import English
+
+"""
+This script opens a setup wizard for a movie recommender model (after the user
+enters the password to the database where movie reviews are held). The process
+is broken into steps because the first-time setup can take a long time. Before
+any inferencing can take place, all movie reviews are joined together into one
+string per movie, and the resulting string is used to create a Document-Term-Matrix.
+
+Since the matrix in question needs to have a small number of terms for fast inferencing,
+Truncated SVD is used directly following TF-IDF vectorizer. The pipeline of these
+two algorithms is fitted on a small matrix and then used to create the master.
+
+Once the master (reduced) DTM is created, it can be used with KNN to find movies
+with similar reviews to the input review.
+
+NOTE: in this version, the only acceptable input reviews are plain text with no
+" or ' symbols.
+"""
 
 # Create a blank Tokenizer with just the English vocab
 # nlp = English()
