@@ -24,19 +24,6 @@ Session(application)
 master_w2v = 'models/w2v_limitingfactor_v3.51.model'
 master_r2v = 'models/r2v_Botanist_v1.1000.5.model'
 
-def highlight_watchlist(id_column, title_column, watchlist):
-    '''
-    This function checks the "Movie ID" column against the watchlist and
-    will give booleans on whether the ID in the column is present on the list.
-    If it is present, then it adds color styling.
-    '''
-    bool_list=[]
-    for x in id_column:
-        bool_list.append(str(x) in watchlist)
-    matched = list(zip(title_column, bool_list))
-    b = [f'<p style="color:#b59fe0">{title}</p>' if x==True else title for title, x in matched]
-    return b
-
 @application.route("/")
 def index():
     '''
@@ -80,18 +67,18 @@ def lb_submit():
                                                            'watched.csv'])
 
             ratings = pd.read_csv(f'temp{tag}/ratings.csv', encoding='cp1252')
-            
+
             '''reviews = pd.read_csv(f'temp{tag}/reviews.csv')
             watched = pd.read_csv(f'temp{tag}/watched.csv')
             watchlist = pd.read_csv(f'temp{tag}/watchlist.csv')'''
             reviews, watched, watchlist = multi_read(['reviews','watched','watchlist'],tag)
-            
+
             '''session['ratings'] = ratings.to_json()
             session['reviews'] = reviews.to_json()
             session['watched'] = watched.to_json()
             session['watchlist'] = watchlist.to_json()'''
             session['ratings'],session['reviews'],session['watched'],session['watchlist']=multi_jsonify([ratings,reviews,watched,watchlist])
-            
+
 
             sleep(1) # wait for session to save
             shutil.rmtree(f'temp{tag}') # remove temp folder
@@ -109,8 +96,9 @@ def lb_recommend():
     reviews = pd.read_json(session['reviews'])
     watched = pd.read_json(session['watched'])
     watchlist = pd.read_json(session['watchlist'])'''
+
     ratings,reviews,watched,watchlist=multi_read_json(['ratings','reviews','watched','watchlist'])
-    
+
     bad_rate = float(request.form['bad_rate'])
     good_rate = float(request.form['good_rate'])
     hidden = "hidden" in request.form # user requests hidden gems
@@ -156,32 +144,15 @@ def lb_recommend():
             cult_df = pd.DataFrame(cult_results,
                 columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
                         'User Rating', 'Reviewer', 'Review', 'Movie ID'])
-            cult_df['URL'] = cult_df['URL'].apply(lambda x: f'<a href="{x}">IMDb page</a>')
-            cult_df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
-                + cult_df['Movie ID'] + '>  Good idea<br>'
-            cult_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
-                + cult_df['Movie ID'] + '>  Hard No<br>'
-            cult_df['Title'] = highlight_watchlist(cult_df['Movie ID'], cult_df['Title'], val_list)
+            cult_df = rec_edit(cult_df, val_list)
         if hidden:
             hidden_df = pd.DataFrame(hidden_results,
                 columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
                         'User Rating', 'Reviewer', 'Review', 'Movie ID'])
-            hidden_df['URL'] = hidden_df['URL'].apply(lambda x: f'<a href="{x}">IMDb page</a>')
-            hidden_df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
-                + hidden_df['Movie ID'] + '>  Good idea<br>'
-            hidden_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
-                + hidden_df['Movie ID'] + '>  Hard No<br>'
-            hidden_df['Title'] = highlight_watchlist(hidden_df['Movie ID'], hidden_df['Title'], val_list)
+            hidden_df = rec_edit(hidden_df, val_list)
 
-    """recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
-    recs['URL'] = recs['URL'].apply(links)
-    recs['Title'] = highlight_watchlist(recs['Movie ID'], recs['Title'], val_list)
-    recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
-        + recs['Movie ID'] + '>  Good idea<br>'
-    recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
-        + recs['Movie ID'] + '>  Hard No<br>'"""
-    recs=rec_edit(recs,good_list)
-
+    recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
+    recs = rec_edit(recs, val_list)
     id_list = recs['Movie ID'].to_list()
 
     session.clear()
@@ -227,7 +198,7 @@ def resubmit():
         rejected_list = []
     checked_list.extend(request.form.getlist('upvote')) # log upvotes
     rejected_list.extend(request.form.getlist('downvote')) # log downvotes
-    
+
     '''id_list = json.loads(session['id_list'])
     good_list = json.loads(session['good_list'])
     bad_list = json.loads(session['bad_list'])
@@ -262,18 +233,18 @@ def resubmit():
                 columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes',
                 'Similarity Score','Movie ID'])
 
-    """recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
-    recs['URL'] = recs['URL'].apply(lambda x: f'<a href="{x}">IMDb page</a>')
+    recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
+    """recs['URL'] = recs['URL'].apply(lambda x: f'<a href="{x}">IMDb page</a>')
     recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
             + recs['Movie ID'] + '>  Good idea<br>'
     recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
         + recs['Movie ID'] + '>  Hard No<br>'"""
-    recs=rec_edit(recs,good_list)
+    recs=rec_edit(recs, val_list)
 
     id_list2 = recs['Movie ID'].to_list()
     difference_list = list(set(id_list2).difference(set(id_list)))
 
-    
+
 
     recs['New Rec?'] = bool_func(recs['Movie ID'],difference_list)
     recs['Title'] = highlight_watchlist(recs['Movie ID'], recs['Title'], val_list)

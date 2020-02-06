@@ -1,13 +1,26 @@
 import pandas as pd
 from flask import session
-from w2v_inference import Recommender
+from w2v_inference import Recommender, timer_func
 import json
 
-#make predetermined lists so that 
+#make predetermined lists so that
 
 '''reviews = pd.read_csv(f'temp{tag}/reviews.csv')
 watched = pd.read_csv(f'temp{tag}/watched.csv')
 watchlist = pd.read_csv(f'temp{tag}/watchlist.csv')'''
+
+def highlight_watchlist(id_column, title_column, watchlist):
+    '''
+    This function checks the "Movie ID" column against the watchlist and
+    will give booleans on whether the ID in the column is present on the list.
+    If it is present, then it adds color styling.
+    '''
+    bool_list=[]
+    for x in id_column:
+        bool_list.append(str(x) in watchlist)
+    matched = list(zip(title_column, bool_list))
+    b = [f'<p style="color:#b59fe0">{title}</p>' if x==True else title for title, x in matched]
+    return b
 
 def multi_read(list,tag):
     '''
@@ -58,16 +71,15 @@ def links(x):
     '''Changes URLs to actual links'''
     return '<a href="%s">Go to the IMDb page</a>' % (x)
 
-def rec_edit(df,good_list):
+def rec_edit(df, val_list):
     '''
     adds various columns to the recommendation data frame, namely:
     Liked by fans of shows you what movie the recommendation is most similar to from your good list
     URL changes the URL to an acutal hypertext link
     Vote Up/Down add the HTML for checkboxes
-    ''' 
-    master_r2v = 'models/r2v_Botanist_v1.1000.5.model'
-    df['Liked by fans of...'] = df['Movie ID'].apply(lambda x: Recommender(master_r2v).get_most_similar_title(x, good_list))
+    '''
     df['URL'] = df['URL'].apply(lambda x: f'<a href="{x}">IMDb page</a>') #may need links or adjust lambda func
+    df['Title'] = highlight_watchlist(df['Movie ID'], df['Title'], val_list)
     df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
         + df['Movie ID'] + '>  Good idea<br>'
     df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
