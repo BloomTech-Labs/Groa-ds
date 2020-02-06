@@ -7,15 +7,13 @@ import numpy as np
 from zipfile import ZipFile
 import json
 import os, shutil, io
-
-
 import psycopg2
-# from getpass import getpass
 
 # self import
 from psycopg2_blob import seventoten,query2,id_to_title,get_imdb_users,imdb_user_lookup,read_users
 from w2v_inference import *
 from r2v_inference import *
+from functions import multi_read
 
 application = Flask(__name__)
 application.secret_key = 'secret_bee'
@@ -88,10 +86,11 @@ def lb_submit():
                                                            'watched.csv'])
 
             ratings = pd.read_csv(f'temp{tag}/ratings.csv', encoding='cp1252')
-            reviews = pd.read_csv(f'temp{tag}/reviews.csv')
+            '''reviews = pd.read_csv(f'temp{tag}/reviews.csv')
             watched = pd.read_csv(f'temp{tag}/watched.csv')
-            watchlist = pd.read_csv(f'temp{tag}/watchlist.csv')
-
+            watchlist = pd.read_csv(f'temp{tag}/watchlist.csv')'''
+            reviews, watched, watchlist = multi_read(['reviews','watched','watchlist'],tag)
+            print(type(reviews))
             session['ratings'] = ratings.to_json()
             session['reviews'] = reviews.to_json()
             session['watched'] = watched.to_json()
@@ -224,7 +223,7 @@ def resubmit():
         rejected_list = []
     checked_list.extend(request.form.getlist('upvote')) # log upvotes
     rejected_list.extend(request.form.getlist('downvote')) # log downvotes
-    id_list = json.loads(session['id_list']) # all of the ids of the previous recommendations
+    id_list = json.loads(session['id_list'])
     good_list = json.loads(session['good_list'])
     bad_list = json.loads(session['bad_list'])
     hist_list = json.loads(session['hist_list'])
@@ -348,8 +347,7 @@ def imdb_recommend():
 
     watched = pd.DataFrame() # IMDb user only uploads ratings
     watchlist = pd.DataFrame()
-    #year_min=int(request.form['year_min'])
-    #year_max=int(request.form['year_max'])
+
     extra_weight = "extra_weight" in request.form # user requests extra weighting
     # connect
     s = Recommender(master_w2v)
@@ -568,35 +566,6 @@ def user_search_recommend():
                             data = recs.to_html(index=False,escape=False),
                             hidden_data = hidden_df.to_html(index=False,escape=False),
                             cult_data = cult_df.to_html(index=False,escape=False))
-
-@application.route('/manual_review', methods=['GET', 'POST'])
-def manual_review():
-    '''
-    Unfinished, lets a user input a review manually
-    '''
-    if request.method == 'POST':
-        #gets these things from user
-        title = request.form['title']
-        review_title = request.form['review_title']
-        review_text = request.form['review']
-        user_rating = request.form['rating']
-        username = request.form['username']
-        '''create new review entry, first querying movie_id from movie_title,
-        then adding the above, along with the day's date, into the reviews table.
-        It would be generating id and zeros for the two helpful things.'''
-        #dropdown of post sucessful!
-
-
-@application.route('/watch_history')
-def watch_history():
-    #checkout the twitoff app to do /watchhistory/user
-
-    '''start scraper on user's rating page to get rated movies because
-    for us, rating = watched. If user's ratings are private, return message to
-    please make ratings public. That's probably better than asking for their login info.
-    '''
-    #display scraped data? display whether they've actually reviewed it and if not, have a link to redirect to review page?
-
 
 if __name__ == "__main__":
     application.run(port=5000, debug=True)
