@@ -26,7 +26,7 @@ The companies which have the resources to create an elegant Movie Recommendation
 
 Existing web sites geared towards providing a recommendation rely entirely on basic rating models which are weighted heavily towards popular films and generally do a poor job identifying unique outliers.
 
-Movie Recommendation Engine will use NLP to create unique recommendations based upon the way in which users talk about movies rather than the reductive 1-5 or 1-10 rating system.
+Our movie recommendation engine will use natural language processing methods to create unique recommendations based upon the way in which users talk about movies as well as the basic 1-5 or 1-10 rating system.
 
 
 ### Tech Stack
@@ -67,22 +67,7 @@ Based on the user's movie ratings and reviews, provide recommendations for movie
 ### Data Sources
 🚫  Add to or delete souce links as needed for your project
 
-
--   [IMDb data files](https://datasets.imdbws.com/)
--   [Source 2](🚫add link to python notebook here)
--   [Source 3](🚫add link to python notebook here)
--   [Source 4](🚫add link to python notebook here)
--   [Source 5](🚫add link to python notebook here)
-
-### Python Notebooks
-
-🚫  Add to or delete python notebook links as needed for your project
-
-[Python Notebook 1](🚫add link to python notebook here)
-
-[Python Notebook 2](🚫add link to python notebook here)
-
-[Python Notebook 3](🚫add link to python notebook here)
+Our primary sources of data are the user reviews of IMDb.com and Letterboxd.com. This was collected from these websites with our own custom-built web scraper. In addition, we make use of [IMDb's data files](https://datasets.imdbws.com/) for summary information on films.
 
 ### 3️⃣ How to connect to the web API
 
