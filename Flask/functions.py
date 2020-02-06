@@ -1,6 +1,7 @@
 import pandas as pd
-
+from flask import session
 from w2v_inference import Recommender
+import json
 
 #make predetermined lists so that 
 
@@ -27,9 +28,10 @@ def multi_jsonify(list):
     '''
     for sessioning multiple data frames
     '''
+    x=[]
     for i in list:
-        session[f'{i}'] = i.to_json()
-    return tuple(list)
+        x.append(i.to_json())
+    return x
 
 '''ratings = pd.read_json(session['ratings'])
 reviews = pd.read_json(session['reviews'])
@@ -40,9 +42,10 @@ def multi_read_json(list):
     '''
     for retrieving multiple data frames from session
     '''
+    x=[]
     for i in list:
-        i = pd.read_json(session[f'{i}'])
-    return tuple(list)
+        x.append(pd.read_json(session[f'{i}']))
+    return x
 
 """ recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
 recs['URL'] = recs['URL'].apply(links)
@@ -55,15 +58,16 @@ def links(x):
     '''Changes URLs to actual links'''
     return '<a href="%s">Go to the IMDb page</a>' % (x)
 
-def rec_edit(df):
+def rec_edit(df,good_list):
     '''
     adds various columns to the recommendation data frame, namely:
     Liked by fans of shows you what movie the recommendation is most similar to from your good list
     URL changes the URL to an acutal hypertext link
     Vote Up/Down add the HTML for checkboxes
     ''' 
+    master_r2v = 'models/r2v_Botanist_v1.1000.5.model'
     df['Liked by fans of...'] = df['Movie ID'].apply(lambda x: Recommender(master_r2v).get_most_similar_title(x, good_list))
-    df['URL'] = df['URL'].apply(lambda x: f'<a href="{x}">Go to the IMDb page</a>') #may need links or adjust lambda func
+    df['URL'] = df['URL'].apply(lambda x: f'<a href="{x}">IMDb page</a>') #may need links or adjust lambda func
     df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
         + df['Movie ID'] + '>  Good idea<br>'
     df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
@@ -81,9 +85,10 @@ def multi_dump(list):
     '''
     takes a list of lists, dumps them to json, and defines session variables for them
     '''
+    x=[]
     for i in list:
-        session[f'{i}'] = json.dumps(i)
-    return tuple(list)
+        x.append(json.dumps(i))
+    return x
 
 '''session['good_rate'] = good_rate
     session['bad_rate'] = bad_rate
@@ -95,9 +100,10 @@ def multi_session(list):
     '''
     takes a list of variables and defines session variables for them
     '''
+    x=[]
     for i in list:
-        session[f'{i}'] = i
-    return tuple(list)
+        x.append(i)
+    return x
 
 '''id_list = json.loads(session['id_list']) # all of the ids of the previous recommendations
     good_list = json.loads(session['good_list'])
@@ -110,7 +116,20 @@ def multi_load(list):
     '''
     takes a list of session objects and assigns them to variables
     '''
+    x=[]
     for i in list:
         #strip i for session[] so that the variable name remains
-        i = json.loads(i)
-    return tuple(list)
+        x.append(json.loads(session[f'{i}']))
+    return x
+
+def bool_func(column,id_list):
+    '''
+    This function checks the "Movie ID" column against the id_list and
+    will give booleans on whether the ID in the column is present on the list.
+    If it is present, then it changes the entry from True to NEW!.
+    '''
+    bool_list=[]
+    for x in column:
+        bool_list.append(x in id_list)
+    b = ['<p style="color: #00bc8c">NEW!</p>' if x==True else '' for x in bool_list]
+    return b
