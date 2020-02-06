@@ -133,3 +133,7 @@ def bool_func(column,id_list):
         bool_list.append(x in id_list)
     b = ['<p style="color: #00bc8c">NEW!</p>' if x==True else '' for x in bool_list]
     return b
+
+def links(x):
+    '''Changes URLs to actual links'''
+    return '<a href="%s">IMDb page</a>' % (x)
