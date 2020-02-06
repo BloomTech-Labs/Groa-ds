@@ -37,8 +37,6 @@ def highlight_watchlist(id_column, title_column, watchlist):
     bool_list=[]
     for x in id_column:
         bool_list.append(str(x) in watchlist)
-        if str(x) in watchlist:
-            print("got a match!")
     matched = list(zip(title_column, bool_list))
     b = [f'<p style="color:#b59fe0">{title}</p>' if x==True else title for title, x in matched]
     return b
