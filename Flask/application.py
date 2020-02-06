@@ -66,19 +66,14 @@ def lb_submit():
                                                            'watchlist.csv',
                                                            'watched.csv'])
 
+            # letterboxd seems to always export as cp1252 encoding regardless of users' OS. Weird!
             ratings = pd.read_csv(f'temp{tag}/ratings.csv', encoding='cp1252')
-
-            '''reviews = pd.read_csv(f'temp{tag}/reviews.csv')
-            watched = pd.read_csv(f'temp{tag}/watched.csv')
-            watchlist = pd.read_csv(f'temp{tag}/watchlist.csv')'''
             reviews, watched, watchlist = multi_read(['reviews','watched','watchlist'],tag)
 
-            '''session['ratings'] = ratings.to_json()
-            session['reviews'] = reviews.to_json()
-            session['watched'] = watched.to_json()
-            session['watchlist'] = watchlist.to_json()'''
-            session['ratings'],session['reviews'],session['watched'],session['watchlist']=multi_jsonify([ratings,reviews,watched,watchlist])
-
+            (session['ratings'],
+            session['reviews'],
+            session['watched'],
+            session['watchlist']) = multi_jsonify([ratings,reviews,watched,watchlist])
 
             sleep(1) # wait for session to save
             shutil.rmtree(f'temp{tag}') # remove temp folder
@@ -97,7 +92,10 @@ def lb_recommend():
     watched = pd.read_json(session['watched'])
     watchlist = pd.read_json(session['watchlist'])'''
 
-    ratings,reviews,watched,watchlist=multi_read_json(['ratings','reviews','watched','watchlist'])
+    (ratings,
+    reviews,
+    watched,
+    watchlist) = multi_read_json(['ratings','reviews','watched','watchlist'])
 
     bad_rate = float(request.form['bad_rate'])
     good_rate = float(request.form['good_rate'])
@@ -105,7 +103,7 @@ def lb_recommend():
     cult = "cult" in request.form # user requests cult movies
     extra_weight = "extra_weight" in request.form # user requests cult movies
 
-    # connect
+    # initialize both models and connect them to database
     s = Recommender(master_w2v)
     s.connect_db()
     r = r2v_Recommender(master_r2v)
@@ -118,10 +116,7 @@ def lb_recommend():
                                         bad_threshold=bad_rate)
 
     # pass dictionary of ratings if the user requests extra weighting
-    if extra_weight:
-        weighting = ratings_dict
-    else:
-        weighting = {}
+    weighting = ratings_dict if extra_weight else {}
 
     # get recs based on ratings, watch history
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
@@ -218,11 +213,9 @@ def resubmit():
     extra_weight = session['extra_weight']
     s = Recommender(master_w2v)
     s.connect_db()
+
     # pass dictionary of ratings if the user requests extra weighting
-    if extra_weight:
-        weighting = ratings_dict
-    else:
-        weighting = {}
+    weighting = ratings_dict if extra_weight else {}
 
     stride = len(checked_list) + len(rejected_list) # number of recs to replace
 
@@ -291,7 +284,7 @@ def imdb_submit():
                 ratings = pd.read_csv(file, encoding='cp1252')
             except:
                 ratings = pd.read_csv(file, encoding='latin1')
-            #strip beginning ts
+            # strip leading "tt"s from ID column
             ratings['Const'] = ratings['Const'].str.strip('t')
 
             ratings = ratings.drop(columns=['Title Type','Num Votes','Directors','Genres',
@@ -326,10 +319,7 @@ def imdb_recommend():
                                         ratings, watched, watchlist, good_threshold=good_rate, bad_threshold=bad_rate)
 
     # pass dictionary of ratings if the user requests extra weighting
-    if extra_weight:
-        weighting = ratings_dict
-    else:
-        weighting = {}
+    weighting = ratings_dict if extra_weight else {}
 
     # prep user watch history
     good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
@@ -347,7 +337,7 @@ def imdb_recommend():
         + recs['Movie ID'] + '> Good idea<br>'
     recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
         + recs['Movie ID'] + '>  Hard No<br>'"""
-    recs = rec_edit(recs,good_list)
+    recs = rec_edit(recs,val_list)
     id_list = recs['Movie ID'].to_list()
 
     session.clear()
@@ -516,7 +506,7 @@ def user_search_recommend():
         + recs['Movie ID'] + '>  Good idea<br>'
     recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
         + recs['Movie ID'] + '>  Hard No<br>'"""
-    recs = rec_edit(recs,good_list)
+    recs = rec_edit(recs,val_list)
 
     id_list = recs['Movie ID'].to_list()
 
