@@ -49,7 +49,6 @@ The lightning-fast inferencing of the Word2Vec/Doc2vec algorithms allows us to i
 #### Machine Learning:
 
 - [Gensim](https://radimrehurek.com/gensim/)
-- [Sklearn](https://scikit-learn.org/stable/index.html)
 
 #### Data Collection/Manipulation:
 
@@ -64,16 +63,7 @@ The lightning-fast inferencing of the Word2Vec/Doc2vec algorithms allows us to i
 
 Based on the user's movie ratings and reviews, provide recommendations for movies to watch that they have never before considered watching. We can do this by vectorizing the user's Letterboxd or IMDb reviews and finding cosine-similar matches from 22GB worth of movie reviews. Results can be filtered to remove movies the user has already watched, so long as they provide their data exported from one of those sites.
 
-###  Explanatory Variables
-
--   Explanatory Variable 1
--   Explanatory Variable 2
--   Explanatory Variable 3
--   Explanatory Variable 4
--   Explanatory Variable 5
-
 ### Data Sources
-🚫  Add to or delete souce links as needed for your project
 
 Our primary sources of data are the user reviews of IMDb.com and Letterboxd.com. This was collected from these websites with our own custom-built web scraper. In addition, we make use of [IMDb's data files](https://datasets.imdbws.com/) for summary information on films.
 
