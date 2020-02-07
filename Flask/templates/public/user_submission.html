@@ -1,0 +1,161 @@
+{% extends "public/templates/public_template.html" %}
+
+{% if site == "letterboxd_upload" %}
+    {% block letterboxd %}Letterboxd submission{% endblock %}
+{% elif site == "imdb_upload" %}
+    {% block imdb %}IMDb submission{% endblock %}
+{% else %}
+    {% block generic_title %}Your submission{% endblock %}
+{% endif %}
+
+{% block main %}
+<style>
+label {
+
+ padding:10px;
+ margin:0 0 10px;
+ display: inline-block;
+ vertical-align:middle;
+
+}
+
+label:hover {
+ cursor:pointer;
+}
+</style>
+<div class="container">
+    <div class="row">
+        <div class="col">
+          <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+          <div class=page>
+          <br>
+          <h3>Customize your recommendations.</h3>
+          <br>
+          <br>
+          <h5 style="color: #F39C12">Your most recent ratings:</h5>
+          {% block content %}
+            {{ data|safe }}
+          {% endblock %}
+        </div>
+        {% if site == "letterboxd_upload" %}
+          <form action='/groa_recommendations' method='post'>
+              <br>
+              <br>
+              <h5 style="color: #00bc8c">What's a star worth to you?</h5>
+              <br>
+              <div class="slidecontainer">
+              <input type="range" min="1" max="5" value="3" class="slider" id="myRange" name="bad_rate" step=".5">
+              <p style="cursor: default">When I dislike a movie, I tend to rate it no higher than <span id="demo"></span>/5 stars</p>
+            </div>
+            <br>
+            <div class="slidecontainer">
+              <input type="range" min="1" max="5" value="3.5" class="slider2" id="myRange2" name="good_rate" step=".5">
+              <p style="cursor: default">When I like a movie, I tend to rate it no lower than <span id="demo2"></span>/5 stars</p>
+            <br>
+            </div>
+              <br>
+              <fieldset class="form-group">
+              <h5 style="color: #3498DB">Any extra requests?</h5>
+              <br>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input class="form-check-input" name="hidden" type="checkbox" value="hidden_gems_check" checked="">
+                  Search for hidden gems.
+                </label><p class="text-muted" style="cursor: default"><i>Movies with high ratings and low viewer count.</i></p>
+
+                <label class="form-check-label">
+                  <input class="form-check-input" name="cult" type="checkbox" value="cult_movies_check" checked="">
+                  Search for cult movies.
+                </label><p class="text-muted" style="cursor: default"><i>Movies considered highly underrated by reviewers like you.</i></p>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input class="form-check-input" name="extra_weight" type="checkbox" value="parabolic_weighting_check" checked="">
+                  Give extra weight to my extreme ratings, like 1 or 5 stars (experimental).
+                </label><p class="text-muted" style="cursor: default"><i>Remember polynomials?</i></p>
+              </div>
+              <br>
+              </fieldset>
+            <button type="submit" class="btn btn-primary btn-lg" value="Submit to the model">Explore Recommendations</button>
+            <br><br>
+          </form>
+          {% elif site == "imdb_upload" %}
+          <form action='/groa_recommendations' method='post'>
+              <br>
+              <br>
+              <h5 style="color: #00bc8c">What's a star worth to you?</h5>
+              <br>
+            <div class="slidecontainer">
+              <input type="range" min="1" max="10" value="6" class="slider" id="myRange" name="bad_rate">
+              <p style="cursor: default">When I dislike a movie, I tend to rate it no higher than <span id="demo"></span>/10 stars</p>
+            </div>
+            <br>
+            <div class="slidecontainer">
+              <input type="range" min="1" max="10" value="7" class="slider2" id="myRange2" name="good_rate">
+              <p style="cursor: default">When I like a movie, I tend to rate it no lower than <span id="demo2"></span>/10 stars</p>
+            </div>
+            <br>
+            <fieldset class="form-group">
+              <h5 style="color: #3498DB">Any extra requests?</h5>
+              <br>
+            <div class="form-check">
+                <label class="form-check-label">
+                <input class="form-check-input" name="hidden" type="checkbox" value="" disabled="">
+                <span style="color:#999">Search for hidden gems.</span>
+                  </label><p class="text-muted" style="cursor: default"><i>Sorry. This feature needs your reviews to work, and IMDb does not allow review exports. To use your IMDb reviews, try the User Lookup page.</i></p>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label">
+                <input class="form-check-input" style="color:#999" name="cult" type="checkbox" value="" disabled="">
+                <span style="color:#999">Search for cult movies.</span>
+                  </label><p class="text-muted" style="cursor: default"><i>Sorry. This feature needs your reviews to work, and IMDb does not allow review exports. To use your IMDb reviews, try the User Lookup page.</i></p>
+            </div>
+            <div class="form-check">
+              <label class="form-check-label">
+              <input class="form-check-input" name="extra_weight" type="checkbox" value="parabolic_weighting_check" checked="">
+                Give extra weight to my extreme ratings, like 1 or 10 stars (experimental).
+              </label><p class="text-muted" style="cursor: default"><i>Remember polynomials?</i></p>
+            </div>
+            <br>
+            </fieldset>
+          <button type="submit" class="btn btn-primary btn-lg" value="Submit to the model">Explore Recommendations</button>
+          <br><br><br>
+          </form>
+          {% endif %}
+          <script>
+            var slider = document.getElementById("myRange");
+            var output = document.getElementById("demo");
+            output.innerHTML = slider.value;
+
+            slider.oninput = function() {
+              output.innerHTML = this.value;
+            }
+
+            var slider2 = document.getElementById("myRange2");
+            var output2 = document.getElementById("demo2");
+            output2.innerHTML = slider2.value;
+
+            slider2.oninput = function() {
+              output2.innerHTML = this.value;
+            }
+
+            var slider3 = document.getElementById("myRange3");
+            var output3 = document.getElementById("demo3");
+            output3.innerHTML = slider3.value;
+
+            slider3.oninput = function() {
+              output3.innerHTML = this.value;
+            }
+
+            var slider4 = document.getElementById("myRange4");
+            var output4 = document.getElementById("demo4");
+            output4.innerHTML = slider4.value;
+
+            slider4.oninput = function() {
+              output4.innerHTML = this.value;
+            }
+          </script>
+        </div>
+    </div>
+</div>
+{% endblock %}
