@@ -199,14 +199,15 @@ class Recommender(object):
             WHERE m.movie_id = '{id}'"""
             self.cursor_dog.execute(info_query)
         except Exception as e:
-            return tuple([f"Movie title unknown. ID:{id}", None, None, None, None, None, id])
+            return tuple([f"Movie title unknown. ID:{id}", None, None, None, None, None, None, id])
 
         t = self.cursor_dog.fetchone()
         if t:
-            title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id}/", t[2], t[3], score, id])
+            title = tuple([t[0], t[1], f"https://www.imdb.com/title/tt{id}/",
+            f"https://www.letterboxd.com/imdb/tt{id}/", t[2], t[3], score, id])
             return title
         else:
-            return tuple([f"Movie title not retrieved. ID:{id}", None, None, None, None, None, id])
+            return tuple([f"Movie title not retrieved. ID:{id}", None, None, None, None, None, None, id])
 
     def get_most_similar_title(self, id, id_list):
         """Get the title of the most similar movie to id from id_list"""
@@ -271,7 +272,8 @@ class Recommender(object):
         Returns
         -------
         A list of tuples
-            (Title, Year, IMDb URL, Average Rating, Number of Votes, Similarity score)
+            (Title, Year, IMDb URL, Letterboxd URL, Average Rating,
+            Number of Votes, Similarity score)
         """
 
         clf = self._get_model()
@@ -345,9 +347,3 @@ class Recommender(object):
             print('\n')
         if rec_movies:
             return formatted_recs
-
-def timer_func(printme=""):
-    """Prints seconds passed since last checkpoint, for debugging purposes."""
-    global my_time
-    print(printme, "--- %s seconds ---" % (time.time() - my_time))
-    my_time = time.time()

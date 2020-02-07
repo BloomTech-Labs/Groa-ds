@@ -82,6 +82,7 @@ def lb_submit():
 
     # letterboxd seems to always export as cp1252 encoding regardless of users' OS. Weird!
     ratings = pd.read_csv(f'temp{tag}/ratings.csv', encoding='cp1252')
+    # read all CSVs as dataframes
     reviews, watched, watchlist = multi_read(['reviews','watched','watchlist'],tag)
 
     # save user data to session.
@@ -131,7 +132,7 @@ def imdb_submit():
     # strip leading "tt"s from ID column
     ratings['Const'] = ratings['Const'].str.strip('t')
     ratings = ratings.drop(columns=['Title Type','Num Votes','Directors','Genres',
-                            'URL','Release Date', 'Const'], errors='ignore')
+                            'Letterboxd Link', 'IMDb Link','Release Date', 'Const'], errors='ignore')
     session['ratings'] = ratings.to_json()
 
     return render_template('public/user_submission.html',
@@ -181,8 +182,8 @@ def groa_recommend():
     # get recs based on ratings, watch history
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
                         ratings_dict=weighting),
-                        columns=['Title', 'Year', 'URL', 'Avg. Rating',
-                        '# Votes', 'Similarity Score','Movie ID'])
+                        columns=['Title', 'Year', 'IMDb Link', 'Letterboxd Link',
+                        'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
 
     # make empty dataframes to return in case hidden or cult is deselected
     hidden_df = cult_df = pd.DataFrame()
@@ -190,8 +191,8 @@ def groa_recommend():
     if hidden or cult:
         reviews = prep_reviews(reviews) # prep user reviews
         cult_results, hidden_results = r.predict(reviews, hist_list=hist_list)
-        optional_cols = ['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
-                                'User Rating', 'Reviewer', 'Review', 'Movie ID']
+        optional_cols = ['Title', 'Year', 'IMDb Link', 'Letterboxd Link', '# Votes',
+                    'Avg. Rating', 'User Rating', 'Reviewer', 'Review', 'Movie ID']
         if cult:
             cult_df = pd.DataFrame(cult_results, columns=optional_cols)
             cult_df = rec_edit(cult_df, val_list) # Applies inline HTML formatting
@@ -217,7 +218,7 @@ def groa_recommend():
     session['ratings_dict'],
     session['checked_list'], # initialize empty 'checked' and 'rejected' lists for later
     session['rejected_list']) = multi_dump([recs['Movie ID'].to_list(), good_list,
-                                bad_list, hist_list, val_list, ratings_dict, [], []])
+                                            bad_list, hist_list, val_list, ratings_dict, [], []])
     (session['good_rate'],
     session['bad_rate'],
     session['extra_weight']) = multi_session([good_rate,bad_rate,extra_weight])
@@ -261,8 +262,8 @@ def resubmit():
                 ratings_dict=weighting, checked_list=checked_list,
                 rejected_list=rejected_list,
                 n=100+stride, harshness=1, scoring=False),
-                columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes',
-                'Similarity Score','Movie ID'])
+                columns=['Title', 'Year', 'IMDb Link', 'Letterboxd Link',
+                'Avg. Rating', '# Votes', 'Similarity Score','Movie ID'])
 
     recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
 
@@ -300,8 +301,9 @@ def download_recs():
         checked_list = [fill_id(x) for x in checked_list]
         checked_info = [s._get_info(x) for x in checked_list]
         recs_df = pd.DataFrame(checked_info,
-                                columns=['Title', 'Year', 'URL',
-                                'Avg. Rating', '# Votes','Blank', 'ID'])
+                                columns=['Title', 'Year', 'IMDb Link',
+                                        'Letterboxd Link', 'Avg. Rating',
+                                        '# Votes','Blank', 'ID'])
         # drop ID because Excel truncates numbers with leading zeroes
         recs_df = recs_df.drop(columns=['Blank', 'ID'])
     elif "cult" in request.form['button']: # export cult movie recs only
