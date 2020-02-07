@@ -66,17 +66,16 @@ Based on the user's movie ratings and reviews, provide recommendations for movie
 ### Data Sources
 
 Our primary sources of data are the user reviews of IMDb.com and Letterboxd.com. This was collected from these websites with our own custom-built web scraper. In addition, we make use of [IMDb's data files](https://datasets.imdbws.com/) for summary information on films.
-
+<!---
 ### 3️⃣ How to connect to the web API
-
+<!---
 🚫 List directions on how to connect to the API here
-
+<!---
 ### 3️⃣ How to connect to the data API
-
+<!---
 🚫 List directions on how to connect to the API here
 
 ## Contributing
-
 When contributing to this repository, please first discuss the change you wish to make via issue, email, or any other method with the owners of this repository before making a change.
 
 Please note we have a [code of conduct](./code_of_conduct.md.md). Please follow it in all your interactions with the project.
