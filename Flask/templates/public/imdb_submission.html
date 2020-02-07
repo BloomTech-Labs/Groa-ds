@@ -4,18 +4,20 @@
 
 {% block main %}
 <style>
-label {
-  border:1px solid #ccc;
-  padding:10px;
-  margin:0 0 10px;
-  display:block; 
- }
- 
- label:hover {
-  background: #f2d0d3;;
-  cursor:pointer;
- }
- </style>
+  label {
+   
+   padding:10px;
+   margin:0 0 10px;
+   display: inline-block; 
+   vertical-align:middle;
+   
+  }
+  
+  label:hover {
+   background: #375A7F;;
+   cursor:pointer;
+  }
+  </style>
 <div class="container">
     <div class="row">
         <div class="col">
@@ -30,7 +32,7 @@ label {
             {{ data|safe }}
           {% endblock %}
         </div>
-          <form action='/imdb_recommendations' method='post'>
+          <form action='/groa_recommendations' method='post'>
               <br>
               <br>
               <h5 style="color: #00bc8c">What's a star worth to you?</h5>
@@ -58,29 +60,30 @@ label {
             <input type="checkbox" name="Cult" value="Cult">Add Cult movies to my search<br> -->
             <br>
             <fieldset class="form-group">
-            <h5 class="color: #3498DB">Any extra requests?</h5>
-            <br>
+              <h5 style="color: #3498DB">Any extra requests?</h5>
+              <br>
             <div class="form-check">
-              <label class="form-check-label">
+              
                 <input class="form-check-input" name="hidden" type="checkbox" value="" disabled="">
                 Search for hidden gems.
-              </label><p class="text-muted"><i>Sorry, IMDb does not allow review exports. To use your IMDb reviews, try the User Lookup page.</i></p>
+                  <p class="text-muted"><i>Sorry, IMDb does not allow review exports. To use your IMDb reviews, try the User Lookup page.</i></p>
             </div>
             <div class="form-check">
-              <label class="form-check-label">
+              
                 <input class="form-check-input" name="cult" type="checkbox" value="" disabled="">
                 Search for cult movies.
-              </label><p class="text-muted"><i>Sorry, IMDb does not allow review exports. To use your IMDb reviews, try the User Lookup page.</i></p>
+                  <p class="text-muted"><i>Sorry, IMDb does not allow review exports. To use your IMDb reviews, try the User Lookup page.</i></p>
             </div>
             <div class="form-check">
               <label class="form-check-label">
-                <input class="form-check-input" name="extra_weight" type="checkbox" value="parabolic_weighting_check" checked="">
+              <input class="form-check-input" name="extra_weight" type="checkbox" value="parabolic_weighting_check" checked="">
                 Give extra weight to my extreme ratings, like 1 or 10 stars (experimental).
               </label><p class="text-muted"><i>Remember polynomials?</i></p>
             </div>
             <br>
             </fieldset>
           <button type="submit" class="btn btn-primary btn-lg" value="Submit to the model">Explore Recommendations</button>
+          <br><br><br>
           </form>
 
           <script>

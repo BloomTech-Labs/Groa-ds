@@ -13,7 +13,7 @@ import psycopg2
 from psycopg2_blob import seventoten,query2,id_to_title,get_imdb_users,imdb_user_lookup,read_users
 from w2v_inference import *
 from r2v_inference import *
-from functions import multi_read,multi_jsonify,multi_read_json,rec_edit,multi_dump,multi_session,multi_load,bool_func,links
+from functions import multi_read,multi_jsonify,multi_read_json,rec_edit,multi_dump,multi_session,multi_load,bool_func,links,highlight_watchlist
 
 application = Flask(__name__)
 application.secret_key = 'secret_bee'
@@ -82,26 +82,35 @@ def lb_submit():
                                     data=ratings.sort_values(by=['Date'],
                                     ascending=False).head().to_html(index=False))
 
-@application.route('/letterboxd_recommendations', methods=['GET', 'POST'])
-def lb_recommend():
+@application.route('/groa_recommendations', methods=['GET', 'POST'])
+def groa_recommend():
     '''
     Shows recommendations from your Letterboxd choices
     '''
-    '''ratings = pd.read_json(session['ratings'])
-    reviews = pd.read_json(session['reviews'])
-    watched = pd.read_json(session['watched'])
-    watchlist = pd.read_json(session['watchlist'])'''
-
-    (ratings,
-    reviews,
-    watched,
-    watchlist) = multi_read_json(['ratings','reviews','watched','watchlist'])
-
-    bad_rate = float(request.form['bad_rate'])
-    good_rate = float(request.form['good_rate'])
-    hidden = "hidden" in request.form # user requests hidden gems
-    cult = "cult" in request.form # user requests cult movies
-    extra_weight = "extra_weight" in request.form # user requests cult movies
+    print('request1:'+str(request.referrer))
+    if '/imdb_submission' in str(request.referrer):
+        ratings = pd.read_json(session['ratings'])
+        bad_rate = int(request.form['bad_rate'])/2
+        good_rate = int(request.form['good_rate'])/2
+        watched = pd.DataFrame() # IMDb user only uploads ratings
+        watchlist = pd.DataFrame()
+        extra_weight = "extra_weight" in request.form # user requests extra weighting
+    elif '/user_reviews' in str(request.referrer):
+        ratings,reviews = multi_read_json(['ratings','reviews'])
+        watched = pd.DataFrame()
+        watchlist = pd.DataFrame()
+        bad_rate = int(request.form['bad_rate'])/2
+        good_rate = int(request.form['good_rate'])/2
+        hidden = "hidden" in request.form # user requests hidden gems
+        cult = "cult" in request.form # user requests cult movies
+        extra_weight = "extra_weight" in request.form # user requests cult movies
+    else:
+        ratings,reviews,watched,watchlist=multi_read_json(['ratings','reviews','watched','watchlist'])
+        bad_rate = float(request.form['bad_rate'])
+        good_rate = float(request.form['good_rate'])
+        hidden = "hidden" in request.form # user requests hidden gems
+        cult = "cult" in request.form # user requests cult movies
+        extra_weight = "extra_weight" in request.form # user requests cult movies
 
     # initialize both models and connect them to database
     s = Recommender(master_w2v)
@@ -123,53 +132,49 @@ def lb_recommend():
                         ratings_dict=weighting, scoring=True),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating', '# Votes',
                         'Similarity Score','Movie ID'])
+    print('request2:'+str(request.referrer))
+    if ('letterboxd_submission' or 'user_reviews') in str(request.referrer):
+        # prep user reviews
+        reviews = prep_reviews(reviews)
 
-    # prep user reviews
-    reviews = prep_reviews(reviews)
+        # make empty dataframes to return if either option is deselected
+        hidden_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+                'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+        cult_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+                'User Rating', 'Reviewer', 'Review', 'Movie ID'])
 
-    # make empty dataframes to return if either option is deselected
-    hidden_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
-            'User Rating', 'Reviewer', 'Review', 'Movie ID'])
-    cult_df = pd.DataFrame(columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
-            'User Rating', 'Reviewer', 'Review', 'Movie ID'])
-
-    if hidden or cult:
-        cult_results, hidden_results = r.predict(reviews, hist_list=hist_list)
-        if cult:
-            cult_df = pd.DataFrame(cult_results,
-                columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
-                        'User Rating', 'Reviewer', 'Review', 'Movie ID'])
-            cult_df = rec_edit(cult_df, val_list)
-        if hidden:
-            hidden_df = pd.DataFrame(hidden_results,
-                columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
-                        'User Rating', 'Reviewer', 'Review', 'Movie ID'])
-            hidden_df = rec_edit(hidden_df, val_list)
-
+        if hidden or cult:
+            cult_results, hidden_results = r.predict(reviews, hist_list=hist_list)
+            if cult:
+                cult_df = pd.DataFrame(cult_results,
+                    columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+                            'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+                cult_df = rec_edit(cult_df, val_list)
+            if hidden:
+                hidden_df = pd.DataFrame(hidden_results,
+                    columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
+                            'User Rating', 'Reviewer', 'Review', 'Movie ID'])
+                hidden_df = rec_edit(hidden_df, val_list)
+    else:
+        hidden_df = cult_df = pd.DataFrame()
     recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
     recs = rec_edit(recs, val_list)
     id_list = recs['Movie ID'].to_list()
 
     session.clear()
-    if hidden:
-        session['hidden_df'] = hidden_df.to_json()
-    if cult:
-        session['cult_df'] = cult_df.to_json()
+    if ('letterboxd_submission' or 'user_reviews') in str(request.referrer):
+        if hidden:
+            session['hidden_df'] = hidden_df.to_json()
+        if cult:
+            session['cult_df'] = cult_df.to_json()
     session['recs'] = recs.to_json()
-    '''session['id_list'] = json.dumps(id_list)
-    session['good_list'] = json.dumps(good_list)
-    session['bad_list'] = json.dumps(bad_list)
-    session['hist_list'] = json.dumps(hist_list)
-    session['val_list'] = json.dumps(val_list)
-    session['ratings_dict'] = json.dumps(ratings_dict)'''
     session['id_list'],session['good_list'],session['bad_list'],session['hist_list'],session['val_list'],session['ratings_dict']=multi_dump([id_list,good_list,bad_list,hist_list,val_list,ratings_dict])
 
-    '''session['good_rate'] = good_rate
-    session['bad_rate'] = bad_rate
-    session['hidden'] = hidden
-    session['cult'] = cult
-    session['extra_weight'] = extra_weight'''
-    session['good_rate'],session['bad_rate'],session['hidden'],session['cult'],session['extra_weight']=multi_session([good_rate,bad_rate,hidden,cult,extra_weight])
+    if ('letterboxd_submission' or 'user_reviews') in str(request.referrer):
+        session['good_rate'],session['bad_rate'],session['hidden'],session['cult'],session['extra_weight']=multi_session([good_rate,bad_rate,hidden,cult,extra_weight])
+    else:
+        session['good_rate'],session['bad_rate'],session['extra_weight']=multi_session([good_rate,bad_rate,extra_weight])
+
 
     recs = recs.drop(columns='Movie ID')
 
@@ -194,11 +199,6 @@ def resubmit():
     checked_list.extend(request.form.getlist('upvote')) # log upvotes
     rejected_list.extend(request.form.getlist('downvote')) # log downvotes
 
-    '''id_list = json.loads(session['id_list'])
-    good_list = json.loads(session['good_list'])
-    bad_list = json.loads(session['bad_list'])
-    hist_list = json.loads(session['hist_list'])
-    val_list = json.loads(session['val_list'])'''
     id_list,good_list,bad_list,hist_list,val_list=multi_load(['id_list','good_list','bad_list','hist_list','val_list'])
 
     ratings_dict = json.loads(session['ratings_dict'])
@@ -227,11 +227,7 @@ def resubmit():
                 'Similarity Score','Movie ID'])
 
     recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
-    """recs['URL'] = recs['URL'].apply(lambda x: f'<a href="{x}">IMDb page</a>')
-    recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
-            + recs['Movie ID'] + '>  Good idea<br>'
-    recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
-        + recs['Movie ID'] + '>  Hard No<br>'"""
+
     recs=rec_edit(recs, val_list)
 
     id_list2 = recs['Movie ID'].to_list()
@@ -242,9 +238,6 @@ def resubmit():
     cols=recs.columns.to_list()
     recs=recs[cols[-1:]+cols[:-1]] #puts New Rec? column as column number 1 or number 0 if you're a computer
 
-    '''session['id_list'] = json.dumps(id_list2)
-    session['checked_list'] = json.dumps(checked_list)
-    session['rejected_list'] = json.dumps(rejected_list)'''
     session['id_list'],session['checked_list'],session['rejected_list']=multi_dump([id_list2,checked_list,rejected_list])
 
     session['recs'] = recs.to_json()
@@ -321,38 +314,20 @@ def imdb_recommend():
     # pass dictionary of ratings if the user requests extra weighting
     weighting = ratings_dict if extra_weight else {}
 
-    # prep user watch history
-    good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
-                        ratings, good_threshold=good_rate, bad_threshold=bad_rate)
-
     # get recs based on ratings, watch history
     recs = pd.DataFrame(s.predict(good_list, bad_list, hist_list, val_list,
                         ratings_dict=weighting, scoring=False),
                         columns=['Title', 'Year', 'URL', 'Avg. Rating',
                         '# Votes', 'Similarity Score','Movie ID'])
 
-    """recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
-    recs['URL'] = recs['URL'].apply(links)
-    recs['Vote Up'] = '<input type="checkbox" name="downvote" value=' \
-        + recs['Movie ID'] + '> Good idea<br>'
-    recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
-        + recs['Movie ID'] + '>  Hard No<br>'"""
-    recs = rec_edit(recs,val_list)
+    recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
+    recs = rec_edit(recs,good_list)
     id_list = recs['Movie ID'].to_list()
 
     session.clear()
     session['recs'] = recs.to_json()
-    '''session['id_list'] = json.dumps(id_list)
-    session['good_list'] = json.dumps(good_list)
-    session['bad_list'] = json.dumps(bad_list)
-    session['hist_list'] = json.dumps(hist_list)
-    session['val_list'] = json.dumps(val_list)
-    session['ratings_dict'] = json.dumps(ratings_dict)'''
-    session['id_list'],session['good_list'],session['bad_list'],session['hist_list'],session['val_list'],session['ratings_dict']=multi_dump([id_list,good_list,bad_list,hist_list,val_list,ratings_dict])
 
-    '''session['good_rate'] = good_rate
-    session['bad_rate'] = bad_rate
-    session['extra_weight'] = extra_weight'''
+    session['id_list'],session['good_list'],session['bad_list'],session['hist_list'],session['val_list'],session['ratings_dict']=multi_dump([id_list,good_list,bad_list,hist_list,val_list,ratings_dict])
     session['good_rate'],session['bad_rate'],session['extra_weight']=multi_session([good_rate,bad_rate,extra_weight])
 
     recs = recs.drop(columns = 'Movie ID')
@@ -422,8 +397,7 @@ def user_reviews():
     name = request.form['Username']
     df,ratings,reviews = imdb_user_lookup(name)
 
-    '''session['ratings']=ratings.to_json()
-    session['reviews']=reviews.to_json()'''
+
     session['ratings'],session['reviews']=multi_jsonify([ratings,reviews])
 
     return render_template('public/user_reviews.html', data=df.head(10).to_html(index=False), name=name)
@@ -434,8 +408,7 @@ def user_search_recommend():
     Shows recommendations from your Letterboxd choices
     '''
 
-    '''ratings = pd.read_json(session['ratings'])
-    reviews = pd.read_json(session['reviews'])'''
+
     ratings,reviews = multi_read_json(['ratings','reviews'])
 
     watched = pd.DataFrame()
@@ -485,27 +458,14 @@ def user_search_recommend():
             cult_df = pd.DataFrame(cult_results,
                 columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
                         'User Rating', 'Reviewer', 'Review', 'Movie ID'])
-            cult_df['URL'] = cult_df['URL'].apply(links)
-            cult_df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
-                + cult_df['Movie ID'] + '>  Good idea<br>'
-            cult_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
-                + cult_df['Movie ID'] + '>  Hard No<br>'
+            cult_df = rec_edit(cult_df, val_list)
         if hidden:
             hidden_df = pd.DataFrame(hidden_results,
                 columns=['Title', 'Year', 'URL', '# Votes', 'Avg. Rating',
                         'User Rating', 'Reviewer', 'Review', 'Movie ID'])
-            hidden_df['URL'] = hidden_df['URL'].apply(links)
-            hidden_df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
-                + hidden_df['Movie ID'] + '>  Good idea<br>'
-            hidden_df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
-                + hidden_df['Movie ID'] + '>  Hard No<br>'
+            hidden_df = rec_edit(hidden_df, val_list)
 
-    """recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
-    recs['URL'] = recs['URL'].apply(links)
-    recs['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
-        + recs['Movie ID'] + '>  Good idea<br>'
-    recs['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
-        + recs['Movie ID'] + '>  Hard No<br>'"""
+    recs['Liked by fans of...'] = recs['Movie ID'].apply(lambda x: s.get_most_similar_title(x, good_list))
     recs = rec_edit(recs,val_list)
 
     id_list = recs['Movie ID'].to_list()
@@ -517,19 +477,8 @@ def user_search_recommend():
         session['cult_df'] = cult_df.to_json()
     session['recs'] = recs.to_json()
 
-    '''session['id_list'] = json.dumps(id_list)
-    session['good_list'] = json.dumps(good_list)
-    session['bad_list'] = json.dumps(bad_list)
-    session['hist_list'] = json.dumps(hist_list)
-    session['val_list'] = json.dumps(val_list)
-    session['ratings_dict'] = json.dumps(ratings_dict)'''
     session['id_list'],session['good_list'],session['bad_list'],session['hist_list'],session['val_list'],session['ratings_dict']=multi_dump([id_list,good_list,bad_list,hist_list,val_list,ratings_dict])
 
-    '''session['good_rate'] = good_rate
-    session['bad_rate'] = bad_rate
-    session['hidden'] = hidden
-    session['cult'] = cult
-    session['extra_weight'] = extra_weight'''
     session['good_rate'],session['bad_rate'],session['hidden'],session['cult'],session['extra_weight']=multi_session([good_rate,bad_rate,hidden,cult,extra_weight])
 
     recs = recs.drop(columns='Movie ID')

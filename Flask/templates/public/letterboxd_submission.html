@@ -5,14 +5,16 @@
 {% block main %}
 <style>
 label {
- border:1px solid #ccc;
+ 
  padding:10px;
  margin:0 0 10px;
- display:block; 
+ display: inline-block; 
+ vertical-align:middle;
+ 
 }
 
 label:hover {
- background:#eee;
+ background: #375A7F;;
  cursor:pointer;
 }
 </style>
@@ -30,7 +32,7 @@ label:hover {
             {{ data|safe }}
           {% endblock %}
         </div>
-          <form action='/letterboxd_recommendations' method='post'>
+          <form action='/groa_recommendations' method='post'>
               <br>
               <br>
               <h5 style="color: #00bc8c">What's a star worth to you?</h5>
@@ -55,15 +57,14 @@ label:hover {
             </div> -->
               <br>
               <fieldset class="form-group">
-              <h5 class="color: #3498DB">Any extra requests?</h5>
+              <h5 style="color: #3498DB">Any extra requests?</h5>
               <br>
               <div class="form-check">
                 <label class="form-check-label">
                   <input class="form-check-input" name="hidden" type="checkbox" value="hidden_gems_check" checked="">
                   Search for hidden gems.
                 </label><p class="text-muted"><i>Movies with high ratings and low viewer count.</i></p>
-              </div>
-              <div class="form-check">
+              
                 <label class="form-check-label">
                   <input class="form-check-input" name="cult" type="checkbox" value="cult_movies_check" checked="">
                   Search for cult movies.
@@ -78,6 +79,7 @@ label:hover {
               <br>
               </fieldset>
             <button type="submit" class="btn btn-primary btn-lg" value="Submit to the model">Explore Recommendations</button>
+            <br><br>
             <!-- <input type="submit" value="Submit to the model"> -->
           </form>
 
