@@ -1,6 +1,6 @@
 import pandas as pd
 from flask import session
-from w2v_inference import Recommender, timer_func
+from w2v_inference import Recommender
 import json
 
 def highlight_watchlist(id_column, title_column, watchlist):
