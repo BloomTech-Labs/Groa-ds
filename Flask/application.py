@@ -93,7 +93,7 @@ def lb_submit():
 
     sleep(1) # wait for session to save (prevents race condition while session saves)
     shutil.rmtree(f'temp{tag}') # remove temp folder if exists
-
+    print(type(session['ratings']))
     return render_template('public/user_submission.html',
                             data=ratings.sort_values(by=['Date'],
                             ascending=False).head().to_html(index=False),

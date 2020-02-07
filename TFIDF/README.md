@@ -1,5 +1,6 @@
 # TF-IDF model guide
 
+## This directory contains a deprecated approach to finding similar reviewers by writing style. For a more successful approach, see [Groa/review2vec](https://github.com/Lambda-School-Labs/Groa/tree/master/review2vec).
 
 This model uses TF-IDF embeddings with Truncated SVD to provide movie recommendations based on a user-defined movie review. It does not give very good results. However, it contains an effective method for constructing a Document-Term Matrix (DTM) from millions of documents in an efficient manner that is robust to network failures.
 
