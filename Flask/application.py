@@ -89,7 +89,7 @@ def lb_submit():
     (session['ratings'],
     session['reviews'],
     session['watched'],
-    session['watchlist']) = multi_jsonify([ratings,reviews,watched,watchlist])
+    session['watchlist']) = save_session([ratings,reviews,watched,watchlist])
 
     sleep(1) # wait for session to save (prevents race condition while session saves)
     shutil.rmtree(f'temp{tag}') # remove temp folder if exists
@@ -156,7 +156,7 @@ def groa_recommend():
     if '/letterboxd_submission' in str(request.referrer):
         (reviews,
         watched,
-        watchlist) = multi_read_json(['reviews','watched','watchlist'])
+        watchlist) = load_session(['reviews','watched','watchlist'])
         bad_rate = float(request.form['bad_rate']) # slider input
         good_rate = float(request.form['good_rate']) # slider input
     ratings = pd.read_json(session['ratings'])
@@ -191,7 +191,7 @@ def groa_recommend():
     if hidden or cult:
         reviews = prep_reviews(reviews) # prep user reviews
         cult_results, hidden_results = r.predict(reviews, hist_list=hist_list)
-        optional_cols = ['Title', 'Year', 'IMDb Link', 'Letterboxd Link', '# Votes',
+        optional_cols = ['Title', 'Year', 'IMDb Link', '# Votes',
                     'Avg. Rating', 'User Rating', 'Reviewer', 'Review', 'Movie ID']
         if cult:
             cult_df = pd.DataFrame(cult_results, columns=optional_cols)
@@ -217,11 +217,15 @@ def groa_recommend():
     session['val_list'],
     session['ratings_dict'],
     session['checked_list'], # initialize empty 'checked' and 'rejected' lists for later
-    session['rejected_list']) = multi_dump([recs['Movie ID'].to_list(), good_list,
-                                            bad_list, hist_list, val_list, ratings_dict, [], []])
-    (session['good_rate'],
+    session['rejected_list'],
+    session['good_rate'],
     session['bad_rate'],
-    session['extra_weight']) = multi_session([good_rate,bad_rate,extra_weight])
+    session['extra_weight']) = save_session([recs['Movie ID'].to_list(), good_list,
+                                            bad_list, hist_list, val_list, ratings_dict,
+                                            [], [], good_rate, bad_rate, extra_weight])
+    '''(session['good_rate'],
+    session['bad_rate'],
+    session['extra_weight']) = multi_session([good_rate,bad_rate,extra_weight])'''
 
     recs = recs.drop(columns='Movie ID')
 
@@ -247,7 +251,7 @@ def resubmit():
     bad_list,
     hist_list,
     val_list,
-    ratings_dict) = multi_load(['id_list','good_list','bad_list',
+    ratings_dict) = load_session(['id_list','good_list','bad_list',
                                 'hist_list','val_list', 'ratings_dict'])
 
     s = Recommender(master_w2v)
@@ -281,7 +285,7 @@ def resubmit():
     session['recs'] = recs.to_json()
     (session['id_list'],
     session['checked_list'],
-    session['rejected_list']) = multi_dump([id_list2, checked_list, rejected_list])
+    session['rejected_list']) = save_session([id_list2, checked_list, rejected_list])
 
     return render_template('public/re_recommendations.html',
                             data=recs.drop(columns='Movie ID')
@@ -333,7 +337,7 @@ def user_search():
 def user_reviews():
     name = request.form['Username']
     df, ratings, reviews = imdb_user_lookup(name)
-    session['ratings'], session['reviews'] = multi_jsonify([ratings, reviews])
+    session['ratings'], session['reviews'] = save_session([ratings, reviews])
     return render_template('public/user_reviews.html',
                             data=df.head(10).to_html(index=False), name=name)
 

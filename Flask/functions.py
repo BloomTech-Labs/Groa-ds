@@ -1,8 +1,47 @@
 import pandas as pd
 from flask import session
-from w2v_inference import Recommender, timer_func
+from w2v_inference import Recommender
 import json
 
+# possible types: strings from session, lists, dataframes, csvs,
+# things it needs to do for df:read_csv,to_json,read_json
+# things it needs to do for lists: dumps, loads
+# good_rate and bad_rate should be floats, I think extra_weight is a bool
+def save_session(var_list):
+    '''
+    Takes lists of objects and appropriately sessions them
+    '''
+    return_list = []
+    for x in var_list:
+        if isinstance(x,pd.DataFrame):
+            return_list.append(x.to_json())
+        elif isinstance(x,list):
+            return_list.append(json.dumps(x))
+        elif isinstance(x,(bool or int or float)):
+            return_list.append(x)
+    return return_list    
+
+def load_session(str_list):
+    '''
+    takes a list of sessions and 
+    turns them into their appropriate types
+    '''
+    df_list = ['hidden_df', 'cult_df', 'recs', 'reviews',
+               'watched', 'watchlist']
+    list_list = ['id_list', 'good_list', 'bad_list', 'hist_list', 
+                 'val_list', 'ratings_dict', 'checked_list', 'rejected_list']
+    other_list = ['good_rate', 'bad_rate', 'extra_weight']
+
+    return_list = []
+    for x in str_list:
+        if x in df_list:
+            return_list.append(pd.read_json(session[x]))
+        elif x in list_list:
+            return_list.append(json.loads(session[x]))
+        else:
+            return_list.append(session[x])
+    return return_list
+        
 def highlight_watchlist(id_column, title_column, watchlist):
     '''
     This function checks the "Movie ID" column against the watchlist and
@@ -15,6 +54,26 @@ def highlight_watchlist(id_column, title_column, watchlist):
     matched = list(zip(title_column, bool_list))
     b = [f'<p style="color:#b59fe0">{title}</p>' if x==True else title for title, x in matched]
     return b
+
+def links(x):
+    '''Changes URLs to actual links'''
+    return '<a href="%s">Go to the IMDb page</a>' % (x)
+
+def rec_edit(df, val_list):
+    '''
+    adds various columns to the recommendation data frame, namely:
+    Liked by fans of shows you what movie the recommendation is most similar to from your good list
+    URL changes the URL to an actual hypertext link
+    Vote Up/Down add the HTML for checkboxes
+    '''
+    df['IMDb Link'] = df['IMDb Link'].apply(lambda x: f'<a href="{x}">IMDb</a>') #may need links or adjust lambda func
+    df['Letterboxd Link'] = df['Movie ID'].apply(lambda x: f'<a href="{x}">Letterboxd</a>') #may need links or adjust lambda func
+    df['Title'] = highlight_watchlist(df['Movie ID'], df['Title'], val_list)
+    df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
+        + df['Movie ID'] + '>  Good idea<br>'
+    df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
+        + df['Movie ID'] + '>  Hard No<br>'
+    return df
 
 def multi_read(list,tag):
     '''
@@ -44,26 +103,6 @@ def multi_read_json(list):
     for i in list:
         x.append(pd.read_json(session[f'{i}']))
     return x
-
-def links(x):
-    '''Changes URLs to actual links'''
-    return '<a href="%s">Go to the IMDb page</a>' % (x)
-
-def rec_edit(df, val_list):
-    '''
-    adds various columns to the recommendation data frame, namely:
-    Liked by fans of shows you what movie the recommendation is most similar to from your good list
-    URL changes the URL to an actual hypertext link
-    Vote Up/Down add the HTML for checkboxes
-    '''
-    df['IMDb Link'] = df['IMDb Link'].apply(lambda x: f'<a href="{x}">IMDb</a>') #may need links or adjust lambda func
-    df['Letterboxd Link'] = df['Letterboxd Link'].apply(lambda x: f'<a href="{x}">Letterboxd</a>') #may need links or adjust lambda func
-    df['Title'] = highlight_watchlist(df['Movie ID'], df['Title'], val_list)
-    df['Vote Up'] = '<input type="checkbox" name="upvote" value=' \
-        + df['Movie ID'] + '>  Good idea<br>'
-    df['Vote Down'] = '<input type="checkbox" name="downvote" value=' \
-        + df['Movie ID'] + '>  Hard No<br>'
-    return df
 
 def multi_dump(list):
     '''
@@ -104,10 +143,6 @@ def bool_func(column,id_list):
         bool_list.append(x in id_list)
     b = ['<p style="color: #00bc8c">NEW!</p>' if x==True else '' for x in bool_list]
     return b
-
-def links(x):
-    '''Changes URLs to actual links'''
-    return '<a href="%s">IMDb page</a>' % (x)
 
 def timer_func(printme=""):
     """Prints seconds passed since last checkpoint, for debugging purposes."""
