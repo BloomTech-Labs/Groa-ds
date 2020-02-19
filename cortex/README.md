@@ -1,5 +1,5 @@
 # Test Locally
-
+- live on http://a53907b2c534911ea8bbd0a1babb722b-2078997105.us-west-2.elb.amazonaws.com/movie-recommender
 - On Windows replace *** with database password and run this in the terminal
 ```
 set DB_PASSWORD=***
