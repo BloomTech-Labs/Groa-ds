@@ -1,5 +1,3 @@
-- live on http://a53907b2c534911ea8bbd0a1babb722b-2078997105.us-west-2.elb.amazonaws.com/movie-recommender
-
 # Test Locally
 
 - On Windows replace *** with database password and run this in the terminal
@@ -16,8 +14,7 @@ export DB_PASSWORD=***
 ```
 ipython 
 > from predictor import PythonPredictor
-> predictor = PythonPredictor()
-> predictor.predict({ "0": "116282", "1": "2042568", "2": "1019452", "3": "1403865" })
+> predictor.predict('{ "0": "116282", "1": "2042568", "2": "1019452", "3": "1403865" }')
 ```
 # Deploy with Cortex 
 

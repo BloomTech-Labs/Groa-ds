@@ -377,18 +377,16 @@ class Recommender(object):
 
 
 class PythonPredictor:
-    def __init__(self, config={}):
+    def __init__(self, config):
         """Called once before the API becomes available. Setup for model serving such as downloading/initializing the model or downloading vocabulary can be done here. Required.
 
         Args:
             config: Dictionary passed from API configuration (if specified).
         """
-        # I commented this out since we are running locally 
-        # s3 = boto3.client("s3")
-        # s3.download_file(config["bucket"], config["key"], "w2v_limitingfactor_v3.51.model")
-
-        # initialize the model 
-
+        
+        # initialize the model
+        s3 = boto3.client("s3")
+        s3.download_file(config["bucket"], config["key"], "w2v_limitingfactor_v3.51.model")
         self.model = Recommender('models/w2v_limitingfactor_v3.51.model')
         
         
