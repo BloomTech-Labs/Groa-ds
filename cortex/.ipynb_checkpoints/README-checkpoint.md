@@ -14,8 +14,7 @@ export DB_PASSWORD=***
 ```
 ipython 
 > from predictor import PythonPredictor
-> predictor = PythonPredictor()
-> predictor.predict({ "0": "116282", "1": "2042568", "2": "1019452", "3": "1403865" })
+> predictor.predict('{ "0": "116282", "1": "2042568", "2": "1019452", "3": "1403865" }')
 ```
 # Deploy with Cortex 
 
