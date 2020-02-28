@@ -14,11 +14,13 @@ curl -X POST -H "Content-Type: application/json" -d "1111" http://http://ace1034
 - On Windows replace *** with database password and run this in the terminal
 ```
 set DB_PASSWORD=***
+set DEV=***
 ```
 
 - On Mac/Linux
 ```
 export DB_PASSWORD=***
+export DEV=***
 ```
 - run ipython terminal to test 
 
@@ -26,8 +28,9 @@ export DB_PASSWORD=***
 ipython 
 > from predictor import PythonPredictor
 > predictor = PythonPredictor()
-> predictor.predict({ "0": "116282", "1": "2042568", "2": "1019452", "3": "1403865" })
+> predictor.predict(1111)
 ```
+
 # Deploy with Cortex 
 
 ## Create Virtual Computer 
