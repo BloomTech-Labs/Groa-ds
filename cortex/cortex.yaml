@@ -7,3 +7,4 @@
     config:
       bucket: groa
       key: models/w2v_limitingfactor_v3.51.model
+

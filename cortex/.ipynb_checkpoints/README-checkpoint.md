@@ -1,3 +1,14 @@
+
+
+
+# live 
+- http://ace1034515a4911ea8ecd028f1b5a1bc-1712147317.us-east-1.elb.amazonaws.com/movie-recommender
+
+# test
+``` 
+curl -X POST -H "Content-Type: application/json" -d "1111" http://http://ace1034515a4911ea8ecd028f1b5a1bc-1712147317.us-east-1.elb.amazonaws.com/movie-recommender?debug=true
+```
+
 # Test Locally
 
 - On Windows replace *** with database password and run this in the terminal
@@ -14,7 +25,8 @@ export DB_PASSWORD=***
 ```
 ipython 
 > from predictor import PythonPredictor
-> predictor.predict('{ "0": "116282", "1": "2042568", "2": "1019452", "3": "1403865" }')
+> predictor = PythonPredictor()
+> predictor.predict({ "0": "116282", "1": "2042568", "2": "1019452", "3": "1403865" })
 ```
 # Deploy with Cortex 
 

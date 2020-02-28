@@ -1,16 +1,16 @@
 # cluster.yaml
 
 # EKS cluster name for cortex (default: cortex)
-cluster_name: groa1
+cluster_name: groa
 
 # AWS region
-region: us-east-2 # use east 
+region: us-east-1  
 
 # S3 bucket (default: <cluster_name>-<RANDOM_ID>)
 # bucket: groa-<RANDOM_ID>
 
 # List of availability zones for your region (default: 3 random availability zones from the specified region)
-# availability_zones: [us-west-2a, us-west-2b, us-west-2c]
+# availability_zones: [us-east-1a, us-east-1b, us-east-1c]
 
 # instance type
 instance_type: t3.medium

@@ -1,4 +1,13 @@
-- live on http://a53907b2c534911ea8bbd0a1babb722b-2078997105.us-west-2.elb.amazonaws.com/movie-recommender
+
+
+
+# live 
+- http://ace1034515a4911ea8ecd028f1b5a1bc-1712147317.us-east-1.elb.amazonaws.com/movie-recommender
+
+# test
+``` 
+curl -X POST -H "Content-Type: application/json" -d "1111" http://http://ace1034515a4911ea8ecd028f1b5a1bc-1712147317.us-east-1.elb.amazonaws.com/movie-recommender?debug=true
+```
 
 # Test Locally
 
