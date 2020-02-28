@@ -1,4 +1,5 @@
 - The API takes in a user_id and returns a recommendation_id, the recommendation_json is commited to the recommendations table in the database.
+- Right now it only is querying for user letterboxd ratings, watchlist and watched from the database, not IMDB data. 
 
 
 # live 
