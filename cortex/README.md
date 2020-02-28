@@ -1,4 +1,4 @@
-
+- The API takes in a user_id and returns a recommendation_id, the recommendation_json is commited to the recommendations table in the database.
 
 
 # live 
