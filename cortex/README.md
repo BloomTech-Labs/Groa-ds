@@ -11,7 +11,7 @@ curl -X POST -H "Content-Type: application/json" -d "1111" http://http://ace1034
 
 # Test Locally
 
-- On Windows replace *** with database password and run this in the terminal
+- On Windows replace *** with database password and host run this in the terminal
 ```
 set DB_PASSWORD=***
 set DEV=***
