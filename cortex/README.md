@@ -3,7 +3,7 @@
 
 
 # live 
-- http://ace1034515a4911ea8ecd028f1b5a1bc-1712147317.us-east-1.elb.amazonaws.com/movie-recommender
+- 
 
 # test
 ``` 
