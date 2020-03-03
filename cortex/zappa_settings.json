@@ -1,0 +1,11 @@
+{
+    "dev": {
+        "app_function": "predictor.py",
+        "aws_region": "us-east-1",
+        "profile_name": "default",
+        "project_name": "cortex",
+        "runtime": "python3.7",
+        "s3_bucket": "cortextest1257",
+        "slim_handler": "True"
+    }
+}
