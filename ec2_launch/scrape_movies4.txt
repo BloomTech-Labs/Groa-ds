@@ -27,7 +27,7 @@ echo "Put python 3.7 into proper bin"
 python -V
 echo "Python version called properly now"
 
-git clone --single-branch --branch master https://github.com/Lambda-School-Labs/Groa.git
+git clone --single-branch --branch ericscrape https://github.com/Lambda-School-Labs/Groa.git
 echo "Repo cloned into server"
 
 cd Groa
@@ -64,6 +64,9 @@ pip3 install aws2
 
 pip3 install psycopg2-binary
 echo "Binary version of psycopg2 installed manually"
+
+cd ec2files
+echo "Moving into ec2files folder"
 
 nohup python -u ec2file4.py &
 echo "Scraping complete"

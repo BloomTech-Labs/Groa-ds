@@ -38,8 +38,8 @@ class Scraper():
         self.scraper_instance = scraper_instance
         self.database = "postgres"
         self.user = "postgres"
-        self.password = config("PASSWORD")
-        self.host = config("HOST")
+        self.password = config("DB_PASSWORD")
+        self.host = config("DEV")
         self.port = config("PORT")
         self.filename = config("FILENAME")
 
