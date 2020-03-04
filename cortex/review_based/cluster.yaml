@@ -1,0 +1,73 @@
+# cluster.yaml
+
+# EKS cluster name for cortex (default: cortex)
+cluster_name: groa2
+
+# AWS region
+region: us-east-1 # use east 
+
+# S3 bucket (default: <cluster_name>-<RANDOM_ID>)
+bucket: groa2
+
+# List of availability zones for your region (default: 3 random availability zones from the specified region)
+# availability_zones: [us-east-1a, us-east-1b, us-east-1c]
+
+# instance type
+instance_type: t3.medium
+
+# minimum number of instances (must be >= 0)
+min_instances: 1
+
+# maximum number of instances (must be >= 1)
+max_instances: 1
+
+# instance volume size (GB) (default: 50)
+instance_volume_size: 50
+
+# CloudWatch log group for cortex (default: <cluster_name>)
+# log_group: groa
+
+# whether to use spot instances in the cluster (default: false)
+spot: true
+
+# see https://cortex.dev/v/0.13/cluster-management/spot-instances for additional details on spot configuration
+spot_config:
+  # additional instances with identical or better specs than the primary instance type (defaults to 2 instances sorted by price)
+  # instance_distribution: [similar_instance_type_1, similar_instance_type_2]
+
+  # minimum number of on demand instances (default: 0)
+  on_demand_base_capacity: 0
+
+  # percentage of on demand instances to use after the on demand base capacity has been met [0, 100] (default: 50)
+  # note: setting this to 0 may hinder cluster scale up when spot instances are not available
+  on_demand_percentage_above_base_capacity: 10
+
+  # max price for spot instances (default: the on-demand price of the primary instance type)
+  # max_price: <float>
+
+  # number of spot instance pools across which to allocate spot instances [1, 20] (default: number of instances in instance distribution)
+  # instance_pools: 3
+
+  # fallback to on-demand instances if spot instances were unable to be allocated (default: true)
+  on_demand_backup: true
+
+# docker image paths
+image_python_serve: cortexlabs/python-serve:0.13.1
+image_python_serve_gpu: cortexlabs/python-serve-gpu:0.13.1
+image_tf_serve: cortexlabs/tf-serve:0.13.1
+image_tf_serve_gpu: cortexlabs/tf-serve-gpu:0.13.1
+image_tf_api: cortexlabs/tf-api:0.13.1
+image_onnx_serve: cortexlabs/onnx-serve:0.13.1
+image_onnx_serve_gpu: cortexlabs/onnx-serve-gpu:0.13.1
+image_operator: cortexlabs/operator:0.13.1
+image_manager: cortexlabs/manager:0.13.1
+image_downloader: cortexlabs/downloader:0.13.1
+image_cluster_autoscaler: cortexlabs/cluster-autoscaler:0.13.1
+image_metrics_server: cortexlabs/metrics-server:0.13.1
+image_nvidia: cortexlabs/nvidia:0.13.1
+image_fluentd: cortexlabs/fluentd:0.13.1
+image_statsd: cortexlabs/statsd:0.13.1
+image_istio_proxy: cortexlabs/istio-proxy:0.13.1
+image_istio_pilot: cortexlabs/istio-pilot:0.13.1
+image_istio_citadel: cortexlabs/istio-citadel:0.13.1
+image_istio_galley: cortexlabs/istio-galley:0.13.1

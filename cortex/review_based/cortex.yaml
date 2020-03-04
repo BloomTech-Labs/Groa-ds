@@ -1,0 +1,11 @@
+# cortex.yaml
+
+- name: movie-recommender
+  predictor:
+    type: python
+    path: predictor.py
+    config:
+      bucket: groa2
+      key: models/files.zip
+
+
