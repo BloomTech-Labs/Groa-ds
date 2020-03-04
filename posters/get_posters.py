@@ -66,3 +66,40 @@ class Posters():
         """
         Creates a pandas dataframe with the movieID and the URL for the poster.
         """
+
+        df = pd.DataFrame(
+            {
+                'movie_id' : movie_id,
+                'poster_url' : poster_url
+                })
+        return df
+
+    def api_query(self):
+        """
+        Queries the TMDb API for movie poster URLs.
+
+        make_dataframe and insert_rows are intended to be used inside
+        this function. Takes in the id of the movie in "ttxxxxxxx" format,
+        robust to different numbers of numerals.
+        """
+
+        id_list = self.get_ids()
+
+        movie_id = []
+        poster_url = []
+
+        for count, id in enumerate(id_list):
+            try:
+                t1 = time.perf_counter()
+                None_count = 0
+                url_count = 0
+
+                movie_id.append(id)
+                
+                result = tmdb.Find('{}'.format(id_list[id])).info(external_source='imdb_id')['movie_results'][0]['poster_path']
+                poster_url.append(result)
+            except Exception:
+                poster_url.append('None')
+
+        df = self.make_dataframe(movie_id, poster_url)
+        self.insert_rows(df)
