@@ -10,3 +10,12 @@ request to the endpoint, returning a set of 'predictions'.
 
 - BEFORE pushing to github make sure that "values.json" is blank or deleted or listed in gitignore or on a private repo.  
 
+# Testing predictor.py
+- config is required for Cortex deployment 
+- payload is currently just a user id number/string
+- output is two recommendation ids and two recommendation JSON strings
+
+# Testing AWS credentials with Boto3
+- follow step one of this guide https://aws.amazon.com/getting-started/tutorials/backup-to-s3-cli/
+    - to create an AWS IAM user to allow programmatic access  
+    - download the credentials.csv and put the keys below 

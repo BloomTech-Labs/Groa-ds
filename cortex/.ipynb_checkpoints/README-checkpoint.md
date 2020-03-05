@@ -1,87 +1,21 @@
+# Deploy using Cortex.dev service:
 
+- The EKS and Docker based CLI service expects a predictor.py file with a PythonPredictor class with 'config'
+as an argument with a predict function to be called each time there is a 'JSON' post
+request to the endpoint, returning a set of 'predictions'.
 
+- This folder starts at about 50kb and about 200mb are downloaded and unzipped when the class is initiated. 
 
-# live 
-- http://ace1034515a4911ea8ecd028f1b5a1bc-1712147317.us-east-1.elb.amazonaws.com/movie-recommender
+- Credentials for the database and s3 bucket are stored in a values.json file.
 
-# test
-``` 
-curl -X POST -H "Content-Type: application/json" -d "1111" http://http://ace1034515a4911ea8ecd028f1b5a1bc-1712147317.us-east-1.elb.amazonaws.com/movie-recommender?debug=true
-```
+- BEFORE pushing to github make sure that "values.json" is blank or deleted or listed in gitignore or on a private repo.  
 
-# Test Locally
+# Testing predictor.py
+- config is required for Cortex deployment 
+- payload is currently just a user id number/string
+- output is two recommendation ids and two recommendation JSON strings
 
-- On Windows replace *** with database password and run this in the terminal
-```
-set DB_PASSWORD=***
-```
-
-- On Mac/Linux
-```
-export DB_PASSWORD=***
-```
-- run ipython terminal to test 
-
-```
-ipython 
-> from predictor import PythonPredictor
-> predictor = PythonPredictor()
-> predictor.predict({ "0": "116282", "1": "2042568", "2": "1019452", "3": "1403865" })
-```
-# Deploy with Cortex 
-
-## Create Virtual Computer 
-- Create EC2 T3 instance on AWS 
-- On windows: use PuTTY to connect https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/putty.html
-
-## Install Docker 
-```
-sudo yum update -y
-sudo amazon-linux-extras install docker
-sudo service docker start
-sudo usermod -a -G docker ec2-user
-```
-- Exit terminal and create a new window to verify commands work
-``` 
-docker info
-```
-## Install Git CLI
-
-```
-sudo yum install git -y
-```
-- clone and enter this repo after you install 
-
-## Install Cortex  CLI
-
-```
-bash -c "$(curl -sS https://raw.githubusercontent.com/cortexlabs/cortex/0.13/get-cli.sh)"
-```
-## Set AWS environment variables 
-
-```
-export AWS_ACCESS_KEY_ID=******
-export AWS_SECRET_ACCESS_KEY=******
-```
-
-
-- check variables 
-```
-printenv
-```
-
-- run cluster and deploy model 
-```
-cortex cluster up --config=cluster.yaml
-cortex deploy
-
-```
-# find the API endpoint and test a POST
-```
-cortex get movie-recommender 
-# it will give you info here <API ENDPOINT>
-curl -X POST -H "Content-Type: application/json" \
-  -d '{ "0": "116282", "1": "2042568", "2": "1019452", "3": "1403865" }'\
- <API ENDPOINT>
- ```
-
+# Testing AWS credentials with Boto3
+- follow step one of this guide https://aws.amazon.com/getting-started/tutorials/backup-to-s3-cli/
+    - to create an AWS IAM user to allow programmatic access  
+    - download the credentials.csv and put the keys below 
