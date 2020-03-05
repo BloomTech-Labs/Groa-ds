@@ -1,0 +1,10 @@
+# ignore individual files 
+
+
+# ignore files that end in 
+
+
+# ignore directories 
+
+/.ipynb_checkpoints/
+/__pycache__/

@@ -1,0 +1,220 @@
+from w2v_helpers import *
+from r2v_helpers import *
+import boto3
+import zipfile
+import pandas as pd
+import numpy as np
+import json
+import hashlib
+from datetime import datetime
+
+
+""" 
+    Deploy using Cortex.dev service:
+    --------------------------------
+
+    The EKS and Docker based CLI service expects a predictor.py file with a PythonPredictor class with 'config'
+    as an argument with a predict function to be called each time there is a 'JSON' post
+    request to the endpoint, returning a set of 'predictions'.
+    
+    This folder starts at about 50kb and about 200mb are downloaded and unzipped when the class is initiated. 
+    
+    Credentials for the database and s3 bucket are stored in a values.json file.
+    
+    BEFORE pushing to github make sure that "values.json" it deleted or listed in gitignore or on a private repo.  
+"""
+
+class PythonPredictor:
+    def __init__(self, config={}): # in cortex deployment config is detected from cortex.yaml
+
+        """ load secret values for database and s3 bucket"""
+        
+        with open('values.json', 'r') as values_file:
+            values = json.load(values_file)
+        self.values = values
+        
+        """ download model files and id book """
+        
+        s3 = boto3.client("s3", aws_access_key_id=self.values['ACCESS_ID'],
+     aws_secret_access_key=self.values['ACCESS_KEY'])
+        s3.download_file(config["bucket"], config["key"], "files.zip")
+        
+        with zipfile.ZipFile('files.zip', 'r') as zip_ref:
+            zip_ref.extractall('')
+              
+        """ connect to database and create cursor """
+        
+        connection = psycopg2.connect(
+            database  =  self.values['DB_NAME'],
+            user      =  self.values['DB_USER'],
+            password  =  self.values['DB_PASSWORD'],
+            host      =  self.values['DEV'],
+            port      =  self.values['PORT']
+        )
+        try:
+            self.cursor_dog = connection.cursor()
+            self.connection = connection  
+            print("Connected!")
+        except Exception as e:
+            print("Connection problem chief!\n")
+            print(e)
+
+        """ instantiate the model files and give them this cursor""" 
+        
+        self.id_book = pd.read_csv('title_basics_small.csv')
+        self.w2v = Recommender('w2v_limitingfactor_v3.51.model', self.id_book, self.cursor_dog)
+        self.r2v = r2v_Recommender('r2v_Botanist_v1.1000.5.model', self.cursor_dog)
+        pass
+
+    def predict(self, payload): # recieves userid, outputs recommendation_id
+
+        user_id = payload
+        
+        """ Check if user id exists """
+        
+        query = "SELECT EXISTS(SELECT 1 FROM user_letterboxd_ratings where user_id=%s);" 
+        self.cursor_dog.execute(query, (user_id,))
+        boolean_letterboxd = self.cursor_dog.fetchall()
+        if boolean_letterboxd[0][0]==False: 
+            print("user_id not found in Letterboxd ratings")
+        
+        query = "SELECT EXISTS(SELECT 1 FROM user_imdb_ratings where user_id=%s);" 
+        self.cursor_dog.execute(query, (user_id,))
+        boolean_imdb = self.cursor_dog.fetchall()
+        if boolean_imdb[0][0]==False: 
+            print("user_id not found in IMDB ratings")
+            
+        if ((boolean_letterboxd[0][0]==False) & (boolean_imdb[0][0]==False)):
+            print("user_id not found in either IMDB or Letterboxd ratings")
+            
+        query = "SELECT EXISTS(SELECT 1 FROM user_letterboxd_reviews where user_id=%s);" 
+        self.cursor_dog.execute(query, (user_id,))
+        boolean_review = self.cursor_dog.fetchall()       
+        if boolean_review[0][0]==False: 
+            print("user_id not found in Letterboxd reviews")
+            
+        if ((boolean_letterboxd[0][0]==False) & (boolean_imdb[0][0]==False) * (boolean_review[0][0]==False)):
+            self.connection.close()
+            return "user_id not found in either IMDB or Letterboxd ratings or Letterboxd reviews"
+        
+        """ IMDB data """
+        
+        if boolean_imdb[0][0]:
+            query = "SELECT date, name, year, rating FROM user_imdb_ratings WHERE user_id=%s;"
+            self.cursor_dog.execute(query, (user_id,))
+            ratings_sql= self.cursor_dog.fetchall()
+            im = pd.DataFrame(ratings_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI', 'Rating'])
+            drop = ['Your Rating', 'Date Rated', 'Title', 'Const', 'URL', 'Title Type', 'IMDb Rating', 'Runtime (mins)', 'Genres', 'Num Votes', 'Release Date', 'Directors']
+            im['Rating'] = im['Your Rating']
+            im['Date'] = im['Date Rated']
+            im['Name'] = im['Title']
+            im = im.drop(columns=drop)
+    
+        """ Letterboxd data """
+        
+        query = "SELECT date, name, year, letterboxd_uri, rating FROM user_letterboxd_ratings WHERE user_id=%s;"
+        self.cursor_dog.execute(query, (user_id,))
+        ratings_sql= self.cursor_dog.fetchall()
+        ratings = pd.DataFrame(ratings_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI', 'Rating'])
+        
+        query = "SELECT date, name, year, letterboxd_uri FROM user_letterboxd_watchlist WHERE user_id=%s;"
+        self.cursor_dog.execute(query, (user_id,))
+        watchlist_sql= self.cursor_dog.fetchall()
+        watchlist = pd.DataFrame(watchlist_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI'])
+        
+        query = "SELECT date, name, year, letterboxd_uri FROM user_letterboxd_watched WHERE user_id=%s;"
+        self.cursor_dog.execute(query, (user_id,))
+        watched_sql= self.cursor_dog.fetchall()
+        watched = pd.DataFrame(watched_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI'])
+        
+        query = "SELECT date, name, year, letterboxd_uri, rating, rewatch, review, tags, watched_date FROM user_letterboxd_reviews WHERE user_id=%s;"
+        self.cursor_dog.execute(query, (user_id,))
+        reviews_sql= self.cursor_dog.fetchall()
+        reviews = pd.DataFrame(reviews_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI', 'Rating', 'Rewatch', 'Review', 'Tags', 'Watched Date'])
+       
+        """ Prepare data  """
+        
+        if boolean_imdb[0][0]:
+                ratings = pd.concat([ratings, im]).drop_duplicates()
+                
+        reviews = prep_reviews(reviews)
+        
+        good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
+                                    ratings, self.id_book, self.cursor_dog, watched, watchlist, good_threshold=3, bad_threshold=2) 
+        
+        """ Run prediction with parameters then wrangle output """
+
+        w2v_preds = self.w2v.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=3, rec_movies=True, scoring=True,)
+        r2v_preds = self.r2v.predict(reviews, n=10)
+        df_w2v = pd.DataFrame(w2v_preds, columns = ['Name', 'Year', 'URL', 'Mean Rating', 'Votes', 'Similarity', 'ID'])
+        df_w2v['Gem'] = False
+        first = df_w2v
+        
+        df_w2v = pd.DataFrame(w2v_preds, columns = ['Name', 'Year', 'URL', 'Mean Rating', 'Votes', 'Similarity', 'ID'])
+        cults = pd.DataFrame(r2v_preds[0], columns = ['Name', 'Year', 'URL', 'Votes', 'Mean Rating', 'Rating', 'User', 'Review', 'ID'])
+        gems = pd.DataFrame(r2v_preds[1], columns = ['Name', 'Year', 'URL', 'Votes', 'Mean Rating', 'Rating', 'User', 'Review', 'ID'])
+        drop = ['User', 'Review', 'Rating']
+        df_r2v = pd.concat([cults, gems]).drop(columns=drop)
+        df_r2v = df_r2v.drop_duplicates()
+
+        s1 = df_w2v.sort_values(by='Similarity', ascending=False)[:20]
+        s1['Gem'] = False
+        s2 = df_r2v.sort_values(by='Mean Rating', ascending=False)[:10]
+        s2['Gem'] = True
+        s2['Similarity'] = 0
+        both = pd.concat([s1, s2])
+        both = both[['Name', 'Year', 'URL', 'Mean Rating', 'Votes', 'Similarity', 'ID', 'Gem']]
+        both = both.sample(frac=1, random_state=41).reset_index(drop=True) 
+        
+        first_list = list(zip(*map(first.get, first)))
+        both_list = list(zip(*map(both.get, both)))
+        predictions1 = first_list
+        predictions2 = both_list
+
+        """ Turn predictions into JSON """
+        
+        def get_JSON(iterable): # receive list of tuples, output JSON
+            names = ['Title', 'Year', 'IMDB URL', 'Mean Rating', 'Votes', 'Similarity', 'ID', 'Gem']
+            names_lists = {key:[] for key in names}
+
+            for x in range(0, len(iterable[0])):
+                for y in range(0, len(iterable)):
+                    names_lists[names[x]].append(iterable[y][x])
+
+            results_dict = [dict(zip(names_lists,t)) for t in zip(*names_lists.values())]
+            recommendation_json = json.dumps(results_dict)
+            return recommendation_json
+        
+        result1 = get_JSON(predictions1)
+        result2 = get_JSON(predictions2)
+        
+        """ Commit to the database """
+        
+        def commit_to_database(result, model_type): # receive JSON, commit to database, return recommendation ID
+            string_json = str(result)
+            hash_object = hashlib.md5(string_json.encode('ascii'))
+            recommendation_id = hash_object.hexdigest()
+
+            query = "SELECT EXISTS(SELECT 1 FROM recommendations where recommendation_id=%s);" 
+            self.cursor_dog.execute(query, (recommendation_id,))
+            boolean = self.cursor_dog.fetchall()
+            date = datetime.now()
+            model_type = model_type
+            
+            if boolean[0][0]: # True
+                    print("Already recommended", recommendation_id)
+            else:
+                query = """ INSERT INTO recommendations(user_id, recommendation_id, recommendation_json, date, model_type)
+                            VALUES (%s, %s, %s, %s, %s);"""
+                self.cursor_dog.execute(query, (user_id, recommendation_id, result, date, model_type))
+                print("Recommendation committed to DB with id:", recommendation_id)
+                
+            return recommendation_id
+        
+        recommendation_one_id = commit_to_database(result1, 'watch history')
+        recommendation_two_id = commit_to_database(result2, 'review history')
+        
+        self.connection.commit()
+#         self.connection.close()
+       
+        return recommendation_one_id, recommendation_two_id, result1, result2

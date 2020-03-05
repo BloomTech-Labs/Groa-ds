@@ -1,0 +1,10 @@
+{
+"DB_NAME": "",
+"DB_USER": "",
+"DB_PASSWORD": "",
+"DEV": "",
+"PROD": "",
+"PORT": 5432,
+"ACCESS_ID": "",
+"ACCESS_KEY": ""
+}

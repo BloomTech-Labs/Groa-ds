@@ -1,0 +1,3 @@
+- when deploying this on cortex
+	- uncomment the s3 buckets in PythonPredictor init
+	- delete the files.zip
