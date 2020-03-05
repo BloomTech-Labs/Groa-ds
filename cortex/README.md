@@ -1,5 +1,4 @@
 # Deploy using Cortex.dev service:
-    --------------------------------
 
 - The EKS and Docker based CLI service expects a predictor.py file with a PythonPredictor class with 'config'
 as an argument with a predict function to be called each time there is a 'JSON' post
