@@ -1,0 +1,12 @@
+# ignore individual files 
+
+.env
+
+# ignore files that end in 
+
+*.txt
+
+# ignore directories 
+
+.ipynb_checkpoints/
+__pycache__/
