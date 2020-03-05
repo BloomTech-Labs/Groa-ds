@@ -12,6 +12,7 @@ class Posters():
 
     def __init__(self):
         self.all_ids = []
+        self.max_iter_count = max_iter
         self.database = config("DB_NAME")
         self.user = config("DB_USER")
         self.password = config("DB_PASSWORD")
@@ -87,6 +88,7 @@ class Posters():
 
         movie_id = []
         poster_url = []
+        iteration_counter = 0
 
         for count, id in enumerate(id_list):
             try:
@@ -95,11 +97,35 @@ class Posters():
                 url_count = 0
 
                 movie_id.append(id)
-                
+
                 result = tmdb.Find('{}'.format(id_list[id])).info(external_source='imdb_id')['movie_results'][0]['poster_path']
                 poster_url.append(result)
             except Exception:
                 poster_url.append('None')
+            while True:
+                if iteration_counter >= self.max_iter_count:
+                    df = self.make_dataframe(movie_id, poster_url)
+                    self.insert_rows(df)
+                    movie_id.clear()
+                    poster_url.clear()
+                    iteration_counter = 0
+                    df = df.iloc[0:0]
+
+
+                movie_id.append(id.replace("tt", ""))
+                try:
+                    poster_url.append(result)
+                    url_count += 1
+                    break
+                except Exception:
+                    poster_url.append('None')
+                    None_count += 1
+                    break
+                if result:
+                    iteration_counter += 1
+
 
         df = self.make_dataframe(movie_id, poster_url)
         self.insert_rows(df)
+        print("This many posters stored:", url_count)
+        print("This many missing posters:", None_count)
