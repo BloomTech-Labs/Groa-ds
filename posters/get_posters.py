@@ -1,6 +1,13 @@
 import psycopg2
 import pandas as pd
+import requests
+import os
+import re
+import sys
+import time
 from decouple import config
+from getpass import getpass
+import tmdbsimple as tmdb
 
 
 class Posters():
@@ -19,6 +26,7 @@ class Posters():
         self.host = config("DEV")
         self.port = config("PORT")
         self.filename = config("FILENAME")
+        self.tmdb.API_KEY = config("tmdbKey")
 
     def connect_to_database(self):
         """
@@ -92,16 +100,15 @@ class Posters():
 
         for count, id in enumerate(id_list):
             try:
-                t1 = time.perf_counter()
                 None_count = 0
                 url_count = 0
 
                 movie_id.append(id)
 
                 result = tmdb.Find('{}'.format(id_list[id])).info(external_source='imdb_id')['movie_results'][0]['poster_path']
-                poster_url.append(result)
             except Exception:
                 poster_url.append('None')
+                None_count += 1
             while True:
                 if iteration_counter >= self.max_iter_count:
                     df = self.make_dataframe(movie_id, poster_url)
@@ -116,16 +123,49 @@ class Posters():
                 try:
                     poster_url.append(result)
                     url_count += 1
+                    iteration_counter += 1
                     break
                 except Exception:
                     poster_url.append('None')
                     None_count += 1
-                    break
-                if result:
                     iteration_counter += 1
-
+                    break
 
         df = self.make_dataframe(movie_id, poster_url)
         self.insert_rows(df)
         print("This many posters stored:", url_count)
         print("This many missing posters:", None_count)
+
+    def insert_rows(self, df):
+        """
+        Connects to the database and inserts poster urls as new rows.
+        Takes a dataframe and formats it into a very long string to convert to
+        SQL. Connects to the database, executes the query, and closes the cursor
+        and connection.
+        """
+
+        #convert rows into tuples
+        row_insertions = ""
+        for in in list(df.intertuples(index=False)):
+            row_insertions += str((
+                              i.movie_id,
+                              i.poster_url)) + ", "
+
+        row_insertions = row_insertions[:-2]
+        cursor_obj, connection = self.connect_to_database()
+        #create SQL INSERT query
+        query = """INSERT INTO reviews(movie_id,
+                                    poster_url)
+                                    VALUES """ + row_insertions + ";"
+
+        #execute query
+        cursor_obj.execute(query)
+        connection.commit()
+        cursor_obj.close()
+        connection.close()
+        print("Insertion Complete")
+
+if __name__ == "__main__":
+    max_iter = int(input("Maximum iterations? "))
+    if max_iter < 1:
+        raise ValueError("Maximum iterations must be positive.")
