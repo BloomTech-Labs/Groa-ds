@@ -1,10 +1,10 @@
 {
-"DB_NAME": "",
-"DB_USER": "",
-"DB_PASSWORD": "",
-"DEV": "",
-"PROD": "",
+"DB_NAME": "postgres",
+"DB_USER": "postgres",
+"DB_PASSWORD": "lambdaschoolgroa",
+"DEV": "groadb-dev.cbayt2opbptw.us-east-1.rds.amazonaws.com",
+"PROD": "groadb-prod.cbayt2opbptw.us-east-1.rds.amazonaws.com",
 "PORT": 5432,
-"ACCESS_ID": "",
-"ACCESS_KEY": ""
+"ACCESS_ID": "AKIASAM5BQ4AWBTUWZ67",
+"ACCESS_KEY": "U2B3mMvX6L/MK3D2oduLIVRkIBkofv/rE5uJE3MX"
 }
