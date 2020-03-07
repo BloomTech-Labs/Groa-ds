@@ -1,10 +1,12 @@
 # ignore individual files 
 
+values.json
 
 # ignore files that end in 
 
 
+
 # ignore directories 
 
-/.ipynb_checkpoints/
-/__pycache__/
+.ipynb_checkpoints/
+__pycache__/

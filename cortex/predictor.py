@@ -1,5 +1,6 @@
 from w2v_helpers import *
 from r2v_helpers import *
+import psycopg2
 import boto3
 import zipfile
 import pandas as pd
@@ -35,13 +36,35 @@ class PythonPredictor:
         
         """ download model files and id book """
         
-        s3 = boto3.client("s3", aws_access_key_id=self.values['ACCESS_ID'],
-     aws_secret_access_key=self.values['ACCESS_KEY'])
-        s3.download_file(config["bucket"], config["key"], "files.zip")
+        self.boolean_w2v = (config["key"] == "models/w2v.zip")
+        self.boolean_r2v = (config["key"] == "models/r2v.zip")
+        if self.boolean_w2v:
+            s3 = boto3.client("s3", aws_access_key_id=self.values['ACCESS_ID'],
+                              aws_secret_access_key=self.values['ACCESS_KEY'])
+            s3.download_file(config["bucket"], config["key"], "w2v.zip")
+
+            with zipfile.ZipFile('w2v.zip', 'r') as zip_ref:
+                zip_ref.extractall('')
+            
+            
+        if self.boolean_r2v:
+            s3 = boto3.client("s3", aws_access_key_id=self.values['ACCESS_ID'],
+                              aws_secret_access_key=self.values['ACCESS_KEY'])
+            s3.download_file(config["bucket"], config["key"], "r2v.zip")
+
+            with zipfile.ZipFile('r2v.zip', 'r') as zip_ref:
+                zip_ref.extractall('')
+
+    def predict(self, payload): # recieves userid, outputs recommendation_id
+        boolean_w2v = self.boolean_w2v
+        boolean_r2v = self.boolean_r2v
         
-        with zipfile.ZipFile('files.zip', 'r') as zip_ref:
-            zip_ref.extractall('')
-              
+        user_id = payload['user_id']
+        n = payload["number_of_recommendations"]
+        good_threshold = payload["good_threshold"]
+        bad_threshold = payload["bad_threshold"]
+        harshness = payload["harshness"]
+        
         """ connect to database and create cursor """
         
         connection = psycopg2.connect(
@@ -62,13 +85,12 @@ class PythonPredictor:
         """ instantiate the model files and give them this cursor""" 
         
         self.id_book = pd.read_csv('title_basics_small.csv')
-        self.w2v = Recommender('w2v_limitingfactor_v3.51.model', self.id_book, self.cursor_dog)
-        self.r2v = r2v_Recommender('r2v_Botanist_v1.1000.5.model', self.cursor_dog)
-        pass
-
-    def predict(self, payload): # recieves userid, outputs recommendation_id
-
-        user_id = payload
+        
+        if boolean_w2v:
+            self.w2v = Recommender('w2v_limitingfactor_v2.model', self.id_book, self.cursor_dog)
+        if boolean_r2v:    
+            self.w2v = Recommender('w2v_limitingfactor_v2.model', self.id_book, self.cursor_dog)
+            self.r2v = r2v_Recommender('r2v_Botanist_v1.1000.5.model', self.cursor_dog)
         
         """ Check if user id exists """
         
@@ -97,18 +119,18 @@ class PythonPredictor:
             self.connection.close()
             return "user_id not found in either IMDB or Letterboxd ratings or Letterboxd reviews"
         
-        """ IMDB data """
+        """ IMDB data """ # needs testing
         
         if boolean_imdb[0][0]:
             query = "SELECT date, name, year, rating FROM user_imdb_ratings WHERE user_id=%s;"
             self.cursor_dog.execute(query, (user_id,))
             ratings_sql= self.cursor_dog.fetchall()
-            im = pd.DataFrame(ratings_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI', 'Rating'])
-            drop = ['Your Rating', 'Date Rated', 'Title', 'Const', 'URL', 'Title Type', 'IMDb Rating', 'Runtime (mins)', 'Genres', 'Num Votes', 'Release Date', 'Directors']
-            im['Rating'] = im['Your Rating']
-            im['Date'] = im['Date Rated']
-            im['Name'] = im['Title']
-            im = im.drop(columns=drop)
+            im = pd.DataFrame(ratings_sql, columns = ['Date', 'Name', 'Year', 'Rating'])
+#             drop = ['Your Rating', 'Date Rated', 'Title', 'Const', 'URL', 'Title Type', 'IMDb Rating', 'Runtime (mins)', 'Genres', 'Num Votes', 'Release Date', 'Directors']
+#             im['Rating'] = im['Your Rating']/2
+#             im['Date'] = im['Date Rated']
+#             im['Name'] = im['Title']
+#             im = im.drop(columns=drop)
     
         """ Letterboxd data """
         
@@ -135,41 +157,43 @@ class PythonPredictor:
         """ Prepare data  """
         
         if boolean_imdb[0][0]:
-                ratings = pd.concat([ratings, im]).drop_duplicates()
-                
-        reviews = prep_reviews(reviews)
+            ratings = pd.concat([ratings, im]).drop_duplicates()
+        
+        if boolean_r2v:
+            reviews = prep_reviews(reviews)
         
         good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
-                                    ratings, self.id_book, self.cursor_dog, watched, watchlist, good_threshold=3, bad_threshold=2) 
+            ratings, self.id_book, self.cursor_dog, watched, watchlist,
+                good_threshold=good_threshold, bad_threshold=bad_threshold) 
         
         """ Run prediction with parameters then wrangle output """
 
-        w2v_preds = self.w2v.predict(good_list, bad_list, hist_list, val_list, ratings_dict, n=100, harshness=3, rec_movies=True, scoring=True,)
-        r2v_preds = self.r2v.predict(reviews, n=10)
+        w2v_preds = self.w2v.predict(good_list, bad_list, hist_list, val_list, ratings_dict, harshness=harshness, n=n, rec_movies=True, scoring=True,)
         df_w2v = pd.DataFrame(w2v_preds, columns = ['Name', 'Year', 'URL', 'Mean Rating', 'Votes', 'Similarity', 'ID'])
         df_w2v['Gem'] = False
         first = df_w2v
-        
-        df_w2v = pd.DataFrame(w2v_preds, columns = ['Name', 'Year', 'URL', 'Mean Rating', 'Votes', 'Similarity', 'ID'])
-        cults = pd.DataFrame(r2v_preds[0], columns = ['Name', 'Year', 'URL', 'Votes', 'Mean Rating', 'Rating', 'User', 'Review', 'ID'])
-        gems = pd.DataFrame(r2v_preds[1], columns = ['Name', 'Year', 'URL', 'Votes', 'Mean Rating', 'Rating', 'User', 'Review', 'ID'])
-        drop = ['User', 'Review', 'Rating']
-        df_r2v = pd.concat([cults, gems]).drop(columns=drop)
-        df_r2v = df_r2v.drop_duplicates()
-
-        s1 = df_w2v.sort_values(by='Similarity', ascending=False)[:20]
-        s1['Gem'] = False
-        s2 = df_r2v.sort_values(by='Mean Rating', ascending=False)[:10]
-        s2['Gem'] = True
-        s2['Similarity'] = 0
-        both = pd.concat([s1, s2])
-        both = both[['Name', 'Year', 'URL', 'Mean Rating', 'Votes', 'Similarity', 'ID', 'Gem']]
-        both = both.sample(frac=1, random_state=41).reset_index(drop=True) 
-        
+        first = first.fillna("None")
         first_list = list(zip(*map(first.get, first)))
-        both_list = list(zip(*map(both.get, both)))
         predictions1 = first_list
-        predictions2 = both_list
+        
+        if boolean_r2v:
+            r2v_preds = self.r2v.predict(reviews, n)
+            df_w2v = pd.DataFrame(w2v_preds, columns = ['Name', 'Year', 'URL', 'Mean Rating', 'Votes', 'Similarity', 'ID'])
+            cults = pd.DataFrame(r2v_preds[0], columns = ['Name', 'Year', 'URL', 'Votes', 'Mean Rating', 'Rating', 'User', 'Review', 'ID'])
+            gems = pd.DataFrame(r2v_preds[1], columns = ['Name', 'Year', 'URL', 'Votes', 'Mean Rating', 'Rating', 'User', 'Review', 'ID'])
+            drop = ['User', 'Review', 'Rating']
+            df_r2v = pd.concat([cults, gems]).drop(columns=drop)
+            df_r2v = df_r2v.drop_duplicates()
+            s1 = df_w2v.sort_values(by='Similarity', ascending=False)[:20]
+            s1['Gem'] = False
+            s2 = df_r2v.sort_values(by='Mean Rating', ascending=False)[:10]
+            s2['Gem'] = True
+            s2['Similarity'] = 0
+            both = pd.concat([s1, s2])
+            both = both[['Name', 'Year', 'URL', 'Mean Rating', 'Votes', 'Similarity', 'ID', 'Gem']]
+            both = both.sample(frac=1, random_state=41).reset_index(drop=True) 
+            both_list = list(zip(*map(both.get, both)))
+            predictions2 = both_list
 
         """ Turn predictions into JSON """
         
@@ -186,7 +210,8 @@ class PythonPredictor:
             return recommendation_json
         
         result1 = get_JSON(predictions1)
-        result2 = get_JSON(predictions2)
+        if boolean_r2v:
+            result2 = get_JSON(predictions2)
         
         """ Commit to the database """
         
@@ -195,8 +220,8 @@ class PythonPredictor:
             hash_object = hashlib.md5(string_json.encode('ascii'))
             recommendation_id = hash_object.hexdigest()
 
-            query = "SELECT EXISTS(SELECT 1 FROM recommendations where recommendation_id=%s);" 
-            self.cursor_dog.execute(query, (recommendation_id,))
+            query = "SELECT EXISTS(SELECT 1 FROM recommendations where recommendation_id=%s and user_id=%s);" 
+            self.cursor_dog.execute(query, (recommendation_id, user_id))
             boolean = self.cursor_dog.fetchall()
             date = datetime.now()
             model_type = model_type
@@ -211,10 +236,21 @@ class PythonPredictor:
                 
             return recommendation_id
         
-        recommendation_one_id = commit_to_database(result1, 'watch history')
-        recommendation_two_id = commit_to_database(result2, 'review history')
-        
+        recommendation1 = commit_to_database(result1, 'ratings model')
+        if boolean_r2v:
+                recommendation2 = commit_to_database(result2, 'review model')
+
         self.connection.commit()
-#         self.connection.close()
-       
-        return recommendation_one_id, recommendation_two_id, result1, result2
+        self.connection.close()
+        if boolean_w2v:
+            return {
+                    "recommendation1": recommendation1, 
+                    "result1": result1
+                    }
+        if boolean_r2v:
+            return {
+                    "recommendation1": recommendation1, 
+                    "result1": result1,
+                    "recommendation2": recommendation2, 
+                    "result2": result2
+                    }
