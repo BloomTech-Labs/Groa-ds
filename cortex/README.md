@@ -5,6 +5,7 @@
 ## movie-ratings-recommender
 - curl http://a56a5b3d360b111ea906516f7da0429b-156937678.us-east-1.elb.amazonaws.com/movie-ratings-recommender?debug=true -X POST -H "Content-Type: application/json" -d @sample.json
 
+
 ## movie-reviews-recommender 
 - curl http://a56a5b3d360b111ea906516f7da0429b-156937678.us-east-1.elb.amazonaws.com/movie-reviews-recommender?debug=true -X POST -H "Content-Type: application/json" -d @sample2.json
 
