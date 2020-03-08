@@ -1,3 +1,7 @@
+# Cortex Deployment 
+
+- To deploy with Cortex create a values.json file in this folder with database credentials and programmatic s3 bucket access keys and change the cluster name and s3 bucket in cluster.yaml to match yours. 
+
 ## movie-ratings-recommender
 - curl http://a56a5b3d360b111ea906516f7da0429b-156937678.us-east-1.elb.amazonaws.com/movie-ratings-recommender?debug=true -X POST -H "Content-Type: application/json" -d @sample.json
 
@@ -24,4 +28,3 @@
 "bad_threshold": 2,
 "harshness": 1
 }
-```
