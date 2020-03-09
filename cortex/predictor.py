@@ -39,8 +39,7 @@ class PythonPredictor:
         self.boolean_w2v = (config["key"] == "models/w2v.zip")
         self.boolean_r2v = (config["key"] == "models/r2v.zip")
         if self.boolean_w2v:
-            s3 = boto3.client("s3", aws_access_key_id=self.values['ACCESS_ID'],
-                              aws_secret_access_key=self.values['ACCESS_KEY'])
+            s3 = boto3.client("s3")
             s3.download_file(config["bucket"], config["key"], "w2v.zip")
 
             with zipfile.ZipFile('w2v.zip', 'r') as zip_ref:
@@ -48,8 +47,7 @@ class PythonPredictor:
             
             
         if self.boolean_r2v:
-            s3 = boto3.client("s3", aws_access_key_id=self.values['ACCESS_ID'],
-                              aws_secret_access_key=self.values['ACCESS_KEY'])
+            s3 = boto3.client("s3")
             s3.download_file(config["bucket"], config["key"], "r2v.zip")
 
             with zipfile.ZipFile('r2v.zip', 'r') as zip_ref:
