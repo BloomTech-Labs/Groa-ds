@@ -152,8 +152,9 @@ class PythonPredictor:
         reviews_sql= self.cursor_dog.fetchall()
         reviews = pd.DataFrame(reviews_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI', 'Rating', 'Rewatch', 'Review', 'Tags', 'Watched Date'])
        
+
         """ Prepare data  """
-        
+
         if boolean_imdb[0][0]:
             ratings = pd.concat([ratings, im]).drop_duplicates()
         
@@ -252,3 +253,4 @@ class PythonPredictor:
                     "recommendation2": recommendation2, 
                     "result2": result2
                     }
+
