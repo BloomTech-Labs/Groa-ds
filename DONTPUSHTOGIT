@@ -1,8 +1,0 @@
-FILENAME=testmovies.csv
-DB_PASSWORD=lambdaschoolgroa
-HOST=movie-rec-scrape.cvslmiksgnix.us-east-1.rds.amazonaws.com
-PORT=5432
-DEV=groadb-dev.cbayt2opbptw.us-east-1.rds.amazonaws.com
-PROD=groadb-prod.cbayt2opbptw.us-east-1.rds.amazonaws.com
-EC2_INSTANCE_KEY=gabekeypair
-tmdbKey=18814be112b8b0167bc919c307bd596e
