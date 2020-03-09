@@ -1,0 +1,7 @@
+{
+"user_id": 1,
+"number_of_recommendations": 50,
+"good_threshold": 5,
+"bad_threshold": 4,
+"harshness": 1
+}

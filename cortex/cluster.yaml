@@ -19,7 +19,7 @@ instance_type: t3.medium
 min_instances: 1
 
 # maximum number of instances (must be >= 1)
-max_instances: 3
+max_instances: 2
 
 # instance volume size (GB) (default: 50)
 instance_volume_size: 50
