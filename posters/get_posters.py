@@ -17,7 +17,7 @@ class Posters():
     Inserts the url and the corresponding IMDbID to the DB.
     """
 
-    def __init__(self):
+    def __init__(self, max_iter):
         self.all_ids = []
         self.max_iter_count = max_iter
         self.database = config("DB_NAME")
@@ -26,22 +26,22 @@ class Posters():
         self.host = config("DEV")
         self.port = config("PORT")
         self.filename = config("FILENAME")
-        self.tmdb.API_KEY = config("tmdbKey")
+        self.API_KEY = config("tmdbKey")
 
     def connect_to_database(self):
         """
         Connects to the database.
 
         Uses class variables set from the environment and takes no
-        arguments other than self. Returns a cursor object and a connection
-        object.
+        arguments other than self. Returns a cursor object and a
+        connection object.
         """
         connection = psycopg2.connect(
             database = self.database,
-            user = self.user,
+            user     = self.user,
             password = self.password,
-            host = self.host,
-            port = self.port
+            host     = self.host,
+            port     = self.port
             )
         return connection.cursor(), connection
 
@@ -56,11 +56,10 @@ class Posters():
         in length and which are not pornographic.
 
         """
-        df = pd.read_csv(self.filename, encoding = 'ascii', header=None)
+        df = pd.read_csv(self.filename, encoding='ascii', header=None)
 
         #get all the rows from the second column
         id_list = [row for row in df.iloc[:, 1]]
-        self.all_ids = id_list
 
         return id_list
 
@@ -96,42 +95,30 @@ class Posters():
 
         movie_id = []
         poster_url = []
-        iteration_counter = 0
+
 
         for count, id in enumerate(id_list):
+            tt_removed = id.replace("tt", "")
+            movie_id.append(tt_removed)
             try:
-                None_count = 0
-                url_count = 0
 
-                movie_id.append(id)
-
-                result = tmdb.Find('{}'.format(id_list[id])).info(external_source='imdb_id')['movie_results'][0]['poster_path']
+                result = tmdb.Find(f"{id}").info(external_source='imdb_id')['movie_results'][0]['poster_path']
             except Exception:
                 poster_url.append('None')
-                None_count += 1
-            while True:
-                if iteration_counter >= self.max_iter_count:
-                    df = self.make_dataframe(movie_id, poster_url)
-                    self.insert_rows(df)
-                    movie_id.clear()
-                    poster_url.clear()
-                    iteration_counter = 0
-                    df = df.iloc[0:0]
+                continue
 
+            if result is None:
+                poster_url.append('None')
+                continue
+            else:
+                poster_url.append(result)
+                continue
 
-                movie_id.append(id.replace("tt", ""))
-                try:
-                    poster_url.append(result)
-                    url_count += 1
-                    iteration_counter += 1
-                    break
-                except Exception:
-                    poster_url.append('None')
-                    None_count += 1
-                    iteration_counter += 1
-                    break
-
-        df = self.make_dataframe(movie_id, poster_url)
+        df = pd.DataFrame(
+            {
+                'movie_id' : movie_id,
+                'poster_url' : poster_url
+                })
         self.insert_rows(df)
         print("This many posters stored:", url_count)
         print("This many missing posters:", None_count)
@@ -146,7 +133,7 @@ class Posters():
 
         #convert rows into tuples
         row_insertions = ""
-        for in in list(df.intertuples(index=False)):
+        for i in list(df.itertuples(index=False)):
             row_insertions += str((
                               i.movie_id,
                               i.poster_url)) + ", "
@@ -154,7 +141,8 @@ class Posters():
         row_insertions = row_insertions[:-2]
         cursor_obj, connection = self.connect_to_database()
         #create SQL INSERT query
-        query = """INSERT INTO reviews(movie_id,
+        query = """UPDATE imdb_movies SET poster_url = ???
+        WHERE movie_id = ???
                                     poster_url)
                                     VALUES """ + row_insertions + ";"
 
@@ -169,3 +157,5 @@ if __name__ == "__main__":
     max_iter = int(input("Maximum iterations? "))
     if max_iter < 1:
         raise ValueError("Maximum iterations must be positive.")
+    p = Posters(max_iter)
+    p.api_query()
