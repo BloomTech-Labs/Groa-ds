@@ -5,7 +5,7 @@
     type: python
     path: predictor.py
     config:
-      bucket: groa2
+      bucket: groa-e3c8e4f6ca
       key: models/w2v.zip
       
 - name: movie-reviews-recommender
@@ -13,6 +13,6 @@
     type: python
     path: predictor.py
     config:
-      bucket: groa2
+      bucket: groa-e3c8e4f6ca
       key: models/r2v.zip
 
