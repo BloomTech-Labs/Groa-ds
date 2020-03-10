@@ -180,26 +180,21 @@ class PythonPredictor:
         query = "SELECT date, name, year, letterboxd_uri FROM user_letterboxd_watchlist WHERE user_id=%s;"
         self.cursor_dog.execute(query, (user_id,))
         watchlist_sql= self.cursor_dog.fetchall()
-        watchlist = pd.DataFrame(watchlist_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI'])
+        letterboxd_watchlist = pd.DataFrame(watchlist_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI'])
+
+        query = "SELECT date, name, year FROM user_groa_watchlist WHERE user_id=%s;"
+        self.cursor_dog.execute(query, (user_id,))
+        watchlist_sql= self.cursor_dog.fetchall()
+        groa_watchlist = pd.DataFrame(watchlist_sql, columns = ['Date', 'Name', 'Year'])
+
+        watchlist = pd.concat([letterboxd_watchlist, groa_watchlist]).drop_duplicates()
 
         query = "SELECT date, name, year, letterboxd_uri FROM user_letterboxd_watched WHERE user_id=%s;"
         self.cursor_dog.execute(query, (user_id,))
         watched_sql= self.cursor_dog.fetchall()
         watched = pd.DataFrame(watched_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI'])
 
-        query = "SELECT date, name, year, letterboxd_uri, rating, rewatch, review, tags, watched_date FROM user_letterboxd_reviews WHERE user_id=%s;"
-        self.cursor_dog.execute(query, (user_id,))
-        reviews_sql= self.cursor_dog.fetchall()
-        reviews = pd.DataFrame(reviews_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI', 'Rating', 'Rewatch', 'Review', 'Tags', 'Watched Date'])
-
-
         """ Prepare data  """
-
-        if boolean_imdb[0][0]:
-            ratings = pd.concat([ratings, im]).drop_duplicates()
-
-        if boolean_r2v:
-            reviews = prep_reviews(reviews)
 
         good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
             ratings, self.id_book, self.cursor_dog, watched, watchlist,
