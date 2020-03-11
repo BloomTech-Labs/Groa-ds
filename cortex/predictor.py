@@ -39,23 +39,23 @@ class PythonPredictor:
         self.boolean_w2v = (config["key"] == "models/w2v.zip")
         self.boolean_r2v = (config["key"] == "models/r2v.zip")
 
-        # self.boolean_w2v = open("models/w2v.zip")
-        # self.boolean_r2v = open("models/r2v.zip")
+        self.boolean_w2v = open("models/w2v.zip")
+        self.boolean_r2v = open("models/r2v.zip")
 
-        # if self.boolean_w2v:
-        #     s3 = boto3.client("s3")
-        #     s3.download_file(config["bucket"], config["key"], "w2v.zip")
-        #
-        #     with zipfile.ZipFile('w2v.zip', 'r') as zip_ref:
-        #         zip_ref.extractall('')
-        #
-        #
-        # if self.boolean_r2v:
-        #     s3 = boto3.client("s3")
-        #     s3.download_file(config["bucket"], config["key"], "r2v.zip")
-        #
-        #     with zipfile.ZipFile('r2v.zip', 'r') as zip_ref:
-        #         zip_ref.extractall('')
+        if self.boolean_w2v:
+            s3 = boto3.client("s3")
+            s3.download_file(config["bucket"], config["key"], "w2v.zip")
+
+            with zipfile.ZipFile('w2v.zip', 'r') as zip_ref:
+                zip_ref.extractall('')
+
+
+        if self.boolean_r2v:
+            s3 = boto3.client("s3")
+            s3.download_file(config["bucket"], config["key"], "r2v.zip")
+
+            with zipfile.ZipFile('r2v.zip', 'r') as zip_ref:
+                zip_ref.extractall('')
 
     def predict(self, payload): # recieves userid, outputs recommendation_id
         boolean_w2v = self.boolean_w2v
@@ -194,6 +194,12 @@ class PythonPredictor:
         watched_sql= self.cursor_dog.fetchall()
         watched = pd.DataFrame(watched_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI'])
 
+        query = "SELECT date, name, year FROM user_groa_willnotwatchlist WHERE user_id=%s;"
+        self.cursor_dog.execute(query, (user_id,))
+        watched_sql= self.cursor_dog.fetchall()
+        willnotwatchlist_df = pd.DataFrame(watched_sql, columns = ['Date', 'Name', 'Year'])
+
+
         """ Prepare data  """
 
         good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
@@ -204,6 +210,10 @@ class PythonPredictor:
 
         w2v_preds = self.w2v.predict(good_list, bad_list, hist_list, val_list, ratings_dict, harshness=harshness, n=n, rec_movies=True, scoring=True,)
         df_w2v = pd.DataFrame(w2v_preds, columns = ['Name', 'Year', 'URL', 'Mean Rating', 'Votes', 'Similarity', 'ID'])
+
+        """Remove movies if they are in user's willnotwatchlist"""
+        df_w2v = pd.merge(df_w2v, willnotwatchlist_df, indicator=True, how='outer').query('_merge=="left_only"').drop('_merge', axis=1)
+
         df_w2v['Gem'] = False
         first = df_w2v
         first = first.fillna("None")
