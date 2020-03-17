@@ -26,7 +26,7 @@ The companies which have the resources to create an elegant Movie Recommendation
 
 Existing web sites geared towards providing a recommendation rely entirely on basic rating models which are weighted heavily towards popular films and generally do a poor job identifying unique outliers.
 
-Groa combines the public data available on IMDb with tried-and-true recommendation techniques to provide a user-driven movie discovery experience. We use two similar language embedding models to acheive this.
+Groa combines the public data available on IMDb with tried-and-true recommendation techniques to provide a user-driven movie discovery experience. We use two similar language embedding models to achieve this.
 
 - We trained Word2Vec on positive user ratings histories to create a user-based collaborative filtering recommender. The algorithm embeds over 97,000 movie IDs into a 100-dimensional vector space according to their co-occurence in a user's positive ratings history. The ID for each movie is a key for its vector, which can be called from the model and compared with any other vector in that space for cosine-similarity. To provide recommendations given a new user's watch history, we simply find the vector average of the user's choice of "good movies" and find the top-n cosine-similar vectors from the model. We can improve the recommendations by subtracting a "bad movies" vector from the "good movies" vector before inferencing. Models trained in this way can be tested by treating a user's watchlist (unwatched movies saved for later) as a validation set.
 
