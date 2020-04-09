@@ -1,3 +1,5 @@
+import dotenv
+
 from ImdbScraper import ImdbScraper
 from LetterboxScraper import LetterboxScraper
 from FinderScraper import FinderScraper
@@ -14,6 +16,8 @@ def checker(str):
     return var
 
 if __name__ == "__main__":
+    dotenv.load_dotenv()
+
     start = int(input("Start at which row? "))
     end = int(input("End at which row? (Inclusive)"))
     if start > end:

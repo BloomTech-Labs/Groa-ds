@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup # 4.8.2
 from decouple import config # 3.3
 import pandas as pd # 0.25.0
 import psycopg2 # 2.8.4
+from psycopg2.extras import execute_batch
 import requests # 2.22.0
 # python 3.7.5
 
@@ -19,7 +20,7 @@ class BaseScraper:
     Start and end parameters are inclusive. max_iter controls how
     many loops can be run before the program inserts into the
     database. This indirectly controls the size and frequency of
-    insertions. 
+    insertions.
     Necessary environment variables are PASSWORD, HOST, PORT,
     and FILENAME.
     """
@@ -33,9 +34,9 @@ class BaseScraper:
         self.pickup = 0
         self.max_iter_count = max_iter
         self.scraper_instance = str(randint(2**31, 2**32))
-        self.database = "postgres"
-        self.user = "postgres"
-        self.password = config("PASSWORD")
+        self.database = config("DB_NAME")
+        self.user = config("DB_USER")
+        self.password = config("DB_PASSWORD")
         self.host = config("HOST")
         self.port = config("PORT")
         self.filename = config("FILENAME")
@@ -137,92 +138,45 @@ less than the end position")
         and closes the cursor and connection.
         """
         # convert rows into tuples
-        row_insertions = ""
+        row_insertions = []
         for i in list(df.itertuples(index=False)):
-            row_insertions += str((
-                              str(i.username.replace("'", "").replace('"', '')),
-                              i.movie_id,
-                              i.date,
-                              str(i.reviews.replace("'", "").replace('"', '')),
-                              str(i.titles.replace("'", "").replace('"', '')),
-                              int(i.rating),
-                              i.helpful_num,
-                              i.helpful_denom,
-                              i.review_id)) + ", "
+            row_insertions.append((
+                  i.movie_id,
+                  i.date,
+                  int(i.rating),
+                  i.helpful_num,
+                  i.helpful_denom,
+                  str(i.username),
+                  str(i.reviews),
+                  str(i.titles),
+                  i.review_id
+            ))
 
         # remove hanging comma
         row_insertions = row_insertions[:-2]
         cursor_boi, connection = self.connect_to_database()
         # create SQL INSERT query
-        query = """INSERT INTO reviews(username,
-                                    movie_id,
-                                    review_date,
-                                    review_text,
-                                    review_title,
-                                    user_rating,
-                                    helpful_num,
-                                    helpful_denom,
-                                    review_id)
-                                    VALUES """ + row_insertions + ";"
+        query = """
+        INSERT INTO imdb_reviews (
+            movie_id,
+            review_date,
+            user_rating,
+            helpful_num,
+            helpful_denom,
+            user_name,
+            review_text,
+            review_title,
+            review_id
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+        """
 
         # execute query
-        cursor_boi.execute(query)
+        execute_batch(cursor_boi, query, row_insertions)
         connection.commit()
         cursor_boi.close()
         connection.close()
         print("Insertion Complete")
-
-    def pull_ids(self, save=True, filename=False):
-        '''
-        Connects to the database and returns all ids as a list.
-
-        Returns a list of review and movie ids. Pass save=False if
-        you don't want to make a new file with the ids.
-        '''
-        self.start_timer()
-        print("Connecting to database...")
-        try:
-            # connect to the database and query it for the review/movie ids
-            cursor, connection = self.connect_to_database()
-            print("Connected.")
-            query = "SELECT review_id, movie_id FROM reviews"
-            cursor.execute(query)
-            # put all of the review/movie ids into a list of tuples
-            print("Fetching IDs...")
-            self.ids = cursor.fetchall()
-            cursor.close()
-            connection.close()
-            print("Done.")
-        except Exception as e:
-            print(e)
-
-        elapsed = self.end_timer()
-        elapsed = self.convert_time(elapsed)
-
-        self.start_timer()
-
-        # save the IDs to a file
-        if save:
-            # if you pass in a filename, use that otherwise use the default
-            filename = input("Enter a filename: ") if filename else "review_ids.csv"
-
-            with open(filename, 'w') as file:
-                for rev, mov in self.ids:
-                    # print(type(rev))
-                    # print(rev[:5])
-                    # print(mov[:5])
-                    file.write(str(rev + "," + mov) + "\n")
-            finished = self.end_timer()
-            finish = self.convert_time(finished)
-            # class variable used to load the file before program is terminated
-            self.load_path = os.path.join(os.getcwd(), filename)
-            print(f"File saved to {self.load_path} and was saved in {finish}")
-
-        print(f"Retrieved {cursor.rowcount} review/movie ID's in {elapsed}")
-        print(f"The ID's are stored as {type(self.ids)}")
-        print(f"The first 10 entries are:\n{self.ids[:10]}")
-
-        return self.ids
 
     def start_timer(self):
         """

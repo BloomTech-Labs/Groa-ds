@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
+import os
 import logging
 from random import randint
+import re
 import time
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
+from psycopg2.extras import execute_batch
 
 from BaseScraper import BaseScraper
 
@@ -195,7 +198,7 @@ code {response.status_code}!")
         that movie ID and the whole process is repeated with the next
         unique movie ID.
         '''
-        ids = pull_ids(save=False)
+        ids = self.pull_ids(save=False)
         review_ids = []
         movie_ids = []
 
@@ -334,3 +337,55 @@ code {response.status_code}!")
         elapsed = self.end_timer()
         elapsed = self.convert_time(elapsed)
         print(f"finished in {elapsed}")
+
+    def pull_ids(self, save=True, filename=False):
+        '''
+        Connects to the database and returns all ids as a list.
+
+        Returns a list of review and movie ids. Pass save=False if
+        you don't want to make a new file with the ids.
+        '''
+        self.start_timer()
+        print("Connecting to database...")
+        try:
+            # connect to the database and query it for the review/movie ids
+            cursor, connection = self.connect_to_database()
+            print("Connected.")
+            query = "SELECT review_id, movie_id FROM imdb_reviews"
+            cursor.execute(query)
+            # put all of the review/movie ids into a list of tuples
+            print("Fetching IDs...")
+            self.ids = cursor.fetchall()
+            cursor.close()
+            connection.close()
+            print("Done.")
+        except Exception as e:
+            print(e)
+
+        elapsed = self.end_timer()
+        elapsed = self.convert_time(elapsed)
+
+        self.start_timer()
+
+        # save the IDs to a file
+        if save:
+            # if you pass in a filename, use that otherwise use the default
+            filename = input("Enter a filename: ") if filename else "review_ids.csv"
+
+            with open(filename, 'w') as file:
+                for rev, mov in self.ids:
+                    # print(type(rev))
+                    # print(rev[:5])
+                    # print(mov[:5])
+                    file.write(str(rev + "," + mov) + "\n")
+            finished = self.end_timer()
+            finish = self.convert_time(finished)
+            # class variable used to load the file before program is terminated
+            self.load_path = os.path.join(os.getcwd(), filename)
+            print(f"File saved to {self.load_path} and was saved in {finish}")
+
+        print(f"Retrieved {cursor.rowcount} review/movie ID's in {elapsed}")
+        print(f"The ID's are stored as {type(self.ids)}")
+        print(f"The first 10 entries are:\n{self.ids[:10]}")
+
+        return self.ids

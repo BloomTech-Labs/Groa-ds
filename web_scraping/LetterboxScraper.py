@@ -5,6 +5,7 @@ from random import randint
 import re
 import requests
 import pandas as pd
+from psycopg2.extras import execute_batch
 
 
 from BaseScraper import BaseScraper
@@ -220,27 +221,29 @@ code {response.status_code}!")
         and closes the cursor and connection.
         """
         # convert rows into tuples
-        row_insertions = ""
+        row_insertions = []
         for i in list(df.itertuples(index=False)):
-            row_insertions += str((i.movie_id,
-                                   i.review_date,
-                               int(i.user_rating),
-                               str(i.review_text.replace("'", "").replace('"', '')),
-                                   i.review_id,
-                               str(i.username.replace("'", "").replace('"', '')))) + ", "
-        # remove hanging comma
+            row_insertions.append((
+                    i.movie_id,
+                    i.review_date,
+                    int(i.user_rating),
+                    str(i.review_text),
+                    i.review_id,
+                    str(i.username),
+            ))
         row_insertions = row_insertions[:-2]
         cursor_boi, connection = self.connect_to_database()
         # create SQL INSERT query
-        query = """INSERT INTO letterboxd_reviews(movie_id,
-                                                  review_date,
-                                                  user_rating,
-                                                  review_text,
-                                                  review_id,
-                                                  username)
-                                                  VALUES """ + row_insertions + ";"
+        query = """
+        INSERT INTO letterboxd_reviews(movie_id, review_date, user_rating, review_text, review_id, user_name)
+        VALUES (%s, %s, %s, %s, %s, %s);
+        """
         # execute query
-        cursor_boi.execute(query)
+        execute_batch(
+            cursor_boi,
+            query,
+            row_insertions,
+        )
         connection.commit()
         cursor_boi.close()
         connection.close()
