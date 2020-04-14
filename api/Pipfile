@@ -1,0 +1,21 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+pandas = "*"
+numpy = "*"
+psycopg2-binary = "*"
+gensim = "*"
+flask = "*"
+flask-restful = "*"
+python-dotenv = "*"
+boto3 = "*"
+requests = "*"
+gunicorn = "*"
+
+[requires]
+python_version = "3.7"
