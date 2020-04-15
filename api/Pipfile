@@ -16,6 +16,8 @@ python-dotenv = "*"
 boto3 = "*"
 requests = "*"
 gunicorn = "*"
+fastapi = "*"
+uvicorn = "*"
 
 [requires]
 python_version = "3.7"

@@ -40,6 +40,10 @@ def create_app():
 
             """ connect to database and create cursor """
 
+            """
+            think we could move this to __init__ and just reconnect only 
+            if needed
+            """
             connection = psycopg2.connect(
                 database  =  os.getenv('DB_NAME'),
                 user      =  os.getenv('DB_USER'),
@@ -300,17 +304,17 @@ def create_app():
                         "result2": result2
                         }
 
-    @app.route("/", methods=['GET'])
+    @app.get("/")
     def helloworld():
         welcome_message = "This is the DS API for Groa"
         return welcome_message
 
     predictor = PythonPredictor()
 
-    @app.route("/recommendation", methods=['GET', 'POST'])
+    @app.post("/recommendation")
     def ds_predict():
         payload = request.get_json(force=True)
         result = predictor.predict(payload)
         return result
 
-    return application
+    return app
