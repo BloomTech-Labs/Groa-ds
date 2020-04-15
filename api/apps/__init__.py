@@ -299,6 +299,65 @@ def create_app():
                         "recommendation2": recommendation2,
                         "result2": result2
                         }
+    def get_user_data(user_id):
+        cursor = connection.cursor()
+        query = f"SELECT * FROM recommendations WHERE user_id = {user_id};"
+        cursor.execute(query)
+        recommendations = cursor.fetchall()
+
+        rec_ids = []
+        rec_titles = []
+        rec_years = []
+        rec_ratings = []
+        rec_votes = []
+        rec_movie_ids = []
+        # rec_gems = []
+        # dates = []
+        genres = []
+        # don't think it's needed
+        # model_types = []
+
+        for rec in recommendations:
+            for unit in rec[2]:
+                movie_query = f"SELECT genres FROM imdb_movies WHERE movie_id = '{unit['ID']}';"
+                cursor.execute(movie_query)
+                movie_data = cursor.fetchone()
+                rec_ids.append(rec[1])
+                rec_titles.append(unit['Title'])
+                rec_years.append(unit['Year'])
+                rec_ratings.append(unit['Mean Rating'])
+                rec_votes.append(unit['Votes'])
+                rec_movie_ids.append(unit['ID'])
+                genres.append(movie_data[0])
+                # rec_gems.append(unit['Gem'])
+                # dates.append(rec[3])
+                # model_types.append(rec[4])
+
+        cursor.close()
+        data = pd.DataFrame({
+            'rec_id': rec_ids,
+            'title': rec_titles,
+            'year': rec_years,
+            'avg_rating': rec_ratings,
+            'votes': rec_votes,
+            'movie_id': rec_movie_ids,
+            'genres': genres
+        })
+        
+        return data
+    
+    
+    @app.route("/stats/decade/{user_id}")
+    def get_stats_by_decade(user_id: int):
+        data = get_user_data(user_id)
+        data["decade"] = data["year"].apply(lambda x: x//10*10)
+        first_decade = data["decade"].min()
+        last_decade = data["decade"].max()
+        decade_to_count = {dec: 0 for dec in range(first_decade, last_decade+1, 10)}
+        for dec in data["decade"].values:
+            decade_to_count[dec] += 1
+        
+        return decade_to_count
 
     @app.route("/", methods=['GET'])
     def helloworld():
@@ -313,4 +372,4 @@ def create_app():
         result = predictor.predict(payload)
         return result
 
-    return application
+    return app
