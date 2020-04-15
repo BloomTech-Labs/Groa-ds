@@ -8,3 +8,8 @@ client = TestClient(application)
 def test_index():
     response = client.get("/")
     assert response.status_code == 200
+
+
+def test_wrong_method():
+    response = client.post("/", json={"message": "testing"})
+    assert response.status_code == 405
