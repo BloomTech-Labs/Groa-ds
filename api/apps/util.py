@@ -26,11 +26,11 @@ class PythonPredictor:
         boolean_w2v = self.boolean_w2v
         boolean_r2v = self.boolean_r2v
 
-        user_id = payload["user_id"]
-        n = payload["number_of_recommendations"]
-        good_threshold = payload["good_threshold"]
-        bad_threshold = payload["bad_threshold"]
-        harshness = payload["harshness"]
+        user_id = payload.user_id
+        n = payload.number_of_recommendations
+        good_threshold = payload.good_threshold
+        bad_threshold = payload.bad_threshold
+        harshness = payload.harshness
 
         """ connect to database and create cursor """
 

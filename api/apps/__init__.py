@@ -10,6 +10,7 @@ app = FastAPI(
 
 predictor = PythonPredictor()
 
+
 class RecData(BaseModel):
     user_id: int
     # one or the other (i want to use n but it was number_of_re.. prior)
@@ -18,6 +19,11 @@ class RecData(BaseModel):
     good_threshold: int = None
     bad_threshold: int = None
     harshness: int = None
+
+
+class SimData(BaseModel):
+    movie_id: str
+
 
 def create_app():
     
@@ -28,8 +34,12 @@ def create_app():
 
     @app.post("/recommendation")
     async def recommend(payload: RecData):
-        payload = request.get_json(force=True)
         result = predictor.predict(payload)
         return result
+    
+    @app.post("/similar-movies")
+    async def similar_movies(payload: SimData):
+        response = f"Need to serve similar movies to {payload.movie_id}"
+        return response
 
     return app
