@@ -250,6 +250,8 @@ class Recommender(object):
 
         """ Check if user has ratings data in IMDB or Letterboxd or Groa"""
         # should be just one call to a single table called `ratings`
+        # if one table can just do a single call to get all rows with user_id=%s
+        # and then just check the len(ratings)
         query = "SELECT EXISTS(SELECT 1 FROM user_letterboxd_ratings where user_id=%s);"
         self.cursor_dog.execute(query, (user_id,))
         boolean_letterboxd = self.cursor_dog.fetchall()
@@ -306,7 +308,9 @@ class Recommender(object):
             return "User does not have ratings or reviews"
 
         """ Congregate Watchlist """
-
+        # should just be one call to a `watchlists` table
+        # if one table can just do a single call to get all rows with user_id=%s
+        # and then just check the len(ratings)
         query = "SELECT date, name, year, letterboxd_uri FROM user_letterboxd_watchlist WHERE user_id=%s;"
         self.cursor_dog.execute(query, (user_id,))
         watchlist_sql= self.cursor_dog.fetchall()
