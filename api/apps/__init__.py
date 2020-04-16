@@ -47,4 +47,15 @@ def create_app():
         response = f"Need to serve similar movies to {payload.movie_id}"
         return response
 
+    @app.get("/stats/decades/{user_id}")
+    async def get_stats_by_decade(user_id):
+        df = predictor.get_user_data(user_id)
+        df["decade"] = df["year"].apply(lambda x: x//10*10)
+        first_decade = df["decade"].min()
+        last_decade = df["decade"].max()
+        dec_to_count = {dec: 0 for dec in range(first_decade, last_decade+1, 10)}
+        for dec in df["decade"].values:
+            dec_to_count[dec] += 1
+        return dec_to_count
+
     return app

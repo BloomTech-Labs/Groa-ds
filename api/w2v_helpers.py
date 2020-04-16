@@ -61,6 +61,53 @@ class Recommender(object):
         id_book['primaryTitle'] = id_book['primaryTitle'].astype('str')
         return id_book
 
+    def get_user_data(self, user_id):
+        cursor = self.connection.cursor()
+        query = f"SELECT * FROM recommendations WHERE user_id = {user_id};"
+        cursor.execute(query)
+        recommendations = cursor.fetchall()
+        
+        rec_ids = []
+        rec_titles = []
+        rec_years = []
+        rec_ratings = []
+        rec_votes = []
+        rec_movie_ids = []
+        # rec_gems = []
+        # dates = []
+        genres = []
+        # don't think it's needed
+        # model_types = []
+
+        for rec in recommendations:
+            for unit in rec[2]:
+                movie_query = f"SELECT genres FROM imdb_movies WHERE movie_id = '{unit['ID']}';"
+                cursor.execute(movie_query)
+                movie_data = cursor.fetchone()
+                rec_ids.append(rec[1])
+                rec_titles.append(unit['Title'])
+                rec_years.append(unit['Year'])
+                rec_ratings.append(unit['Mean Rating'])
+                rec_votes.append(unit['Votes'])
+                rec_movie_ids.append(unit['ID'])
+                genres.append(movie_data[0])
+                # rec_gems.append(unit['Gem'])
+                # dates.append(rec[3])
+                # model_types.append(rec[4])
+                
+        cursor.close()
+        data = pd.DataFrame({
+            'rec_id': rec_ids,
+            'title': rec_titles,
+            'year': rec_years,
+            'avg_rating': rec_ratings,
+            'votes': rec_votes,
+            'movie_id': rec_movie_ids,
+            'genres': genres
+        })
+
+        return data
+
     def _get_model(self):
         """Get the model object for this instance, loading it if it's not already loaded."""
         if self.model == None:

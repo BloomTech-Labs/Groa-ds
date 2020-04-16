@@ -13,3 +13,7 @@ def test_index():
 def test_wrong_method():
     response = client.post("/", json={"message": "testing"})
     assert response.status_code == 405
+
+def test_decades():
+    response = client.get("/stats/decades/1")
+    assert response.status_code == 200
