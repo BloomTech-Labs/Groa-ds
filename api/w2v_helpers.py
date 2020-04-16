@@ -2,16 +2,64 @@ import pandas as pd
 import numpy as np
 import gensim
 import re
+import os 
+import psycopg2
+import json
+import hashlib
+from datetime import datetime
 
 
 class Recommender(object):
 
-    def __init__(self, model_path, id_book, cursor_dog):
+    def __init__(self, model_path):
         """Initialize model with name of .model file"""
         self.model_path = model_path
-        self.model = None
-        self.id_book = id_book
-        self.cursor_dog = cursor_dog
+        # think this only will ever need to be called once
+        # probably can remove _get_model
+        self.model = self._load_model()
+        self.connection = psycopg2.connect(
+            database  =  os.getenv('DB_NAME'),
+            user      =  os.getenv('DB_USER'),
+            password  =  os.getenv('DB_PASSWORD'),
+            host      =  os.getenv('DEV'),
+            port      =  os.getenv('PORT')
+        )
+        self.cursor_dog = self.connection.cursor()
+        self.id_book = self.get_id_book()
+        """
+        when should the cursor be instantiated and where will it be closed?
+        """
+    
+    def get_cursor(self):
+        try:
+            cursor = self.conneciton.cursor()
+            return cursor 
+        except:
+            self.connection = psycopg2.connect(
+                database  =  os.getenv('DB_NAME'),
+                user      =  os.getenv('DB_USER'),
+                password  =  os.getenv('DB_PASSWORD'),
+                host      =  os.getenv('DEV'),
+                port      =  os.getenv('PORT')
+            )
+            return self.connection.cursor()
+    
+    def get_id_book(self):
+        """ 
+        Get id_book from Database
+        this was in get_recommendations method but because it's constant and
+        the same for each execution there is no need to fetch and build each time
+        """
+        # just add poster_path to this to avoid an additional query
+        query = "SELECT movie_id, primary_title, original_title, start_year FROM imdb_movies;"
+        self.cursor_dog.execute(query)
+        movie_sql= self.cursor_dog.fetchall()
+        id_book = pd.DataFrame(movie_sql, columns = ['tconst', 'primaryTitle', 'originalTitle', 'startYear'])
+        # does this need to be done??
+        id_book['startYear'] = id_book['startYear'].astype(int)
+        id_book['tconst'] = id_book['tconst'].astype(int)
+        id_book['primaryTitle'] = id_book['primaryTitle'].astype('str')
+        return id_book
 
     def _get_model(self):
         """Get the model object for this instance, loading it if it's not already loaded."""
@@ -22,6 +70,15 @@ class Recommender(object):
             # This saves memory but makes the model untrainable (read-only).
             w2v_model.init_sims(replace=True)
             self.model = w2v_model
+        return self.model
+    
+    def _load_model(self):
+        """Get the model object for this instance, loading it if it's not already loaded."""
+        w2v_model = gensim.models.Word2Vec.load(self.model_path)
+        # Keep only the normalized vectors.
+        # This saves memory but makes the model untrainable (read-only).
+        w2v_model.init_sims(replace=True)
+        self.model = w2v_model
         return self.model
 
     def _get_info(self, id, score=None):
@@ -45,7 +102,7 @@ class Recommender(object):
 
     def get_most_similar_title(self, id, id_list):
         """Get the title of the most similar movie to id from id_list"""
-        clf = self._get_model()
+        clf = self.model
         vocab = clf.wv.vocab
         if id not in vocab:
             return ""
@@ -56,8 +113,7 @@ class Recommender(object):
 
     def predict(self, input, bad_movies=[], hist_list=[], val_list=[],
                 ratings_dict = {}, checked_list=[], rejected_list=[],
-                n=50, harshness=1, rec_movies=True,
-                show_vibes=False, scoring=False, return_scores=False):
+                n=50, harshness=1):
         """Returns a list of recommendations and useful metadata, given a pretrained
         word2vec model and a list of movies.
 
@@ -117,7 +173,7 @@ class Recommender(object):
             (Title, Year, IMDb URL, Average Rating, Number of Votes, Similarity score)
         """
 
-        clf = self._get_model()
+        clf = self.model
         dupes = []                 # list for storing duplicates for scoring
 
         def _aggregate_vectors(movies, feedback_list=[]):
@@ -170,28 +226,193 @@ class Recommender(object):
             bad_vec = bad_vec / harshness
             return good_movies_vec - bad_vec
 
-        def _score_model(recs, val_list):
-            """Returns the number of recs that were already in the user's watchlist. Validation!"""
-            ids = [x[0] for x in recs]
-            return len(list(set(ids) & set(val_list)))
-
         aggregated = _aggregate_vectors(input, checked_list)
         recs = _similar_movies(aggregated, bad_movies, n=n)
         recs = _remove_dupes(recs, input, bad_movies, hist_list, checked_list + rejected_list)
         formatted_recs = [self._get_info(x[0], x[1]) for x in recs]
-        if val_list:
-            if return_scores:
-                return tuple([_score_model(recs, val_list), sum([i[3] for i in formatted_recs if i[3] is not None])/len(formatted_recs)])
-            elif scoring:
-                print(f"The model recommended {_score_model(recs, val_list)} movies that were on the watchlist!\n")
-                print(f"\t\t Average Rating: {sum([i[3] for i in formatted_recs if i[3] is not None])/len(formatted_recs)}\n")
-        if show_vibes:
-            print("You'll get along with people who like: \n")
-            for x in dupes:
-                print(self._get_info(x[0], x[1]))
-            print('\n')
-        if rec_movies:
-            return formatted_recs
+        return formatted_recs
+    
+    def get_recommendations(self, payload):
+        # request data 
+        user_id = payload.user_id
+        n = payload.number_of_recommendations
+        good_threshold = payload.good_threshold
+        bad_threshold = payload.bad_threshold
+        harshness = payload.harshness
+
+        """ create cursor """
+        try:
+            self.cursor_dog = self.get_cursor()
+            print("Connected!")
+        except Exception as e:
+            print("Connection problem chief!\n")
+            print(e)
+
+        """ Check if user has ratings data in IMDB or Letterboxd or Groa"""
+        # should be just one call to a single table called `ratings`
+        # if one table can just do a single call to get all rows with user_id=%s
+        # and then just check the len(ratings)
+        query = "SELECT EXISTS(SELECT 1 FROM user_letterboxd_ratings where user_id=%s);"
+        self.cursor_dog.execute(query, (user_id,))
+        boolean_letterboxd = self.cursor_dog.fetchall()
+        if boolean_letterboxd[0][0]==False:
+            print("user_id not found in Letterboxd ratings")
+
+        query = "SELECT EXISTS(SELECT 1 FROM user_imdb_ratings where user_id=%s);"
+        self.cursor_dog.execute(query, (user_id,))
+        boolean_imdb = self.cursor_dog.fetchall()
+        if boolean_imdb[0][0]==False:
+            print("user_id not found in IMDB ratings")
+
+        query = "SELECT EXISTS(SELECT 1 FROM user_groa_ratings where user_id=%s);"
+        self.cursor_dog.execute(query, (user_id,))
+        boolean_groa = self.cursor_dog.fetchall()
+        if boolean_groa[0][0]==False:
+            print("user_id not found in Groa ratings")
+
+        no_rating_data = False
+        if ((boolean_letterboxd[0][0]==False) & (boolean_imdb[0][0]==False) & (boolean_groa[0][0]==False)):
+            no_rating_data = True
+            print("user_id not found in either IMDB, Letterboxd or Groa ratings")
+
+        """ Congregate the ratings data """
+
+        imdb_ratings_df = pd.DataFrame()
+        letterboxd_ratings_df = pd.DataFrame()
+        groa_ratings_df = pd.DataFrame()
+
+        if boolean_imdb[0][0]:
+            query = "SELECT date, name, year, rating FROM user_imdb_ratings WHERE user_id=%s;"
+            self.cursor_dog.execute(query, (user_id,))
+            ratings_sql= self.cursor_dog.fetchall()
+            imdb_ratings_df = pd.DataFrame(ratings_sql, columns = ['Date', 'Name', 'Year', 'Rating'])
+
+        if boolean_letterboxd[0][0]:
+            query = "SELECT date, name, year, rating FROM user_letterboxd_ratings WHERE user_id=%s;"
+            self.cursor_dog.execute(query, (user_id,))
+            ratings_sql= self.cursor_dog.fetchall()
+            letterboxd_ratings_df = pd.DataFrame(ratings_sql, columns = ['Date', 'Name', 'Year', 'Rating'])
+
+        if boolean_groa[0][0]:
+            query = "SELECT date, name, year, rating FROM user_groa_ratings WHERE user_id=%s;"
+            self.cursor_dog.execute(query, (user_id,))
+            ratings_sql= self.cursor_dog.fetchall()
+            groa_ratings_df = pd.DataFrame(ratings_sql, columns = ['Date', 'Name', 'Year', 'Rating'])
+
+        ratings = pd.concat([imdb_ratings_df, letterboxd_ratings_df, groa_ratings_df]).drop_duplicates()
+
+        """ Check if the user has ratings data """
+
+        if no_rating_data:
+            self.cursor_dog.close()
+            return "User does not have ratings or reviews"
+
+        """ Congregate Watchlist """
+        # should just be one call to a `watchlists` table
+        # if one table can just do a single call to get all rows with user_id=%s
+        # and then just check the len(ratings)
+        query = "SELECT date, name, year, letterboxd_uri FROM user_letterboxd_watchlist WHERE user_id=%s;"
+        self.cursor_dog.execute(query, (user_id,))
+        watchlist_sql= self.cursor_dog.fetchall()
+        letterboxd_watchlist = pd.DataFrame(watchlist_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI'])
+
+        query = "SELECT date, name, year FROM user_groa_watchlist WHERE user_id=%s;"
+        self.cursor_dog.execute(query, (user_id,))
+        watchlist_sql= self.cursor_dog.fetchall()
+        groa_watchlist = pd.DataFrame(watchlist_sql, columns = ['Date', 'Name', 'Year'])
+
+        watchlist = pd.concat([letterboxd_watchlist, groa_watchlist]).drop_duplicates()
+
+        query = "SELECT date, name, year, letterboxd_uri FROM user_letterboxd_watched WHERE user_id=%s;"
+        self.cursor_dog.execute(query, (user_id,))
+        watched_sql= self.cursor_dog.fetchall()
+        watched = pd.DataFrame(watched_sql, columns = ['Date', 'Name', 'Year', 'Letterboxd URI'])
+
+        query = "SELECT date, name, year FROM user_groa_willnotwatchlist WHERE user_id=%s;"
+        self.cursor_dog.execute(query, (user_id,))
+        willnotwatch_sql= self.cursor_dog.fetchall()
+        willnotwatchlist_df = pd.DataFrame(willnotwatch_sql, columns = ['Date', 'Name', 'Year'])
+
+
+        """ Prepare data  """
+        good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
+            ratings, self.id_book, self.cursor_dog, watched, watchlist,
+                good_threshold=good_threshold, bad_threshold=bad_threshold)
+
+        """Remove movies if they are in user's willnotwatchlist"""  # this creates null date column
+        ratings = pd.merge(ratings, willnotwatchlist_df, how='outer', indicator=True)
+        ratings = ratings[ratings['_merge'] == 'left_only'].drop('_merge', axis=1)
+
+
+        """ Run prediction with parameters then wrangle output """
+
+        w2v_preds = self.predict(good_list, bad_list, hist_list, val_list, ratings_dict, harshness=harshness, n=n)
+        df_w2v = pd.DataFrame(w2v_preds, columns = ['Name', 'Year', 'URL', 'Mean Rating', 'Votes', 'Similarity', 'ID'])
+
+
+        def get_poster(movie_id):
+            query = "SELECT poster_url FROM imdb_movies WHERE movie_id=%s;"
+            self.cursor_dog.execute(query, (movie_id,))
+            result = self.cursor_dog.fetchall()
+            if len(result)==0:
+                return "Not in table"
+            if result[0][0] == '':
+                return "No poster"
+            else:
+                return result[0][0]
+
+        df_w2v['Gem'] = False
+        df_w2v['Poster_URL'] = df_w2v['ID'].apply(get_poster)
+        first = df_w2v
+        first = first.fillna("None")
+        first_list = list(zip(*map(first.get, first)))
+        predictions1 = first_list
+
+        """ Turn predictions into JSON """
+
+        def get_JSON(iterable): # receive list of tuples, output JSON
+            names = ['Title', 'Year', 'IMDB URL', 'Mean Rating', 'Votes', 'Similarity', 'ID', 'Gem', 'Poster URL']
+            names_lists = {key:[] for key in names}
+
+            for x in range(0, len(iterable[0])):
+                for y in range(0, len(iterable)):
+                    names_lists[names[x]].append(iterable[y][x])
+
+            results_dict = [dict(zip(names_lists,t)) for t in zip(*names_lists.values())]
+            recommendation_json = json.dumps(results_dict)
+            return recommendation_json
+
+        rec_data = get_JSON(predictions1)
+
+        """ Commit to the database """
+
+        def commit_to_database(result, model_type): # receive JSON, commit to database, return recommendation ID
+            string_json = str(result) + str(user_id)
+            hash_object = hashlib.md5(string_json.encode('ascii'))
+            recommendation_id = hash_object.hexdigest()
+
+            query = "SELECT EXISTS(SELECT 1 FROM recommendations where recommendation_id=%s and user_id=%s);"
+            self.cursor_dog.execute(query, (recommendation_id, user_id))
+            boolean = self.cursor_dog.fetchall()
+            date = datetime.now()
+            model_type = model_type
+
+            if boolean[0][0]: # True
+                    print("Already recommended", recommendation_id, result)
+            else:
+                query = """ INSERT INTO recommendations(user_id, recommendation_id, recommendation_json, date, model_type)
+                            VALUES (%s, %s, %s, %s, %s);"""
+                self.cursor_dog.execute(query, (user_id, recommendation_id, result, date, model_type))
+                print("Recommendation committed to DB with id:", recommendation_id, result)
+
+            return recommendation_id
+
+        recommendation_id = commit_to_database(rec_data, 'ratings model')
+        self.connection.commit()
+        return {
+                "recommendation_id": recommendation_id,
+                "data": rec_data
+                }
 
 
 def fill_id(id):
