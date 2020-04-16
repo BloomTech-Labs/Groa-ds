@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from apps.util import PythonPredictor
+from w2v_helpers import Recommender
+import os
+from pathlib import Path
 
 app = FastAPI(
     title="groa-ds-api",
@@ -8,14 +10,17 @@ app = FastAPI(
     version="1.0"
 )
 
-predictor = PythonPredictor()
+parent_path = Path(__file__).resolve().parents[1]
+model_path = os.path.join(parent_path, 'w2v_limitingfactor_v2.model')
+
+predictor = Recommender(model_path)
 
 
 class RecData(BaseModel):
     user_id: int
     # one or the other (i want to use n but it was number_of_re.. prior)
-    n: int = 20
-    number_of_recommendations: int = 20
+    n: int = 10
+    number_of_recommendations: int = 10
     good_threshold: int = None
     bad_threshold: int = None
     harshness: int = None
@@ -34,7 +39,7 @@ def create_app():
 
     @app.post("/recommendation")
     async def recommend(payload: RecData):
-        result = predictor.predict(payload)
+        result = predictor.get_recommendations(payload)
         return result
     
     @app.post("/similar-movies")
