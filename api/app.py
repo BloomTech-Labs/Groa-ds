@@ -1,8 +1,7 @@
 from apps import create_app
+import uvicorn
 
 application = app = create_app()
 
 if __name__ == '__main__':
-    #app.jinja_env.auto_reload = True
-    #app.config['TEMPLATES_AUTO_RELOAD'] = True
-    app.run(debug=False)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
