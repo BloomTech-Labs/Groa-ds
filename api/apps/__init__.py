@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from w2v_helpers import Recommender
+from apps.utils import Recommender
 import os
 from pathlib import Path
 
