@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from typing import List
 from apps.utils import Recommender
 import os
 from pathlib import Path
@@ -16,7 +17,16 @@ model_path = os.path.join(parent_path, 'w2v_limitingfactor_v2.model')
 predictor = Recommender(model_path)
 
 
-class RecData(BaseModel):
+class Movie(BaseModel):
+    movie_id: str 
+    score: float 
+    title: str 
+    year: int 
+    genres: List[str]
+    poster_url: str
+
+
+class RecInput(BaseModel):
     user_id: int
     num_recs: int = 10
     good_threshold: int = None
@@ -24,9 +34,18 @@ class RecData(BaseModel):
     harshness: int = None
 
 
-class SimData(BaseModel):
+class RecOutput(BaseModel):
+    recommendation_id: str 
+    data: List[Movie]
+
+
+class SimInput(BaseModel):
     movie_id: str
     num_movies: int = 10
+
+
+class SimOutput(BaseModel):
+    data: List[Movie]
 
 
 def create_app():
@@ -36,13 +55,13 @@ def create_app():
         welcome_message = "This is the DS API for Groa"
         return welcome_message
 
-    @app.post("/recommendation")
-    async def recommend(payload: RecData):
+    @app.post("/recommendations", response_model=RecOutput)
+    async def get_recommendations(payload: RecInput):
         result = predictor.get_recommendations(payload)
         return result
     
-    @app.post("/similar-movies")
-    async def similar_movies(payload: SimData):
+    @app.post("/similar-movies", response_model=SimOutput)
+    async def get_similar_movies(payload: SimInput):
         result = predictor.get_similar_movies(payload)
         return result
 

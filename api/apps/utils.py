@@ -180,7 +180,7 @@ class Recommender(object):
                         continue
             return np.mean(movie_vec, axis=0)
 
-        def _similar_movies(v, bad_movies=[], n=50):
+        def _similar_movies(v, n, bad_movies=[]):
             """ Aggregates movies and finds n vectors with highest cosine similarity """
             if bad_movies:
                 v = _remove_dislikes(bad_movies, v, harshness=harshness)
@@ -202,7 +202,7 @@ class Recommender(object):
             return good_movies_vec - bad_vec
 
         aggregated = _aggregate_vectors(input, checked_list)
-        recs = _similar_movies(aggregated, bad_movies, n=n)
+        recs = _similar_movies(aggregated, n, bad_movies)
         recs = _remove_dupes(recs, input, bad_movies, hist_list, checked_list + rejected_list)
         return recs
     # ------- End Helper Methods -------
@@ -229,7 +229,9 @@ class Recommender(object):
         m_vec = clf[movie_id]
         movies_df = pd.DataFrame(clf.similar_by_vector(m_vec, topn=n+1)[1:], columns=['movie_id', 'score'])
         result_df = self._get_info(movies_df)
-        return self._get_JSON(result_df)
+        return {
+            "data": self._get_JSON(result_df)
+            }
     
     def get_recommendations(self, payload):
         """ Uses user's ratings to generate recommendations """
@@ -325,7 +327,7 @@ class Recommender(object):
         return {
                 "recommendation_id": 'in test mode',
                 "data": rec_json
-                }
+            }
     # ------- End Public Methods -------
 
 
