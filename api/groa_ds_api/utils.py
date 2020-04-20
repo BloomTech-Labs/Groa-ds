@@ -325,7 +325,6 @@ class Recommender(object):
         self.cursor_dog.close()
         print(f"Sending response with {len(rec_json)} recommendations...")
         return {
-                "recommendation_id": 'in test mode',
                 "data": rec_json
             }
     # ------- End Public Methods -------

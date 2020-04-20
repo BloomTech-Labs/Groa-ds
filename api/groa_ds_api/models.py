@@ -18,13 +18,12 @@ class Movie(BaseModel):
 class RecInput(BaseModel):
     user_id: int
     num_recs: int = 10
-    good_threshold: int = None
-    bad_threshold: int = None
-    harshness: int = None
+    good_threshold: int = 4
+    bad_threshold: int = 3
+    harshness: int = 1
 
 
 class RecOutput(BaseModel):
-    recommendation_id: str 
     data: List[Movie]
 
 
