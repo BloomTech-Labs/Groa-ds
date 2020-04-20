@@ -1,7 +1,6 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import List
-from apps.utils import Recommender
+from groa_ds_api.utils import Recommender
+from groa_ds_api.models import RecInput, RecOutput, SimInput, SimOutput
 import os
 from pathlib import Path
 
@@ -15,37 +14,6 @@ parent_path = Path(__file__).resolve().parents[1]
 model_path = os.path.join(parent_path, 'w2v_limitingfactor_v2.model')
 
 predictor = Recommender(model_path)
-
-
-class Movie(BaseModel):
-    movie_id: str 
-    score: float 
-    title: str 
-    year: int 
-    genres: List[str]
-    poster_url: str
-
-
-class RecInput(BaseModel):
-    user_id: int
-    num_recs: int = 10
-    good_threshold: int = None
-    bad_threshold: int = None
-    harshness: int = None
-
-
-class RecOutput(BaseModel):
-    recommendation_id: str 
-    data: List[Movie]
-
-
-class SimInput(BaseModel):
-    movie_id: str
-    num_movies: int = 10
-
-
-class SimOutput(BaseModel):
-    data: List[Movie]
 
 
 def create_app():
