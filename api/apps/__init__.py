@@ -18,9 +18,7 @@ predictor = Recommender(model_path)
 
 class RecData(BaseModel):
     user_id: int
-    # one or the other (i want to use n but it was number_of_re.. prior)
-    n: int = 10
-    number_of_recommendations: int = 10
+    num_recs: int = 10
     good_threshold: int = None
     bad_threshold: int = None
     harshness: int = None
@@ -28,6 +26,7 @@ class RecData(BaseModel):
 
 class SimData(BaseModel):
     movie_id: str
+    num_movies: int = 10
 
 
 def create_app():
@@ -44,8 +43,8 @@ def create_app():
     
     @app.post("/similar-movies")
     async def similar_movies(payload: SimData):
-        response = f"Need to serve similar movies to {payload.movie_id}"
-        return response
+        result = predictor.get_similar_movies(payload)
+        return result
 
     @app.get("/stats/decades/{user_id}")
     async def get_stats_by_decade(user_id):
