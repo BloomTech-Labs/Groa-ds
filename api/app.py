@@ -1,4 +1,4 @@
-from apps import create_app
+from groa_ds_api import create_app
 import uvicorn
 
 application = app = create_app()
