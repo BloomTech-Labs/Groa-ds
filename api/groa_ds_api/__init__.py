@@ -20,16 +20,54 @@ def create_app():
     
     @app.get("/")
     async def index():
+        """
+        Simple 'hello' from our API.
+        """
         welcome_message = "This is the DS API for Groa"
         return welcome_message
 
     @app.post("/recommendations", response_model=RecOutput)
     async def get_recommendations(payload: RecInput):
+        """
+        Given a `user_id`, the user's ratings are used to create a user's 'taste'
+        vector. We then get the most similar movies to that vector using cosine similarity.
+
+        Parameters: 
+
+        - **user_id:** int
+        - num_recs: int [1, 100]
+        - good_threshold: int [3, 5]
+        - bad_threshold: int [1, 3]
+        - harshness: int [1, 2]
+
+        Returns:
+
+        - **data:** List[Movie]
+
+        `Will not always return as many recommendations as 
+        num_recs due to the algorithms filtering process.`
+        """
         result = predictor.get_recommendations(payload)
         return result
     
     @app.post("/similar-movies", response_model=SimOutput)
     async def get_similar_movies(payload: SimInput):
+        """
+        Given a `movie_id`, we get the movie's vector using our trained `w2v` model. 
+        We then get the most similar movies to that vector using cosine similarity.
+
+        Parameters:
+
+        - **movie_id:** str
+        - num_movies: int [1, 100]
+
+        Returns:
+
+        - **data:** List[Movie]
+
+        `Will reliably return as many recommendations as indicated
+        in num_movies parameter.`
+        """
         result = predictor.get_similar_movies(payload)
         return result
 
