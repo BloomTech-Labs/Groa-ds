@@ -35,7 +35,14 @@ class LetterboxScraper(BaseScraper):
         broken = []
         page_count = 0
 
-        for count, id in enumerate(id_list):
+        query = """
+        SELECT movie_id FROM movies
+        """
+        curs, conn = self.connect_to_database()
+        curs.execute(query)
+        movie_ids = set([row[0] for row in curs.fetchall()])
+
+        for count, id in enumerate(id for id in id_list if id in movie_ids):
             print("----------------------------------------")
             try:
                 t1 = time.perf_counter()
@@ -227,16 +234,15 @@ code {response.status_code}!")
                     i.movie_id,
                     i.review_date,
                     int(i.user_rating),
-                    str(i.review_text),
-                    i.review_id,
                     str(i.username),
+                    str(i.review_text),
             ))
         row_insertions = row_insertions[:-2]
         cursor_boi, connection = self.connect_to_database()
         # create SQL INSERT query
         query = """
-        INSERT INTO letterboxd_reviews(movie_id, review_date, user_rating, review_text, review_id, user_name)
-        VALUES (%s, %s, %s, %s, %s, %s);
+        INSERT INTO movie_reviews(movie_id, review_date, user_rating, user_name, review_text)
+        VALUES (%s, %s, %s, %s, %s);
         """
         # execute query
         execute_batch(
