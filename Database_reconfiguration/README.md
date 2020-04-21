@@ -8,6 +8,7 @@ Groa gives movie recommendations based on user ratings and reviews. The ratings 
 
 ### Why to reconfigure the database
 There are several reasons why the database had to be reconfigured: 
+
 **1. Redundancy**
 
   * `letterboxd_ratings` table contains the same information already presented in `letterboxd_movies` table. Idem `imdb_ratings` contains the information already presented in `imdb_movies` table;
