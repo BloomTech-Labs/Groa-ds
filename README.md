@@ -15,6 +15,12 @@ You can check out the [live demo of Gróa here](http://www.groa.us/).
 
 ### Labs 23
 
+| [Doina Langille](https://github.com/doinalangille) |
+| :-: |
+| [<img src="https://avatars3.githubusercontent.com/u/57115234?s=460&u=b52b5978498b1461fa05d0d1e913aea4a9aafdb3&v=4" width = "200" />](https://github.com/doinalangille) |
+| [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/doinalangille) |
+| [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/doina-jitoreanu/) |
+
 ## Project Overview
 
 
