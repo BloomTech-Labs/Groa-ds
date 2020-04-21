@@ -109,3 +109,4 @@ Find [here](https://www.lucidchart.com/invitations/accept/7b6ed3b9-2387-4c66-a93
 | user_watchlist        | id        | NEXTVAL('user_watchlist_id_seq') |
 | users                 | user_id   | NEXTVAL('users_id_seq')          |
 | user_willnotwatchlist | id        | NEXTVAL('willnotwatch_id_seq')   |
+
