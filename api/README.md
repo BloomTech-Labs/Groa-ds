@@ -13,11 +13,11 @@ Recommender system for the Groa project.
 
 - navigate to `api/` directory
 - run `docker build -t groadsapi .`
-- run `docker run --env-file ./.env -p 8000:8000 --name groacontainer groadsapi`
+- run `docker run --env-file ./.env -p 5000:5000 --name groacontainer groadsapi`
 
 ## navigate to docs (includes route information)
 
 Once this FastAPI is deployed will link prod docs here.
 
 - run appy using `pipenv run python main.py` 
-- navigate to `http://0.0.0.0:8000/docs` in browser
+- navigate to `http://0.0.0.0:5000/docs` in browser

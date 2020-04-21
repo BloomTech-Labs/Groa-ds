@@ -1,17 +1,21 @@
 FROM python:3.7-slim-buster
+LABEL maintainer="groa"
 
-# Make working directories
-RUN  mkdir -p /home/project-api
-WORKDIR /home/project-api/
+RUN apt-get update && apt-get install -y python3-dev build-essential
 
-# Copy application requirements file to the created working directory
+# makes and sets working directory
+RUN mkdir -p /usr/src/groa
+WORKDIR /usr/src/groa
+
+# installs application dependencies
 COPY requirements.txt .
+RUN pip3 install -r requirements.txt
 
-# Install application dependencies from the requirements file
-RUN pip install -r requirements.txt
+# copies over all application files
+COPY . .
 
-# Copy every file in the source folder to the created working directory
-COPY  . .
+# exposes port 5000
+EXPOSE 5000
 
-# Run the python application
-CMD ["python", "main.py"]
+# runs groa_ds_api
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "5000", "main:app"]
