@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import BackgroundTasks, FastAPI
 from groa_ds_api.utils import Recommender
-from groa_ds_api.models import RecInput, RecOutput, SimInput, SimOutput
+from groa_ds_api.models import RecInput, RecOutput, SimInput, SimOutput, ScraperInput
+from web_scraping.util import run_scrapers
 import os
 from pathlib import Path
 
@@ -82,4 +83,7 @@ def create_app():
         #     dec_to_count[dec] += 1
         return "New class needs to be built for user_data"
 
-    return app
+    @app.post("/scrape-update")
+    async def scrape_update(payload: ScraperInput, background_tasks: BackgroundTasks):
+        background_tasks.add_tasks(run_scrapers, payload.start, payload.end)
+        return "Scrape update started"

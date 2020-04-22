@@ -141,15 +141,15 @@ less than the end position")
         row_insertions = []
         for i in list(df.itertuples(index=False)):
             row_insertions.append((
+                  int(i.review_id.strip("rw")),
                   i.movie_id,
                   i.date,
-                  int(i.rating),
+                  float(i.rating)/2,
                   i.helpful_num,
                   i.helpful_denom,
                   str(i.username),
                   str(i.reviews),
                   str(i.titles),
-                  i.review_id
             ))
 
         # remove hanging comma
@@ -157,7 +157,8 @@ less than the end position")
         cursor_boi, connection = self.connect_to_database()
         # create SQL INSERT query
         query = """
-        INSERT INTO imdb_reviews (
+        INSERT INTO movie_reviews (
+            review_id,
             movie_id,
             review_date,
             user_rating,
@@ -165,8 +166,7 @@ less than the end position")
             helpful_denom,
             user_name,
             review_text,
-            review_title,
-            review_id
+            review_title
         )
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
         """

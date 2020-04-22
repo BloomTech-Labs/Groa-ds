@@ -34,3 +34,8 @@ class SimInput(BaseModel):
 
 class SimOutput(BaseModel):
     data: List[Movie]
+
+
+class ScraperInput(BaseModel):
+    start: int
+    end: int
