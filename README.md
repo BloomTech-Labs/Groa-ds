@@ -17,11 +17,9 @@ You can check out the [live demo of Gróa here](http://www.groa.us/).
 
 | [Doina Langille](https://github.com/doinalangille) | [Ben de Vera](https://github.com/bendevera) |
 | :-: | :-:  |
-| [<img src="https://avatars3.githubusercontent.com/u/57115234?s=460&u=b52b5978498b1461fa05d0d1e913aea4a9aafdb3&v=4" width = "200" />](https://github.com/doinalangille) |
-| [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/doinalangille) |
-| [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/doina-jitoreanu/) | [<img src="https://avatars1.githubusercontent.com/u/6827916?s=460&u=8478269a71034ed77cf5bb126f084efcc21d80e8&v=4" width = "200" />](https://github.com/bendevera) |
-| [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/bendevera) |
-| [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/ben-de-vera-31418b15a/) |
+| [<img src="https://avatars3.githubusercontent.com/u/57115234?s=460&u=b52b5978498b1461fa05d0d1e913aea4a9aafdb3&v=4" width = "200" />](https://github.com/doinalangille) | [<img src="https://avatars1.githubusercontent.com/u/6827916?s=460&u=8478269a71034ed77cf5bb126f084efcc21d80e8&v=4" width = "200" />](https://github.com/bendevera) |
+| [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/doinalangille) | [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/bendevera) |
+| [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/doina-jitoreanu/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/ben-de-vera-31418b15a/) |
 
 ## Project Overview
 
