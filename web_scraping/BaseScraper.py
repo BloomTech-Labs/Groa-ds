@@ -144,7 +144,7 @@ less than the end position")
                   int(i.review_id.strip("rw")),
                   i.movie_id,
                   i.date,
-                  int(i.rating),
+                  float(i.rating),
                   i.helpful_num,
                   i.helpful_denom,
                   str(i.username),

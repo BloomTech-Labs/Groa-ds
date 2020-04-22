@@ -233,7 +233,7 @@ code {response.status_code}!")
             row_insertions.append((
                     i.movie_id,
                     i.review_date,
-                    int(i.user_rating),
+                    float(i.user_rating),
                     str(i.username),
                     str(i.review_text),
             ))
