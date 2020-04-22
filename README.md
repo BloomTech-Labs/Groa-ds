@@ -13,6 +13,12 @@ You can check out the [live demo of Gróa here](http://www.groa.us/).
 
 ### Labs 21
 
+| [Niki Bhatt](https://github.com/nikibhatt) | [Ben de Vera](https://github.com/bendevera) |
+| :-: | :-:  |
+| [<img src="https://ca.slack-edge.com/T4JUEB3ME-UNLTW45P1-5a2e91fea50c-512" width = "200" />](https://github.com/nikibhatt) | [<img src="https://avatars1.githubusercontent.com/u/6827916?s=460&u=8478269a71034ed77cf5bb126f084efcc21d80e8&v=4" width = "200" />](https://github.com/bendevera) |
+| [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/nikibhatt) | [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/bendevera) |
+| [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](http://www.linkedin.com/in/nikibhatt) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/ben-de-vera-31418b15a/) |
+
 ### Labs 23
 
 | [Doina Langille](https://github.com/doinalangille) | [Ben de Vera](https://github.com/bendevera) |
