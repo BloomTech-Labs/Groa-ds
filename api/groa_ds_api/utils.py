@@ -234,7 +234,7 @@ class Recommender(object):
             "data": self._get_JSON(result_df)
             }
     
-    def get_recommendations(self, payload):
+    def get_recommendations(self, payload, background_tasker):
         """ Uses user's ratings to generate recommendations """
         # request data 
         user_id = payload.user_id
@@ -295,35 +295,42 @@ class Recommender(object):
         rec_data = self._get_info(df_w2v)
         rec_data = rec_data.fillna("None")
 
-        def _commit_to_database(model_recs): 
+        def _commit_to_database(model_recs, user_id, num_recs, good, bad, harsh): 
             """ Commit recommendations to the database """
-            # want to thread this off to not have user wait till committing all recs
             date = datetime.now()
-            model_type = model_type
+            model_type = "ratings"
 
-            for movie in model_recs:
-                query = "SELECT EXISTS(SELECT 1 FROM recommendations where movie_id=%s and user_id=%s);"
-                self.cursor_dog.execute(query, (movie['movie_id'], user_id))
-                boolean = self.cursor_dog.fetchone()
+            create_rec = """
+            INSERT INTO recommendations 
+            (user_id, date, model_type) 
+            VALUES (%s, %s, %s) RETURNING recommendation_id;
+            """
+            self.cursor_dog.execute(create_rec, (user_id, date, model_type))
+            rec_id = self.cursor_dog.fetchone()[0]
 
-                if boolean[0]: # True
-                        print("Already recommended", movie['movie_id'])
-                else:
-                    query = """ INSERT INTO recommendations(user_id, movie_id, date, model_type)
-                                VALUES (%s, %s, %s, %s, %s);"""
-                    self.cursor_dog.execute(query, (user_id, movie['movie_id'], date, model_type))
+            create_movie_rec = """
+            INSERT INTO recommendations_movies
+            (recommendation_id, movie_number, movie_id, num_recs, good_threshold, bad_threshold, harshness)
+            VALUES (%s, %s, %s, %s, %s, %s, %s);
+            """
+
+            for num, movie in enumerate(model_recs):
+                print((rec_id, num+1, movie['movie_id'], num_recs, good, bad, harsh))
+                self.cursor_dog.execute(
+                    create_movie_rec, 
+                    (rec_id, num+1, movie['movie_id'], num_recs, good, bad, harsh))
 
             self.connection.commit()
             self.cursor_dog.close()
-            return recommendation_id
 
         print("Getting JSON response...")
         rec_json = self._get_JSON(rec_data)
 
-        # print("Saving recommendations to DB...")
-        # recommendation_id = _commit_to_database(rec_json)
-        # delete once committing to db
-        self.cursor_dog.close()
+        # add background task to commit recs to DB
+        background_tasker.add_task(
+            _commit_to_database, 
+            rec_json, user_id, n, good_threshold, bad_threshold, harshness)
+
         print(f"Sending response with {len(rec_json)} recommendations...")
         return {
                 "data": rec_json

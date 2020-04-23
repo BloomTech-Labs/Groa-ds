@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from groa_ds_api.utils import Recommender
 from groa_ds_api.models import RecInput, RecOutput, SimInput, SimOutput
 import os
@@ -27,7 +27,7 @@ def create_app():
         return welcome_message
 
     @app.post("/recommendations", response_model=RecOutput)
-    async def get_recommendations(payload: RecInput):
+    async def get_recommendations(payload: RecInput, background_tasks: BackgroundTasks):
         """
         Given a `user_id`, the user's ratings are used to create a user's 'taste'
         vector. We then get the most similar movies to that vector using cosine similarity.
@@ -47,7 +47,7 @@ def create_app():
         `Will not always return as many recommendations as 
         num_recs due to the algorithms filtering process.`
         """
-        result = predictor.get_recommendations(payload)
+        result = predictor.get_recommendations(payload, background_tasks)
         return result
     
     @app.post("/similar-movies", response_model=SimOutput)
