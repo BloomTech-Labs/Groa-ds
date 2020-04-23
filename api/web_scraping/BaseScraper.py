@@ -6,7 +6,6 @@ from datetime import timedelta, datetime
 import time
 
 from bs4 import BeautifulSoup # 4.8.2
-from decouple import config # 3.3
 import pandas as pd # 0.25.0
 import psycopg2 # 2.8.4
 from psycopg2.extras import execute_batch
@@ -34,12 +33,12 @@ class BaseScraper:
         self.pickup = 0
         self.max_iter_count = max_iter
         self.scraper_instance = str(randint(2**31, 2**32))
-        self.database = config("DB_NAME")
-        self.user = config("DB_USER")
-        self.password = config("DB_PASSWORD")
-        self.host = config("HOST")
-        self.port = config("PORT")
-        self.filename = config("FILENAME")
+        self.database = os.getenv("DB_NAME")
+        self.user = os.getenv("DB_USER")
+        self.password = os.getenv("DB_PASSWORD")
+        self.host = os.getenv("HOST")
+        self.port = os.getenv("PORT")
+        self.filename = os.getenv("FILENAME")
 
     def connect_to_database(self):
         """

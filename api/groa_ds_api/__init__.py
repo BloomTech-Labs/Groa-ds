@@ -85,5 +85,8 @@ def create_app():
 
     @app.post("/scrape-update")
     async def scrape_update(payload: ScraperInput, background_tasks: BackgroundTasks):
+        run_scrapers(payload.start, payload.end)
         background_tasks.add_tasks(run_scrapers, payload.start, payload.end)
         return "Scrape update started"
+    
+    return app

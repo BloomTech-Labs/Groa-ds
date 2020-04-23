@@ -37,5 +37,5 @@ class SimOutput(BaseModel):
 
 
 class ScraperInput(BaseModel):
-    start: int
-    end: int
+    start: int = 0
+    end: int = 100

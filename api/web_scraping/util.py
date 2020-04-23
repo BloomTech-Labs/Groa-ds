@@ -1,5 +1,5 @@
-from ImdbScraper import ImdbScraper
-from LetterboxScraper import LetterboxScraper
+from web_scraping.ImdbScraper import ImdbScraper
+from web_scraping.LetterboxScraper import LetterboxScraper
 
 
 def run_scrapers(start, end):

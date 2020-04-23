@@ -16,6 +16,8 @@ fastapi = "*"
 uvicorn = "*"
 pydantic = "*"
 pytest = "*"
+bs4 = "*"
+decouple = "*"
 
 [requires]
 python_version = "3.7"

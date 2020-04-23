@@ -9,7 +9,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from psycopg2.extras import execute_batch
 
-from BaseScraper import BaseScraper
+from web_scraping.BaseScraper import BaseScraper
 
 class ImdbScraper(BaseScraper):
 
