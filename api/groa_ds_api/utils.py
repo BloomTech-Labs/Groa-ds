@@ -73,15 +73,16 @@ class Recommender(object):
             rec_json = []
 
             for i in range(rec_df.shape[0]):
-                curr_object = dict(rec_df.iloc[i].to_dict())
+                rec = dict(rec_df.iloc[i].to_dict())
+                rec['score'] = float(rec['score']) if not isinstance(rec['score'], str) else 0.0
                 rec_json.append({
-                    'movie_id': curr_object['movie_id'], 
-                    'score': float(curr_object['score']), 
-                    'title': curr_object['title'],
-                    'year': int(curr_object['year']),
-                    'genres': curr_object['genres'].split(','), 
-                    'poster_url': curr_object['poster_url']
-                    })
+                        'movie_id': rec['movie_id'], 
+                        'score': rec['score'], 
+                        'title': rec['title'],
+                        'year': int(rec['year']),
+                        'genres': rec['genres'].split(','), 
+                        'poster_url': rec['poster_url']
+                        })
 
             return rec_json
 
