@@ -351,7 +351,7 @@ code {response.status_code}!")
             # connect to the database and query it for the review/movie ids
             cursor, connection = self.connect_to_database()
             print("Connected.")
-            query = "SELECT review_id, movie_id FROM imdb_reviews"
+            query = "SELECT review_id, movie_id FROM movie_reviews"
             cursor.execute(query)
             # put all of the review/movie ids into a list of tuples
             print("Fetching IDs...")

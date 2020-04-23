@@ -65,24 +65,39 @@ class BaseScraper:
         Uses a class variable set from environment variable
         FILENAME to look for a csv formatted after the tarball
         released by IMDB.com. Returns a list.
+
+        If the file is not found, grabs movie ids from the db.
         '''
-        df = pd.read_csv(self.filename, encoding='ascii', header=None)
+        if os.path.exists(self.filename):
+            df = pd.read_csv(self.filename, encoding='ascii', header=None)
 
-        # get all the rows from the second column and then select only
-        # the ones from the start and end positions
-        id_list = [row for row in df.iloc[:, 1]]
-        self.all_ids = id_list
+            # get all the rows from the second column and then select only
+            # the ones from the start and end positions
+            id_list = [row for row in df.iloc[:, 1]]
+            self.all_ids = id_list
 
-        id_list = id_list[self.start:self.end]
-        self.current_ids = id_list
+            id_list = id_list[self.start:self.end]
+            self.current_ids = id_list
 
-        # lets the class know the range of ID's its grabbing at a time
-        if self.start > self.end:
-            raise ValueError("The start position needs to be \
-less than the end position")
-        self.range = abs(self.end - self.start)
+            # lets the class know the range of ID's its grabbing at a time
+            if self.start > self.end:
+                raise ValueError("The start position needs to be \
+    less than the end position")
+            self.range = abs(self.end - self.start)
 
-        return id_list
+            return id_list
+        else:
+            curs, conn = self.connect_to_database()
+            query = """
+            SELECT movie_id FROM movies;
+            """
+            curs.execute(query)
+            movie_ids = curs.fetchall()
+            movie_ids = [row[0] for row in movie_ids]
+            id_list = movie_ids[self.start:self.end]
+
+            return id_list
+            
 
     def show(self, lst):
         '''
@@ -208,8 +223,17 @@ less than the end position")
         from that file back into the class variable self.ids.
         '''
 
-        path = self.load_path if path is None else path
+        try:
+            path = self.load_path if path is None else path
 
-        df = pd.read_csv(path, header=None)
-        self.ids = df.values.tolist()
-        return self.ids
+            df = pd.read_csv(path, header=None)
+            self.ids = df.values.tolist()
+            return self.ids
+        except:
+            curs, conn = self.connect_to_database()
+            query = """
+            SELECT movie_id FROM movies;
+            """
+            curs.execute(query)
+            self.ids = curs.fetchall()
+            return self.ids
