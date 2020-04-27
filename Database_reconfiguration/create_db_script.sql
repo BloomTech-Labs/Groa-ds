@@ -1,3 +1,32 @@
+-- SEQUENCE: public.movie_provider_id_seq
+
+CREATE SEQUENCE public.movie_provider_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+
+
+-- SEQUENCE: public.provider_id_seq
+
+CREATE SEQUENCE public.provider_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+
+-- SEQUENCE: public.rec_id_seq
+
+CREATE SEQUENCE public.rec_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+
+
 -- SEQUENCE: public.willnotwatch_id_seq
 
 CREATE SEQUENCE public.willnotwatch_id_seq
@@ -161,7 +190,8 @@ CREATE TABLE public.user_watchlist
     movie_id character varying COLLATE pg_catalog."default" NOT NULL,
     date date NOT NULL,
     source character varying COLLATE pg_catalog."default",
-    CONSTRAINT user_watchlist_pkey PRIMARY KEY (user_id, movie_id, date),
+    id integer NOT NULL DEFAULT nextval('user_watchlist_id_seq'::regclass),
+    CONSTRAINT user_watchlist_pkey PRIMARY KEY (id),
     CONSTRAINT movie_id_fk FOREIGN KEY (movie_id)
         REFERENCES public.movies (movie_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -259,7 +289,7 @@ TABLESPACE pg_default;
 
 CREATE TABLE public.recommendations
 (
-    recommendation_id character varying COLLATE pg_catalog."default" NOT NULL,
+    recommendation_id integer NOT NULL DEFAULT nextval('rec_id_seq'::regclass),
     user_id integer,
     date timestamp with time zone,
     model_type character varying COLLATE pg_catalog."default",
@@ -279,7 +309,7 @@ TABLESPACE pg_default;
 
 CREATE TABLE public.recommendations_movies
 (
-    recommendation_id character varying COLLATE pg_catalog."default" NOT NULL,
+    recommendation_id integer NOT NULL,
     movie_number integer NOT NULL,
     movie_id character varying COLLATE pg_catalog."default" NOT NULL,
     num_recs integer,
@@ -300,3 +330,44 @@ WITH (
     OIDS = FALSE
 )
 TABLESPACE pg_default;
+    
+-- Table: public.providers
+
+CREATE TABLE public.providers
+(
+    provider_id integer NOT NULL DEFAULT nextval('provider_id_seq'::regclass),
+    name character varying COLLATE pg_catalog."default" NOT NULL,
+    logo_url character varying COLLATE pg_catalog."default",
+    CONSTRAINT providers_pkey PRIMARY KEY (provider_id)
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+    
+-- Table: public.movie_providers
+
+CREATE TABLE public.movie_providers
+(
+    id integer NOT NULL DEFAULT nextval('movie_provider_id_seq'::regclass),    
+    movie_id character varying COLLATE pg_catalog."default" NOT NULL,
+    provider_id integer NOT NULL,
+    provider_movie_url character varying COLLATE pg_catalog."default",
+    presentation_type character varying COLLATE pg_catalog."default",
+    monetization_type character varying COLLATE pg_catalog."default",
+    CONSTRAINT movie_providers_pkey PRIMARY KEY (id),
+    CONSTRAINT provider_movie_fk FOREIGN KEY (movie_id)
+        REFERENCES public.movies (movie_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT providers_fk FOREIGN KEY (provider_id)
+        REFERENCES public.providers (provider_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+    
