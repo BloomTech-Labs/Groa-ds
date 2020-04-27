@@ -8,7 +8,7 @@ import pandas as pd
 from psycopg2.extras import execute_batch
 
 
-from web_scraping.BaseScraper import BaseScraper
+from BaseScraper import BaseScraper
 
 class LetterboxScraper(BaseScraper):
 
