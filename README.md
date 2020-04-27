@@ -21,11 +21,11 @@ You can check out the [live demo of Gróa here](http://www.groa.us/).
 
 ### Labs 23
 
-| [Doina Langille](https://github.com/doinalangille) | [Ben de Vera](https://github.com/bendevera) | [Erik Cowley](https://github.com/ekoly) | [Chase Goldfeld](https://github.com/aufeld) | 
+| [Doina Langille](https://github.com/doinalangille) | [Ben de Vera](https://github.com/bendevera) | [Erik Cowley](https://github.com/ekoly) | [Chase Goldfeld](https://github.com/aufeld) | [Benjamin Bishop](https://github.com/Benjamin1118) 
 | :-: | :-:  | :-: |
 | [<img src="https://avatars3.githubusercontent.com/u/57115234?s=460&u=b52b5978498b1461fa05d0d1e913aea4a9aafdb3&v=4" width = "200" />](https://github.com/doinalangille) | [<img src="https://avatars1.githubusercontent.com/u/6827916?s=460&u=8478269a71034ed77cf5bb126f084efcc21d80e8&v=4" width = "200" />](https://github.com/bendevera)  [ <img src="https://avatars0.githubusercontent.com/u/174233?s=400&u=68f3f2490a9dff56d4223e0f2ede2d4d8390c4c1&v=4" width = "200" />](https://github.com/ekoly) |
 | [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/doinalangille) | [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/bendevera) | [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/ekoly) |
-| [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/doina-jitoreanu/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/ben-de-vera-31418b15a/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/erik-cowley-89090120/) | (www.linkedin.com/in/chase-goldfeld) |
+| [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/doina-jitoreanu/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/ben-de-vera-31418b15a/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/erik-cowley-89090120/) | (www.linkedin.com/in/chase-goldfeld) | (https://www.linkedin.com/in/ben-bishop-244a50102/)
 
 ## Project Overview
 
