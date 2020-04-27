@@ -1,5 +1,7 @@
 # groa-ds-api
 
+#### [live API](https://ds.groa.us) | [live API docs](https://ds.groa.us/docs)
+
 Recommender system for the Groa project. 
 
 ## local setup (with `pipenv`)
@@ -15,9 +17,7 @@ Recommender system for the Groa project.
 - run `docker build -t groadsapi .`
 - run `docker run --env-file ./.env -p 5000:5000 --name groacontainer groadsapi`
 
-## navigate to docs (includes route information)
-
-Once this FastAPI is deployed will link prod docs here.
+## navigate to local docs (includes route information)
 
 - run appy using `pipenv run python main.py` 
 - navigate to `http://0.0.0.0:5000/docs` in browser
