@@ -1,0 +1,11 @@
+.git
+.pytest_cache
+.elasticbeanstalk
+.ebextensions
+.ebignore
+.env
+Pipfile
+Pipfile.lock
+r2v_helpers.py
+README.md
+sample.json

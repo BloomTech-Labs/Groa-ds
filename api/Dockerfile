@@ -1,8 +1,6 @@
 FROM python:3.7-slim-buster
 LABEL maintainer="groa"
 
-RUN apt-get update && apt-get install -y python3-dev build-essential
-
 # makes and sets working directory
 RUN mkdir -p /usr/src/groa
 WORKDIR /usr/src/groa

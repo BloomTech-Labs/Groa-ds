@@ -1,0 +1,13 @@
+{
+    "AWSEBDockerrunVersion": "1",
+    "Image": {
+      "Name": "bendevera/groa-ds-api",
+      "Update": "true"
+    },
+    "Ports": [
+      {
+        "ContainerPort": "5000"
+      }
+    ]
+  }
+  
