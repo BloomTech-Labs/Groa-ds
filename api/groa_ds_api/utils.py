@@ -9,8 +9,8 @@ import hashlib
 from datetime import datetime
 
 
-class Recommender(object):
-    """ Movie recommender class that uses a W2V model to recommend movies
+class MovieUtility(object):
+    """ Movie utility class that uses a W2V model to recommend movies
     based on the movies a user likes and dislikes """
 
     def __init__(self, model_path):
@@ -24,8 +24,6 @@ class Recommender(object):
             host      =  os.getenv('HOST'),
             port      =  os.getenv('PORT')
         )
-        # creating on demand
-        # self.cursor_dog = self.connection.cursor()
         self.id_book = self._get_id_book()
     
     # ------- Start Helper Methods -------
@@ -68,23 +66,39 @@ class Recommender(object):
         return pd.merge(recs, self.id_book, how='left', on='movie_id')
     
     def _get_JSON(self, rec_df):
-            """ Turn predictions into JSON """
-            names = rec_df.columns
-            rec_json = []
+        """ Turn predictions into JSON """
+        names = rec_df.columns
+        rec_json = []
 
-            for i in range(rec_df.shape[0]):
-                rec = dict(rec_df.iloc[i].to_dict())
-                rec['score'] = float(rec['score']) if not isinstance(rec['score'], str) else 0.0
-                rec_json.append({
-                        'movie_id': rec['movie_id'], 
-                        'score': rec['score'], 
-                        'title': rec['title'],
-                        'year': int(rec['year']),
-                        'genres': rec['genres'].split(','), 
-                        'poster_url': rec['poster_url']
-                        })
+        for i in range(rec_df.shape[0]):
+            rec = dict(rec_df.iloc[i].to_dict())
+            rec['score'] = float(rec['score']) if not isinstance(rec['score'], str) else 0.0
+            rec_json.append({
+                    'movie_id': rec['movie_id'], 
+                    'score': rec['score'], 
+                    'title': rec['title'],
+                    'year': int(rec['year']),
+                    'genres': rec['genres'].split(','), 
+                    'poster_url': rec['poster_url']
+                    })
 
-            return rec_json
+        return rec_json
+
+    def _get_provider_JSON(self, prov_sql):
+        """ Turn provider data into JSON """
+        prov_json = {
+            "data": []
+        }
+        for provider in prov_sql:
+            prov_json["data"].append({
+                "provider_id": provider[0],
+                "name": provider[1],
+                "logo": provider[2],
+                "link": provider[3],
+                "presentation_type": provider[4],
+                "monetization_type": provider[5]
+            })
+        return prov_json
 
     def _predict(self, input, bad_movies=[], hist_list=[], val_list=[],
                 ratings_dict = {}, checked_list=[], rejected_list=[],
@@ -207,6 +221,7 @@ class Recommender(object):
         recs = _remove_dupes(recs, input, bad_movies, hist_list, checked_list + rejected_list)
         return recs
     # ------- End Helper Methods -------
+
     # ------- Start Public Methods -------
     def get_most_similar_title(self, id, id_list):
         """ Get the title of the most similar movie to id from id_list """
@@ -218,6 +233,24 @@ class Recommender(object):
         id_book = self.id_book
         match = clf.wv.most_similar_to_given(id, id_list)
         return match
+    
+    def get_service_providers(self, movie_id):
+        """ Get the service providers of a given movie_id """
+        try:
+            self.cursor_dog = self._get_cursor()
+        except Exception as e:
+            print("Connection problem chief!\n")
+            print(e)
+        
+        query = """
+        SELECT m.provider_id, p.name, p.logo_url, m.provider_movie_url, 
+        m.presentation_type, m.monetization_type
+        FROM movie_providers AS m
+        LEFT JOIN providers AS p ON m .provider_id = p.provider_id
+        WHERE m.movie_id = %s; 
+        """
+        self.cursor_dog.execute(query, (movie_id,))
+        return self._get_provider_JSON(self.cursor_dog.fetchall())
     
     def get_similar_movies(self, payload):
         """ Gets movies with highest cosine similarity """
@@ -246,7 +279,6 @@ class Recommender(object):
         # create cursor
         try:
             self.cursor_dog = self._get_cursor()
-            print("Connected!")
         except Exception as e:
             print("Connection problem chief!\n")
             print(e)
@@ -256,11 +288,9 @@ class Recommender(object):
         self.cursor_dog.execute(query, (user_id,))
         ratings_sql= self.cursor_dog.fetchall()
         ratings = pd.DataFrame(ratings_sql, columns=['date', 'movie_id', 'rating'])
-        print(ratings['rating'].max())
         if ratings.shape[0] == 0:
             self.cursor_dog.close()
             return "User does not have ratings"
-        print("Got user ratings...")
 
         # Get user watchlist, willnotwatchlist, watched
         query = "SELECT date, movie_id FROM user_watchlist WHERE user_id=%s;"
@@ -277,17 +307,13 @@ class Recommender(object):
         self.cursor_dog.execute(query, (user_id,))
         willnotwatch_sql= self.cursor_dog.fetchall()
         willnotwatchlist_df = pd.DataFrame(willnotwatch_sql, columns = ['date', 'movie_id'])
-        print("Got user watchlists, prepping data...")
 
         # Prepare data
-        # remove movies in willnotwatchlist before? I think if bad ratings gives more info for recs
-        # prior dev had code to remove but after prep so it didn't actually affect recs
         good_list, bad_list, hist_list, val_list, ratings_dict = prep_data(
             ratings, watched, watchlist, good_threshold=good_threshold, bad_threshold=bad_threshold
             )
 
         # Run prediction with parameters then wrangle output
-        print("Getting predictions...")
         w2v_preds = self._predict(good_list, bad_list, hist_list, val_list, ratings_dict, harshness=harshness, n=n)
         df_w2v = pd.DataFrame(w2v_preds, columns=['movie_id', 'score'])
 
@@ -315,7 +341,6 @@ class Recommender(object):
             """
 
             for num, movie in enumerate(model_recs):
-                print((rec_id, num+1, movie['movie_id'], num_recs, good, bad, harsh))
                 self.cursor_dog.execute(
                     create_movie_rec, 
                     (rec_id, num+1, movie['movie_id'], num_recs, good, bad, harsh))
@@ -323,7 +348,6 @@ class Recommender(object):
             self.connection.commit()
             self.cursor_dog.close()
 
-        print("Getting JSON response...")
         rec_json = self._get_JSON(rec_data)
 
         # add background task to commit recs to DB
@@ -331,7 +355,6 @@ class Recommender(object):
             _commit_to_database, 
             rec_json, user_id, n, good_threshold, bad_threshold, harshness)
 
-        print(f"Sending response with {len(rec_json)} recommendations...")
         return {
                 "data": rec_json
             }
@@ -373,10 +396,6 @@ def prep_data(ratings_df, watched_df=None, watchlist_df=None, good_threshold=4, 
         ratings_dict all ids mapped to their ratings
     """
     try:
-        # shouldn't be necessary to check for nulls
-        # drop rows with nulls in the columns we use
-        # ratings_df = ratings_df.dropna(subset=['rating', 'movie_id'])
-
         # split according to user rating
         good_df = ratings_df[ratings_df['rating'] >= good_threshold]
         bad_df = ratings_df[ratings_df['rating'] <= bad_threshold]

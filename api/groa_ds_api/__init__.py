@@ -1,5 +1,5 @@
 from fastapi import FastAPI, BackgroundTasks
-from groa_ds_api.utils import Recommender
+from groa_ds_api.utils import MovieUtility
 from groa_ds_api.models import RecInput, RecOutput, SimInput, SimOutput
 import os
 from pathlib import Path
@@ -13,7 +13,7 @@ app = FastAPI(
 parent_path = Path(__file__).resolve().parents[1]
 model_path = os.path.join(parent_path, 'w2v_limitingfactor_v2.model')
 
-predictor = Recommender(model_path)
+predictor = MovieUtility(model_path)
 
 
 def create_app():
@@ -70,6 +70,29 @@ def create_app():
         """
         result = predictor.get_similar_movies(payload)
         return result
+    
+    @app.get("/service-providers/{movie_id}")
+    async def service_providers(movie_id: str):
+        """
+        Given a `movie_id`, we provide the service providers and the links 
+        to the movie of that service provider for quick access to the film.
+
+        Parameters:
+        - **movie_id:** str
+
+        Returns:
+        - **data:** List[Provider]
+
+        Provider Object:
+        - provider_id
+        - name
+        - link
+        - presentation_type (HD or SD)
+        - monetization_type (buy, rent or flatrate)
+        """
+        # could make a post and allow input of included_providers
+        # should add caching for this query
+        return predictor.get_service_providers(movie_id)
 
     @app.get("/stats/decades/{user_id}")
     async def get_stats_by_decade(user_id):
