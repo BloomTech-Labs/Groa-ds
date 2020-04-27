@@ -4,12 +4,28 @@ You can check out the [live demo of Gróa here](http://www.groa.us/).
 
 ## Contributors
 
+### Labs19
 |                                       [Michael Gospodinoff](https://github.com/cmgospod)                                        |                                       [Gabe flomo](https://github.com/gabe-flomo)                                        |                                       [Jeff Rowe](https://github.com/Jeffrowetull)                                        |                                       [Coop Williams](https://github.com/coopwilliams)                                        |                                       [Eric Smith](https://github.com/moviedatascience)                                        |
 | :-----------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------: |
 |                      [<img src="https://avatars1.githubusercontent.com/u/53590416?s=400&u=1ddb3c7742a0c79a8d108b2aeff7680e32faa29e&v=4" width = "200" />](https://github.com/cmgospod)                       |                      [<img src="https://avatars0.githubusercontent.com/u/44428182?s=460&v=4" width = "200" />](https://github.com/gabe-flomo)                       |                      [<img src="https://avatars0.githubusercontent.com/u/18298291?s=460&v=4" width = "200" />](https://github.com/Jeffrowetull)                       |                      [<img src="https://avatars2.githubusercontent.com/u/6357375?s=460&v=4" width = "200" />](https://github.com/)                       |                      [<img src="https://avatars2.githubusercontent.com/u/7471385?s=460&v=4" width = "200" />](https://www.imdb.com/title/tt0047522/videoplayer/vi375194649)                       |
 |                 [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/cmgospod)                 |            [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/gabe-flomo)             |           [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/Jeffrowetull)            |          [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/coopwilliams)           |            [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/moviedatascience)             |
 | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/michael-gospodinoff-00908216a/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/jeff-rowe-36216a6b/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/cooper-williams-308b2a60/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/ericdavidsmith91/) |
 
+### Labs 21
+
+| [Niki Bhatt](https://github.com/nikibhatt) | [Riley Jones](https://github.com/rileythejones) |
+| :-: | :-:  |
+| [<img src="https://ca.slack-edge.com/T4JUEB3ME-UNLTW45P1-5a2e91fea50c-512" width = "200" />](https://github.com/nikibhatt) | [<img src="https://avatars2.githubusercontent.com/u/3674628?s=400&u=bc06cfab08dda9ee382e6bed28a25b57f4ccc5b9&v=4" width = "200" />](https://github.com/rileythejones) |
+| [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/nikibhatt) | [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/rileythejones) |
+| [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](http://www.linkedin.com/in/nikibhatt) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/rileyjones12/) |
+
+### Labs 23
+
+| [Doina Langille](https://github.com/doinalangille) | [Ben de Vera](https://github.com/bendevera) | [Erik Cowley](https://github.com/ekoly) | [Chase Goldfeld](https://github.com/aufeld) | [Benjamin Bishop](https://github.com/Benjamin1118) 
+| :-: | :-:  | :-: | :-: | :-: |
+| [<img src="https://avatars3.githubusercontent.com/u/57115234?s=460&u=b52b5978498b1461fa05d0d1e913aea4a9aafdb3&v=4" width = "200" />](https://github.com/doinalangille) | [<img src="https://avatars1.githubusercontent.com/u/6827916?s=460&u=8478269a71034ed77cf5bb126f084efcc21d80e8&v=4" width = "200" />](https://github.com/bendevera) | [ <img src="https://avatars0.githubusercontent.com/u/174233?s=400&u=68f3f2490a9dff56d4223e0f2ede2d4d8390c4c1&v=4" width = "200" />](https://github.com/ekoly) | [<img src="https://avatars0.githubusercontent.com/u/56325086?s=400&u=b246352a5f89814e5ebb27f3ebcfd2e8b13f7e9d&v=4" width = "200" />](https://github.com/aufeld) | [<img src="https://avatars3.githubusercontent.com/u/56941327?s=400&u=448b9fe46e7226557921cc69ef43472d35ffa4e1&v=4" width = "200" />](https://github.com/Benjamin1118)
+| [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/doinalangille) | [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/bendevera) | [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/ekoly) | [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/aufeld) | [<img src="https://github.com/favicon.ico" width="15"> ](https://github.com/Benjamin1118) |
+| [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/doina-jitoreanu/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/ben-de-vera-31418b15a/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/erik-cowley-89090120/) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/chase-goldfeld) | [ <img src="https://static.licdn.com/sc/h/al2o9zrvru7aqj8e1x2rzsrca" width="15"> ](https://www.linkedin.com/in/ben-bishop-244a50102/)
 
 ## Project Overview
 
@@ -21,12 +37,6 @@ We use Trello as a quick wireframe tracker through the first stages of developme
 This notion document serves as a solid resource if you want to learn more about our motivations for creating this product and the general development direction it is taking.
 
 ### Project Description
-
-The companies which have the resources to create an elegant Movie Recommendation Engine have a profit motive aligned with recommending high cost proprietary content rather than films their customers would genuinely enjoy.
-
-Existing web sites geared towards providing a recommendation rely entirely on basic rating models which are weighted heavily towards popular films and generally do a poor job identifying unique outliers.
-
-Groa combines the public data available on IMDb with tried-and-true recommendation techniques to provide a user-driven movie discovery experience. We use two similar language embedding models to achieve this.
 
 - We trained Word2Vec on positive user ratings histories to create a user-based collaborative filtering recommender. The algorithm embeds over 97,000 movie IDs into a 100-dimensional vector space according to their co-occurence in a user's positive ratings history. The ID for each movie is a key for its vector, which can be called from the model and compared with any other vector in that space for cosine-similarity. To provide recommendations given a new user's watch history, we simply find the vector average of the user's choice of "good movies" and find the top-n cosine-similar vectors from the model. We can improve the recommendations by subtracting a "bad movies" vector from the "good movies" vector before inferencing. Models trained in this way can be tested by treating a user's watchlist (unwatched movies saved for later) as a validation set.
 
@@ -62,10 +72,6 @@ The lightning-fast inferencing of the Word2Vec/Doc2vec algorithms allows us to i
 ### Predictions
 
 Based on the user's movie ratings and reviews, provide recommendations for movies to watch that they have never before considered watching. We can do this by vectorizing the user's Letterboxd or IMDb reviews and finding cosine-similar matches from 22GB worth of movie reviews. Results can be filtered to remove movies the user has already watched, so long as they provide their data exported from one of those sites.
-
-### Data Sources
-
-Our primary sources of data are the user reviews of IMDb.com and Letterboxd.com. This was collected from these websites with our own custom-built web scraper. In addition, we make use of [IMDb's data files](https://datasets.imdbws.com/) for summary information on films.
 
 
 ## Contributing
@@ -105,6 +111,6 @@ These contribution guidelines have been adapted from [this good-Contributing.md-
 
 ## Documentation
 
-See [Backend Documentation](_link to your backend readme here_) for details on the backend of our project.
+See [Backend Documentation](https://github.com/Lambda-School-Labs/Groa-be) for details on the backend of our project.
 
-See [Front End Documentation](_link to your front end readme here_) for details on the front end of our project.
+See [Front End Documentation](https://github.com/Lambda-School-Labs/Groa-fe) for details on the front end of our project.
