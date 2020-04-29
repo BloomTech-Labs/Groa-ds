@@ -16,4 +16,4 @@ COPY . .
 EXPOSE 5000
 
 # runs groa_ds_api
-CMD ["uvicorn", "--host", "0.0.0.0", "--port", "5000", "main:app"]
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "5000", "--log-level", "error", "main:app"]
