@@ -3,6 +3,8 @@ from groa_ds_api.utils import MovieUtility
 from groa_ds_api.models import RecInput, RecOutput, SimInput, SimOutput
 import os
 from pathlib import Path
+import redis 
+import pickle
 
 app = FastAPI(
     title="groa-ds-api",
@@ -14,6 +16,8 @@ parent_path = Path(__file__).resolve().parents[1]
 model_path = os.path.join(parent_path, 'w2v_limitingfactor_v2.model')
 
 predictor = MovieUtility(model_path)
+
+cache = redis.StrictRedis()
 
 
 def create_app():
@@ -68,7 +72,12 @@ def create_app():
         `Will reliably return as many recommendations as indicated
         in num_movies parameter.`
         """
+        result = cache.get(payload.movie_id)
+        if result is not None:
+            result = pickle.loads(result)
+            return result
         result = predictor.get_similar_movies(payload)
+        cache.set(payload.movie_id, pickle.dumps(result))
         return result
     
     @app.get("/service-providers/{movie_id}")
@@ -90,8 +99,12 @@ def create_app():
         - presentation_type (HD or SD)
         - monetization_type (buy, rent or flatrate)
         """
-        # could make a post and allow input of included_providers
-        # should add caching for this query
-        return predictor.get_service_providers(movie_id)
+        result = cache.get(movie_id)
+        if result is not None:
+            result = pickle.loads(result)
+            return result
+        result = predictor.get_service_providers(movie_id)
+        cache.set(movie_id, pickle.dumps(result))
+        return result
 
     return app
