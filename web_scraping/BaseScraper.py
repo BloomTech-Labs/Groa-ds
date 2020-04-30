@@ -11,9 +11,6 @@ import psycopg2 # 2.8.4
 from psycopg2.extras import execute_batch
 import requests # 2.22.0
 # python 3.7.5
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class BaseScraper:
     """
@@ -175,6 +172,7 @@ class BaseScraper:
                 str(i.username),
                 str(i.reviews),
                 str(i.titles),
+                "imdb"
             ))
 
         # remove hanging comma
@@ -190,9 +188,10 @@ class BaseScraper:
             helpful_denom,
             user_name,
             review_text,
-            review_title
+            review_title,
+            source
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
 
         # execute query
