@@ -17,7 +17,7 @@ model_path = os.path.join(parent_path, 'w2v_limitingfactor_v2.model')
 
 predictor = MovieUtility(model_path)
 
-cache = redis.StrictRedis()
+cache = redis.StrictRedis(host=os.getenv('REDIS_HOST'))
 
 
 def create_app():
