@@ -6,7 +6,6 @@ from datetime import timedelta, datetime
 import time
 
 from bs4 import BeautifulSoup # 4.8.2
-from decouple import config # 3.3
 import pandas as pd # 0.25.0
 import psycopg2 # 2.8.4
 from psycopg2.extras import execute_batch
@@ -26,6 +25,7 @@ class BaseScraper:
     """
 
     def __init__(self, start, end, max_iter):
+
         self.start = start
         self.end = end + 1
         self.current_ids = []
@@ -34,12 +34,12 @@ class BaseScraper:
         self.pickup = 0
         self.max_iter_count = max_iter
         self.scraper_instance = str(randint(2**31, 2**32))
-        self.database = config("DB_NAME")
-        self.user = config("DB_USER")
-        self.password = config("DB_PASSWORD")
-        self.host = config("HOST")
-        self.port = config("PORT")
-        self.filename = config("FILENAME")
+        self.database = os.getenv("DB_NAME")
+        self.user = os.getenv("DB_USER")
+        self.password = os.getenv("DB_PASSWORD")
+        self.host = os.getenv("HOST")
+        self.port = os.getenv("PORT")
+        self.filename = os.getenv("FILENAME")
 
     def connect_to_database(self):
         """
@@ -66,24 +66,39 @@ class BaseScraper:
         Uses a class variable set from environment variable
         FILENAME to look for a csv formatted after the tarball
         released by IMDB.com. Returns a list.
+
+        If the file is not found, grabs movie ids from the db.
         '''
-        df = pd.read_csv(self.filename, encoding='ascii', header=None)
+        if os.path.exists(self.filename):
+            df = pd.read_csv(self.filename, encoding='ascii', header=None)
 
-        # get all the rows from the second column and then select only
-        # the ones from the start and end positions
-        id_list = [row for row in df.iloc[:, 1]]
-        self.all_ids = id_list
+            # get all the rows from the second column and then select only
+            # the ones from the start and end positions
+            id_list = [row for row in df.iloc[:, 1]]
+            self.all_ids = id_list
 
-        id_list = id_list[self.start:self.end]
-        self.current_ids = id_list
+            id_list = id_list[self.start:self.end]
+            self.current_ids = id_list
 
-        # lets the class know the range of ID's its grabbing at a time
-        if self.start > self.end:
-            raise ValueError("The start position needs to be \
-less than the end position")
-        self.range = abs(self.end - self.start)
+            # lets the class know the range of ID's its grabbing at a time
+            if self.start > self.end:
+                raise ValueError("The start position needs to be \
+    less than the end position")
+            self.range = abs(self.end - self.start)
 
-        return id_list
+            return id_list
+        else:
+            curs, conn = self.connect_to_database()
+            query = """
+            SELECT movie_id FROM movies;
+            """
+            curs.execute(query)
+            movie_ids = curs.fetchall()
+            movie_ids = [row[0] for row in movie_ids]
+            id_list = movie_ids[self.start:self.end]
+
+            return id_list
+            
 
     def show(self, lst):
         '''
@@ -137,24 +152,31 @@ less than the end position")
         convert to SQL. Connects to the database, executes the query,
         and closes the cursor and connection.
         """
+        cursor_boi, connection = self.connect_to_database()
+        cursor_boi.execute("SELECT review_id FROM movie_reviews")
+        existing_review_ids = set([row[0] for row in cursor_boi.fetchall()])
         # convert rows into tuples
         row_insertions = []
         for i in list(df.itertuples(index=False)):
+            review_id = int(i.review_id.strip("rw"))
+            if review_id in existing_review_ids:
+                print(f"skipping id {review_id} because it already exists in the database")
+                continue
             row_insertions.append((
-                  int(i.review_id.strip("rw")),
-                  i.movie_id,
-                  i.date,
-                  float(i.rating)/2,
-                  i.helpful_num,
-                  i.helpful_denom,
-                  str(i.username),
-                  str(i.reviews),
-                  str(i.titles),
+                review_id,
+                i.movie_id,
+                i.date,
+                float(i.rating)/2,
+                i.helpful_num,
+                i.helpful_denom,
+                str(i.username),
+                str(i.reviews),
+                str(i.titles),
+                "imdb"
             ))
 
         # remove hanging comma
-        row_insertions = row_insertions[:-2]
-        cursor_boi, connection = self.connect_to_database()
+        #row_insertions = row_insertions[:-2]
         # create SQL INSERT query
         query = """
         INSERT INTO movie_reviews (
@@ -166,9 +188,10 @@ less than the end position")
             helpful_denom,
             user_name,
             review_text,
-            review_title
+            review_title,
+            source
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
 
         # execute query
@@ -209,8 +232,17 @@ less than the end position")
         from that file back into the class variable self.ids.
         '''
 
-        path = self.load_path if path is None else path
+        try:
+            path = self.load_path if path is None else path
 
-        df = pd.read_csv(path, header=None)
-        self.ids = df.values.tolist()
-        return self.ids
+            df = pd.read_csv(path, header=None)
+            self.ids = df.values.tolist()
+            return self.ids
+        except:
+            curs, conn = self.connect_to_database()
+            query = """
+            SELECT movie_id FROM movies;
+            """
+            curs.execute(query)
+            self.ids = curs.fetchall()
+            return self.ids
