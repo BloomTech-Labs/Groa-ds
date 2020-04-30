@@ -1,8 +1,10 @@
-from fastapi import FastAPI
-from groa_ds_api.utils import Recommender
+from fastapi import FastAPI, BackgroundTasks
+from groa_ds_api.utils import MovieUtility
 from groa_ds_api.models import RecInput, RecOutput, SimInput, SimOutput
 import os
 from pathlib import Path
+import redis 
+import pickle
 
 app = FastAPI(
     title="groa-ds-api",
@@ -11,9 +13,11 @@ app = FastAPI(
 )
 
 parent_path = Path(__file__).resolve().parents[1]
-model_path = os.path.join(parent_path, 'w2v_limitingfactor_v2.model')
+model_path = os.path.join(parent_path, 'w2v_limitingfactor_v3.51.model')
 
-predictor = Recommender(model_path)
+predictor = MovieUtility(model_path)
+
+cache = redis.StrictRedis(host=os.getenv('REDIS_HOST'))
 
 
 def create_app():
@@ -27,7 +31,7 @@ def create_app():
         return welcome_message
 
     @app.post("/recommendations", response_model=RecOutput)
-    async def get_recommendations(payload: RecInput):
+    async def get_recommendations(payload: RecInput, background_tasks: BackgroundTasks):
         """
         Given a `user_id`, the user's ratings are used to create a user's 'taste'
         vector. We then get the most similar movies to that vector using cosine similarity.
@@ -47,7 +51,7 @@ def create_app():
         `Will not always return as many recommendations as 
         num_recs due to the algorithms filtering process.`
         """
-        result = predictor.get_recommendations(payload)
+        result = predictor.get_recommendations(payload, background_tasks)
         return result
     
     @app.post("/similar-movies", response_model=SimOutput)
@@ -68,18 +72,39 @@ def create_app():
         `Will reliably return as many recommendations as indicated
         in num_movies parameter.`
         """
+        result = cache.get(payload.movie_id)
+        if result is not None:
+            result = pickle.loads(result)
+            return result
         result = predictor.get_similar_movies(payload)
+        cache.set(payload.movie_id, pickle.dumps(result))
         return result
+    
+    @app.get("/service-providers/{movie_id}")
+    async def service_providers(movie_id: str):
+        """
+        Given a `movie_id`, we provide the service providers and the links 
+        to the movie of that service provider for quick access to the film.
 
-    @app.get("/stats/decades/{user_id}")
-    async def get_stats_by_decade(user_id):
-        # df = predictor.get_user_data(user_id)
-        # df["decade"] = df["year"].apply(lambda x: x//10*10)
-        # first_decade = df["decade"].min()
-        # last_decade = df["decade"].max()
-        # dec_to_count = {dec: 0 for dec in range(first_decade, last_decade+1, 10)}
-        # for dec in df["decade"].values:
-        #     dec_to_count[dec] += 1
-        return "New class needs to be built for user_data"
+        Parameters:
+        - **movie_id:** str
+
+        Returns:
+        - **data:** List[Provider]
+
+        Provider Object:
+        - provider_id
+        - name
+        - link
+        - presentation_type (HD or SD)
+        - monetization_type (buy, rent or flatrate)
+        """
+        result = cache.get(movie_id)
+        if result is not None:
+            result = pickle.loads(result)
+            return result
+        result = predictor.get_service_providers(movie_id)
+        cache.set(movie_id, pickle.dumps(result))
+        return result
 
     return app
