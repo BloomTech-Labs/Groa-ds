@@ -11,6 +11,9 @@ import psycopg2 # 2.8.4
 from psycopg2.extras import execute_batch
 import requests # 2.22.0
 # python 3.7.5
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class BaseScraper:
     """
@@ -25,6 +28,7 @@ class BaseScraper:
     """
 
     def __init__(self, start, end, max_iter):
+
         self.start = start
         self.end = end + 1
         self.current_ids = []
@@ -151,24 +155,30 @@ class BaseScraper:
         convert to SQL. Connects to the database, executes the query,
         and closes the cursor and connection.
         """
+        cursor_boi, connection = self.connect_to_database()
+        cursor_boi.execute("SELECT review_id FROM movie_reviews")
+        existing_review_ids = set([row[0] for row in cursor_boi.fetchall()])
         # convert rows into tuples
         row_insertions = []
         for i in list(df.itertuples(index=False)):
+            review_id = int(i.review_id.strip("rw"))
+            if review_id in existing_review_ids:
+                print(f"skipping id {review_id} because it already exists in the database")
+                continue
             row_insertions.append((
-                  int(i.review_id.strip("rw")),
-                  i.movie_id,
-                  i.date,
-                  float(i.rating)/2,
-                  i.helpful_num,
-                  i.helpful_denom,
-                  str(i.username),
-                  str(i.reviews),
-                  str(i.titles),
+                review_id,
+                i.movie_id,
+                i.date,
+                float(i.rating)/2,
+                i.helpful_num,
+                i.helpful_denom,
+                str(i.username),
+                str(i.reviews),
+                str(i.titles),
             ))
 
         # remove hanging comma
-        row_insertions = row_insertions[:-2]
-        cursor_boi, connection = self.connect_to_database()
+        #row_insertions = row_insertions[:-2]
         # create SQL INSERT query
         query = """
         INSERT INTO movie_reviews (

@@ -6,6 +6,7 @@ import re
 import requests
 import pandas as pd
 from psycopg2.extras import execute_batch
+import traceback
 
 
 from BaseScraper import BaseScraper
@@ -36,11 +37,13 @@ class LetterboxScraper(BaseScraper):
         page_count = 0
 
         query = """
-        SELECT movie_id FROM movies
+        SELECT movie_id, primary_title FROM movies
         """
         curs, conn = self.connect_to_database()
         curs.execute(query)
-        movie_ids = set([row[0] for row in curs.fetchall()])
+        fetched = curs.fetchall()
+        movie_ids = set([row[0] for row in fetched])
+        movie_titles = {row[0]: row[1] for row in fetched}
 
         for count, id in enumerate(id for id in id_list if id in movie_ids):
             print("----------------------------------------")
@@ -59,10 +62,10 @@ class LetterboxScraper(BaseScraper):
                     soup = BeautifulSoup(initial_response.text, 'html.parser')
                     title = soup.find(class_="headline-1 js-widont prettify").get_text()
                     title = title.replace(" ", "-").lower()
+                    print("Found: ", title, movie_titles[id])
 
                 except Exception as e:
-                    print(f"Unable to find a title for this movie at index: \
-{self.all_ids.index(id)}")
+                    print(f"Unable to find a title for this movie at index: {id}")
                     print("This is normal and expected behavior")
                     raise Exception(e)
                 url_reviews = initial_response.url + 'reviews/by/activity/'
@@ -177,7 +180,10 @@ code {response.status_code}!")
 
             except Exception as e:
                 broken.append(id)
-                print(sys.exc_info()[1])
+                print("Broken!", id)
+                err1, err2, tb = sys.exc_info()
+                print(err1, err2)
+                print(traceback.print_tb(tb))
                 continue
 
         try:
@@ -236,13 +242,14 @@ code {response.status_code}!")
                     float(i.user_rating),
                     str(i.username),
                     str(i.review_text),
+                    "letterboxd",
             ))
         row_insertions = row_insertions[:-2]
         cursor_boi, connection = self.connect_to_database()
         # create SQL INSERT query
         query = """
-        INSERT INTO movie_reviews(movie_id, review_date, user_rating, user_name, review_text)
-        VALUES (%s, %s, %s, %s, %s);
+        INSERT INTO movie_reviews(movie_id, review_date, user_rating, user_name, review_text, source)
+        VALUES (%s, %s, %s, %s, %s, %s);
         """
         # execute query
         execute_batch(
