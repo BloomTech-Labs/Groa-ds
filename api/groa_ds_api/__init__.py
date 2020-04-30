@@ -13,7 +13,7 @@ app = FastAPI(
 )
 
 parent_path = Path(__file__).resolve().parents[1]
-model_path = os.path.join(parent_path, 'w2v_limitingfactor_v2.model')
+model_path = os.path.join(parent_path, 'w2v_limitingfactor_v3.51.model')
 
 predictor = MovieUtility(model_path)
 
