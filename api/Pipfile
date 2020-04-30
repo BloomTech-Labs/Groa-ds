@@ -16,6 +16,7 @@ python-dotenv = "*"
 fastapi = "*"
 uvicorn = "*"
 pydantic = "*"
+redis = "*"
 
 [requires]
 python_version = "3.7"
