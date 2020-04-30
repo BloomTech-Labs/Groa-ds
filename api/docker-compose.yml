@@ -1,0 +1,29 @@
+version: '3'
+services:
+  web:
+    build: .
+    command: uvicorn --host 0.0.0.0 --port 5000 --log-level error main:app
+    volumes:
+      - groa_data:/data
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    networks:
+      - groa-net
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - groa_data:/data
+    command: ["redis-server", "--bind", "0.0.0.0", "--port", "6379"]
+    networks:
+      - groa-net
+
+networks:
+    groa-net:
+
+volumes:
+    groa_data:
+        driver: local
