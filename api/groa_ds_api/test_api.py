@@ -15,11 +15,6 @@ def test_wrong_method():
     assert response.status_code == 405
 
 
-def test_decades():
-    response = client.get("/stats/decades/1")
-    assert response.status_code == 200
-
-
 def test_recommendations():
     payload = {
         "user_id": 11,
@@ -29,4 +24,9 @@ def test_recommendations():
         "harshness": 1
     }
     response = client.post("/recommendations", json=payload)
+    assert response.status_code == 200
+
+
+def test_service_providers():
+    response = client.get("/service-providers/0111161")
     assert response.status_code == 200

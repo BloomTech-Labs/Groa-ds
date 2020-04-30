@@ -4,20 +4,18 @@
 
 Recommender system for the Groa project. 
 
-## local setup (with `pipenv`)
+## local setup (with docker-compose)
 
 - navigate to `api/` directory
-- run `pipenv install` to create `Pipefile.lock`
-- run app using: `pipenv run python main.py`
-- run tests using: `pipenv run pytest`
+- run `docker-compose build`
+- run `docker-compose up`
+- API will be running on `http://localhost:5000`
 
-## local setup (with docker)
+## enviroment variables needed
 
-- navigate to `api/` directory
-- run `docker build -t groadsapi .`
-- run `docker run --env-file ./.env -p 5000:5000 --name groacontainer groadsapi`
-
-## navigate to local docs (includes route information)
-
-- run appy using `pipenv run python main.py` 
-- navigate to `http://0.0.0.0:5000/docs` in browser
+- DB_USER
+- DB_PASSWORD
+- HOST
+- PORT
+- DB_NAME
+- REDIS_HOST

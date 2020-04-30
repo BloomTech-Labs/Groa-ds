@@ -4,6 +4,8 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pytest = "*"
+requests = "*"
 
 [packages]
 pandas = "*"
@@ -11,13 +13,11 @@ numpy = "*"
 psycopg2-binary = "*"
 gensim = "*"
 python-dotenv = "*"
-requests = "*"
 fastapi = "*"
 uvicorn = "*"
 pydantic = "*"
-pytest = "*"
-bs4 = "*"
-decouple = "*"
+redis = "*"
 
 [requires]
 python_version = "3.7"
+
