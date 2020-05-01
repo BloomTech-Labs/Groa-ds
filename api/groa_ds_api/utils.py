@@ -101,6 +101,8 @@ class MovieUtility(object):
         return prov_json
     
     def _get_list_JSON(self, list_sql):
+        """ Turn movie list SQL into JSON and create
+        recs from movie list aggregate vector """
         list_json = {
             "data": [],
             "recs": []
@@ -127,6 +129,7 @@ class MovieUtility(object):
         return list_json
     
     def _get_list_preview(self, data):
+        """ Turns list preview sql into an object """
         return {
             "list_id": data[0], 
             "name": data[1],
@@ -257,6 +260,7 @@ class MovieUtility(object):
 
     # ------- Start Public Methods -------
     def create_movie_list(self, payload):
+        """ Creates a MovieList """
         query = """INSERT INTO movie_lists
         (user_id, name, private) VALUES (%s, %s, %s) RETURNING list_id;"""
         try:
@@ -275,6 +279,7 @@ class MovieUtility(object):
         }
     
     def get_movie_list(self, list_id):
+        """ Gets all movies in MovieList and the associated recs """
         query = """SELECT l.movie_id, m.primary_title, m.start_year, m.genres, m.poster_url 
         FROM list_movies AS l LEFT JOIN movies AS m ON l.movie_id = m.movie_id
         WHERE l.list_id = %s;"""
@@ -289,6 +294,7 @@ class MovieUtility(object):
         return self._get_list_JSON(list_data)
     
     def get_user_lists(self, user_id):
+        """ Get user's MovieLists """
         query = "SELECT list_id, name, private FROM movie_lists WHERE user_id = %s;"
         try:
             self.cursor_dog = self._get_cursor()
@@ -302,6 +308,7 @@ class MovieUtility(object):
         return user_lists_json
     
     def get_all_lists(self):
+        """ Get all MovieLists """
         query = "SELECT list_id, name, private FROM movie_lists WHERE private=FALSE;"
         try:
             self.cursor_dog = self._get_cursor()
@@ -315,6 +322,7 @@ class MovieUtility(object):
         return lists_json
     
     def add_to_movie_list(self, list_id, movie_id):
+        """ Add movie to a MovieList """
         query = """INSERT INTO list_movies
         (list_id, movie_id) VALUES (%s, %s);"""
         try:
@@ -328,6 +336,7 @@ class MovieUtility(object):
         return "Success"
     
     def remove_from_movie_list(self, list_id, movie_id):
+        """ Remove movie from a MovieList """
         query = "DELETE FROM list_movies WHERE list_id = %s AND movie_id = %s;"
         try:
             self.cursor_dog = self._get_cursor()
@@ -341,6 +350,7 @@ class MovieUtility(object):
     
 
     def delete_movie_list(self, list_id):
+        """ Delete a MovieList """
         query = "DELETE FROM movie_lists WHERE list_id = %s;"
         try:
             self.cursor_dog = self._get_cursor()
