@@ -1,6 +1,6 @@
 from fastapi import FastAPI, BackgroundTasks
 from groa_ds_api.utils import MovieUtility
-from groa_ds_api.models import RecInput, RecOutput, SimInput, SimOutput
+from groa_ds_api.models import *
 import os
 from pathlib import Path
 import redis 
@@ -106,5 +106,112 @@ def create_app():
         result = predictor.get_service_providers(movie_id)
         cache.set(movie_id, pickle.dumps(result))
         return result
+    
+    """ Start of Movie List routes """
+    @app.post("/movie-list")
+    async def create_movie_list(payload: ListInput):
+        """
+        Given a `user_id` and `name`, we create a movie_list and return the 
+        `list_id`.
+
+        Parameters:
+        - **user_id:** int
+        - **name:** str
+
+        Returns:
+        - **list_id:** int
+        """
+        list_id = predictor.create_movie_list(payload)
+        # return the MovieList and make class for this and next two routes
+        return list_id
+    
+    @app.get("/movie-list/all")
+    async def get_all_lists():
+        lists = predictor.get_all_lists()
+        return lists
+    
+    @app.get("/movie-list/all/{user_id}")
+    async def get_user_lists(user_id: int):
+        """
+        Given a `user_id`, we grab a preview of all movie lists 
+        the user has made.
+
+        Parameters:
+        - **user_id:** int
+
+        Returns:
+        - List[ListPreview]
+
+        ListPreview Object:
+        - list_id: int
+        - name: str
+        """
+        user_lists = predictor.get_user_lists(user_id)
+        return user_lists
+    
+    @app.get("/movie-list/{list_id}")
+    async def get_movie_list(list_id: int):
+        """
+        Given a `list_id`, we grab that list and send back
+        the list data.
+
+        Parameters:
+        - **list_id:** int
+
+        Returns:
+        - list_id: int
+        - name: str
+        - movie_list: List[Movie]
+        - recs: List[Movie]
+        """
+        movie_list = predictor.get_movie_list(list_id)
+        return movie_list
+    
+    @app.put("/movie-list/{list_id}/add/{movie_id}")
+    async def add_to_movie_list(list_id: int, movie_id: str):
+        """
+        Given a `list_id` and `movie_id`, we add that movie to the 
+        list of the list_id provided.
+
+        Parameters:
+        - **list_id:** int
+        - **movie_id:** str
+
+        Returns:
+        - result: str
+        """
+        result = predictor.add_to_movie_list(list_id, movie_id)
+        return result
+    
+    @app.put("/movie-list/{list_id}/remove/{movie_id}")
+    async def remove_from_list(list_id: int, movie_id: str):
+        """
+        Given a `list_id` and `movie_id`, we remove the movie from the 
+        list of the list_id provided.
+
+        Parameters:
+        - **list_id:** int
+        - **movie_id:** str
+
+        Returns:
+        - result: str
+        """
+        result = predictor.remove_from_movie_list(list_id, movie_id)
+        return result
+    
+    @app.delete("/movie-list/{list_id}")
+    async def delete_list(list_id: int):
+        """
+        Given a `list_id`, we delete that list.
+
+        Parameters:
+        - **list_id:** int
+
+        Returns:
+        - result: str
+        """
+        result = predictor.delete_movie_list(list_id)
+        return result
+    """ End of Movie List routes """
 
     return app

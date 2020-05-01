@@ -99,6 +99,38 @@ class MovieUtility(object):
                 "monetization_type": provider[5]
             })
         return prov_json
+    
+    def _get_list_JSON(self, list_sql):
+        list_json = {
+            "data": [],
+            "recs": []
+        }
+        movie_ids = []
+        for movie in list_sql:
+            movie_ids.append(movie[0])
+            list_json["data"].append({
+                "movie_id": movie[0],
+                "title": movie[1],
+                "year": movie[2],
+                "genres": movie[3].split(","),
+                "poster_url": movie[4]
+            })
+        w2v_preds = self._predict(movie_ids)
+        df_w2v = pd.DataFrame(w2v_preds, columns=['movie_id', 'score'])
+
+        # get movie info using movie_id
+        rec_data = self._get_info(df_w2v)
+        rec_data = rec_data.fillna("None")
+        rec_json = self._get_JSON(rec_data)
+        list_json["recs"] = rec_json
+        return list_json
+    
+    def _get_list_preview(self, data):
+        return {
+            "list_id": data[0], 
+            "name": data[1],
+            "private": data[2]
+        }
 
     def _predict(self, input, bad_movies=[], hist_list=[], val_list=[],
                 ratings_dict = {}, checked_list=[], rejected_list=[],
@@ -223,6 +255,99 @@ class MovieUtility(object):
     # ------- End Helper Methods -------
 
     # ------- Start Public Methods -------
+    def create_movie_list(self, payload):
+        query = """INSERT INTO movie_lists
+        (user_id, name, private) VALUES (%s, %s, %s) RETURNING list_id;"""
+        try:
+            self.cursor_dog = self._get_cursor()
+        except Exception as e:
+            print("Connection problem chief!\n")
+            print(e)
+        self.cursor_dog.execute(query, (payload.user_id, payload.name, False))
+        list_id = self.cursor_dog.fetchone()[0]
+        self.connection.commit()
+        self.cursor_dog.close()
+        return list_id 
+    
+    def get_movie_list(self, list_id):
+        query = """SELECT l.movie_id, m.primary_title, m.start_year, m.genres, m.poster_url 
+        FROM list_movies AS l LEFT JOIN movies AS m ON l.movie_id = m.movie_id
+        WHERE l.list_id = %s;"""
+        try:
+            self.cursor_dog = self._get_cursor()
+        except Exception as e:
+            print("Connection problem chief!\n")
+            print(e)
+        self.cursor_dog.execute(query, (list_id,))
+        list_data = self.cursor_dog.fetchall()
+        self.cursor_dog.close()
+        return self._get_list_JSON(list_data)
+    
+    def get_user_lists(self, user_id):
+        query = "SELECT list_id, name, private FROM movie_lists WHERE user_id = %s;"
+        try:
+            self.cursor_dog = self._get_cursor()
+        except Exception as e:
+            print("Connection problem chief!\n")
+            print(e)
+        self.cursor_dog.execute(query, (user_id,))
+        user_lists = self.cursor_dog.fetchall()
+        self.cursor_dog.close()
+
+        user_lists_json = [self._get_list_preview(elem) for elem in user_lists]
+        return user_lists_json
+    
+    def get_all_lists(self):
+        query = "SELECT list_id, name, private FROM movie_lists WHERE private=FALSE;"
+        try:
+            self.cursor_dog = self._get_cursor()
+        except Exception as e:
+            print("Connection problem chief!\n")
+            print(e)
+        self.cursor_dog.execute(query)
+        lists = self.cursor_dog.fetchall()
+        self.cursor_dog.close()
+        lists_json = [self._get_list_preview(elem) for elem in lists]
+        return lists_json
+    
+    def add_to_movie_list(self, list_id, movie_id):
+        query = """INSERT INTO list_movies
+        (list_id, movie_id) VALUES (%s, %s);"""
+        try:
+            self.cursor_dog = self._get_cursor()
+        except Exception as e:
+            print("Connection problem chief!\n")
+            print(e)
+        self.cursor_dog.execute(query, (list_id, movie_id))
+        self.connection.commit()
+        self.cursor_dog.close()
+        return "Success"
+    
+    def remove_from_movie_list(self, list_id, movie_id):
+        query = "DELETE FROM list_movies WHERE list_id = %s AND movie_id = %s;"
+        try:
+            self.cursor_dog = self._get_cursor()
+        except Exception as e:
+            print("Connection problem chief!\n")
+            print(e)
+        self.cursor_dog.execute(query, (list_id, movie_id))
+        self.connection.commit()
+        self.cursor_dog.close()
+        return "Success"
+    
+
+    def delete_movie_list(self, list_id):
+        query = "DELETE FROM movie_lists WHERE list_id = %s;"
+        try:
+            self.cursor_dog = self._get_cursor()
+        except Exception as e:
+            print("Connection problem chief!\n")
+            print(e)
+        self.cursor_dog.execute(query, (list_id,))
+        self.connection.commit()
+        self.cursor_dog.close()
+        return "Success"
+
     def get_most_similar_title(self, id, id_list):
         """ Get the title of the most similar movie to id from id_list """
         clf = self.model
