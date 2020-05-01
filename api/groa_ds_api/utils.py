@@ -105,24 +105,25 @@ class MovieUtility(object):
             "data": [],
             "recs": []
         }
-        movie_ids = []
-        for movie in list_sql:
-            movie_ids.append(movie[0])
-            list_json["data"].append({
-                "movie_id": movie[0],
-                "title": movie[1],
-                "year": movie[2],
-                "genres": movie[3].split(","),
-                "poster_url": movie[4]
-            })
-        w2v_preds = self._predict(movie_ids)
-        df_w2v = pd.DataFrame(w2v_preds, columns=['movie_id', 'score'])
+        if len(list_sql) > 0:
+            movie_ids = []
+            for movie in list_sql:
+                movie_ids.append(movie[0])
+                list_json["data"].append({
+                    "movie_id": movie[0],
+                    "title": movie[1],
+                    "year": movie[2],
+                    "genres": movie[3].split(","),
+                    "poster_url": movie[4]
+                })
+            w2v_preds = self._predict(movie_ids)
+            df_w2v = pd.DataFrame(w2v_preds, columns=['movie_id', 'score'])
 
-        # get movie info using movie_id
-        rec_data = self._get_info(df_w2v)
-        rec_data = rec_data.fillna("None")
-        rec_json = self._get_JSON(rec_data)
-        list_json["recs"] = rec_json
+            # get movie info using movie_id
+            rec_data = self._get_info(df_w2v)
+            rec_data = rec_data.fillna("None")
+            rec_json = self._get_JSON(rec_data)
+            list_json["recs"] = rec_json
         return list_json
     
     def _get_list_preview(self, data):
@@ -263,11 +264,15 @@ class MovieUtility(object):
         except Exception as e:
             print("Connection problem chief!\n")
             print(e)
-        self.cursor_dog.execute(query, (payload.user_id, payload.name, False))
+        self.cursor_dog.execute(query, (payload.user_id, payload.name, payload.private))
         list_id = self.cursor_dog.fetchone()[0]
         self.connection.commit()
         self.cursor_dog.close()
-        return list_id 
+        return {
+            "list_id": list_id,
+            "name": payload.name,
+            "private": payload.private 
+        }
     
     def get_movie_list(self, list_id):
         query = """SELECT l.movie_id, m.primary_title, m.start_year, m.genres, m.poster_url 
@@ -293,7 +298,6 @@ class MovieUtility(object):
         self.cursor_dog.execute(query, (user_id,))
         user_lists = self.cursor_dog.fetchall()
         self.cursor_dog.close()
-
         user_lists_json = [self._get_list_preview(elem) for elem in user_lists]
         return user_lists_json
     

@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import redis 
 import pickle
+from typing import List
 
 app = FastAPI(
     title="groa-ds-api",
@@ -108,8 +109,8 @@ def create_app():
         return result
     
     """ Start of Movie List routes """
-    @app.post("/movie-list")
-    async def create_movie_list(payload: ListInput):
+    @app.post("/movie-list", response_model=MovieList)
+    async def create_movie_list(payload: CreateListInput):
         """
         Given a `user_id` and `name`, we create a movie_list and return the 
         `list_id`.
@@ -125,12 +126,12 @@ def create_app():
         # return the MovieList and make class for this and next two routes
         return list_id
     
-    @app.get("/movie-list/all")
+    @app.get("/movie-list/all", response_model=List[MovieList])
     async def get_all_lists():
         lists = predictor.get_all_lists()
         return lists
     
-    @app.get("/movie-list/all/{user_id}")
+    @app.get("/movie-list/all/{user_id}", response_model=List[MovieList])
     async def get_user_lists(user_id: int):
         """
         Given a `user_id`, we grab a preview of all movie lists 
@@ -149,7 +150,7 @@ def create_app():
         user_lists = predictor.get_user_lists(user_id)
         return user_lists
     
-    @app.get("/movie-list/{list_id}")
+    @app.get("/movie-list/{list_id}", response_model=GetListOutput)
     async def get_movie_list(list_id: int):
         """
         Given a `list_id`, we grab that list and send back
@@ -167,7 +168,7 @@ def create_app():
         movie_list = predictor.get_movie_list(list_id)
         return movie_list
     
-    @app.put("/movie-list/{list_id}/add/{movie_id}")
+    @app.put("/movie-list/{list_id}/add/{movie_id}", response_model=str)
     async def add_to_movie_list(list_id: int, movie_id: str):
         """
         Given a `list_id` and `movie_id`, we add that movie to the 
@@ -183,7 +184,7 @@ def create_app():
         result = predictor.add_to_movie_list(list_id, movie_id)
         return result
     
-    @app.put("/movie-list/{list_id}/remove/{movie_id}")
+    @app.put("/movie-list/{list_id}/remove/{movie_id}", response_model=str)
     async def remove_from_list(list_id: int, movie_id: str):
         """
         Given a `list_id` and `movie_id`, we remove the movie from the 
@@ -199,7 +200,7 @@ def create_app():
         result = predictor.remove_from_movie_list(list_id, movie_id)
         return result
     
-    @app.delete("/movie-list/{list_id}")
+    @app.delete("/movie-list/{list_id}", response_model=str)
     async def delete_list(list_id: int):
         """
         Given a `list_id`, we delete that list.

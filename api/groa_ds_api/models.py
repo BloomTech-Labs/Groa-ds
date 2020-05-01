@@ -23,6 +23,12 @@ class Movie(BaseModel):
     poster_url: str
 
 
+class MovieList(BaseModel):
+    list_id: int 
+    name: str 
+    private: bool 
+
+
 class RecInput(BaseModel):
     user_id: int
     num_recs: int = 10
@@ -44,10 +50,12 @@ class SimOutput(BaseModel):
     data: List[MovieRec]
 
 
-class ListInput(BaseModel):
+class CreateListInput(BaseModel):
     user_id: int 
     name: str 
+    private: bool
 
 
 class GetListOutput(BaseModel):
     data: List[Movie]
+    recs: List[MovieRec]
