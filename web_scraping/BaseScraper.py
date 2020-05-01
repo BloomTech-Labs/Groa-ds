@@ -24,12 +24,12 @@ class BaseScraper:
     and FILENAME.
     """
 
-    def __init__(self, start, end, max_iter):
+    def __init__(self, start, end, max_iter, ids=[]):
 
         self.start = start
         self.end = end + 1
         self.current_ids = []
-        self.all_ids = []
+        self.all_ids = ids
         self.range = 0
         self.pickup = 0
         self.max_iter_count = max_iter
