@@ -29,6 +29,15 @@ class MovieList(BaseModel):
     private: bool 
 
 
+class Provider(BaseModel):
+    provider_id: int 
+    name: str 
+    logo: str 
+    link: str 
+    presentation_type: str 
+    monetization_type: str 
+
+
 class RecInput(BaseModel):
     user_id: int
     num_recs: int = 10
@@ -48,6 +57,10 @@ class SimInput(BaseModel):
 
 class SimOutput(BaseModel):
     data: List[MovieRec]
+
+
+class ProviderOutput(BaseModel):
+    data: List[Provider]
 
 
 class CreateListInput(BaseModel):

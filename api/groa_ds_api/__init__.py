@@ -7,6 +7,14 @@ import redis
 import pickle
 from typing import List
 
+"""
+Caching todo:
+- add prefix to key for each route so that provider data doesn't get 
+pulled for most similar titles 
+- add caching to list routes (especially all lists, but need to uncache when a non-private 
+list is made or a movie is added to a non-private list)
+"""
+
 app = FastAPI(
     title="groa-ds-api",
     description="Movie recommendations based on user ratings and preferences using a trained w2v model",
@@ -23,7 +31,7 @@ cache = redis.StrictRedis(host=os.getenv('REDIS_HOST'))
 
 def create_app():
     
-    @app.get("/")
+    @app.get("/", response_model=str)
     async def index():
         """
         Simple 'hello' from our API.
@@ -73,15 +81,15 @@ def create_app():
         `Will reliably return as many recommendations as indicated
         in num_movies parameter.`
         """
-        result = cache.get(payload.movie_id)
+        result = cache.get("sim"+payload.movie_id)
         if result is not None:
             result = pickle.loads(result)
             return result
         result = predictor.get_similar_movies(payload)
-        cache.set(payload.movie_id, pickle.dumps(result))
+        cache.set("sim"+payload.movie_id, pickle.dumps(result))
         return result
     
-    @app.get("/service-providers/{movie_id}")
+    @app.get("/service-providers/{movie_id}", response_model=ProviderOutput)
     async def service_providers(movie_id: str):
         """
         Given a `movie_id`, we provide the service providers and the links 
@@ -100,12 +108,12 @@ def create_app():
         - presentation_type (HD or SD)
         - monetization_type (buy, rent or flatrate)
         """
-        result = cache.get(movie_id)
+        result = cache.get("prov"+movie_id)
         if result is not None:
             result = pickle.loads(result)
             return result
         result = predictor.get_service_providers(movie_id)
-        cache.set(movie_id, pickle.dumps(result))
+        cache.set("prov"+movie_id, pickle.dumps(result))
         return result
     
     """ Start of Movie List routes """
@@ -123,13 +131,21 @@ def create_app():
         - **list_id:** int
         """
         list_id = predictor.create_movie_list(payload)
-        # return the MovieList and make class for this and next two routes
+        # do before?
+        cache.delete("lists"+str(payload.user_id))
+        if not payload.private:
+            cache.delete("alllists")
         return list_id
     
     @app.get("/movie-list/all", response_model=List[MovieList])
     async def get_all_lists():
-        lists = predictor.get_all_lists()
-        return lists
+        result = cache.get("alllists")
+        if result is not None:
+            result = pickle.loads(result)
+            return result
+        result = predictor.get_all_lists()
+        cache.set("alllists", pickle.dumps(result))
+        return result
     
     @app.get("/movie-list/all/{user_id}", response_model=List[MovieList])
     async def get_user_lists(user_id: int):
@@ -147,8 +163,13 @@ def create_app():
         - list_id: int
         - name: str
         """
-        user_lists = predictor.get_user_lists(user_id)
-        return user_lists
+        result = cache.get("lists"+str(user_id))
+        if result is not None:
+            result = pickle.loads(result)
+            return result
+        result = predictor.get_user_lists(user_id)
+        cache.set("lists"+str(user_id), pickle.dumps(result))
+        return result
     
     @app.get("/movie-list/{list_id}", response_model=GetListOutput)
     async def get_movie_list(list_id: int):
@@ -165,8 +186,15 @@ def create_app():
         - movie_list: List[Movie]
         - recs: List[Movie]
         """
-        movie_list = predictor.get_movie_list(list_id)
-        return movie_list
+        # could cache and then remove from cache when movies
+        # are added or removed
+        result = cache.get("movielist"+str(list_id))
+        if result is not None:
+            result = pickle.loads(result)
+            return result
+        result = predictor.get_movie_list(list_id)
+        cache.set("movielist"+str(list_id), pickle.dumps(result))
+        return result
     
     @app.put("/movie-list/{list_id}/add/{movie_id}", response_model=str)
     async def add_to_movie_list(list_id: int, movie_id: str):
@@ -182,6 +210,7 @@ def create_app():
         - result: str
         """
         result = predictor.add_to_movie_list(list_id, movie_id)
+        cache.delete("movielist"+str(list_id))
         return result
     
     @app.put("/movie-list/{list_id}/remove/{movie_id}", response_model=str)
@@ -198,6 +227,7 @@ def create_app():
         - result: str
         """
         result = predictor.remove_from_movie_list(list_id, movie_id)
+        cache.delete("movielist"+str(list_id))
         return result
     
     @app.delete("/movie-list/{list_id}", response_model=str)
@@ -212,6 +242,10 @@ def create_app():
         - result: str
         """
         result = predictor.delete_movie_list(list_id)
+        cache.delete("movielist"+str(list_id))
+        # could delete alllists but only need to 
+        # if list is public
+        # cache.delete("alllists")
         return result
     """ End of Movie List routes """
 
