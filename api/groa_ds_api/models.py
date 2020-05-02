@@ -66,7 +66,7 @@ class ProviderOutput(BaseModel):
 class CreateListInput(BaseModel):
     user_id: int 
     name: str 
-    private: bool
+    private: bool = False
 
 
 class GetListOutput(BaseModel):

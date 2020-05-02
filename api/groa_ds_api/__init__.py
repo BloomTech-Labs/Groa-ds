@@ -7,13 +7,6 @@ import redis
 import pickle
 from typing import List
 
-"""
-Caching todo:
-- add prefix to key for each route so that provider data doesn't get 
-pulled for most similar titles 
-- add caching to list routes (especially all lists, but need to uncache when a non-private 
-list is made or a movie is added to a non-private list)
-"""
 
 app = FastAPI(
     title="groa-ds-api",
@@ -245,7 +238,7 @@ def create_app():
         cache.delete("movielist"+str(list_id))
         # could delete alllists but only need to 
         # if list is public
-        # cache.delete("alllists")
+        cache.delete("alllists")
         return result
     """ End of Movie List routes """
 
