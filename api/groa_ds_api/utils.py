@@ -42,13 +42,13 @@ class MovieUtility(object):
 
     def __get_id_book(self):
         """ Gets movie data from database to merge with recommendations """
-        self.cursor_dog = self.__get_cursor()
+        cursor_dog = self.__get_cursor()
         query = "SELECT movie_id, primary_title, start_year, genres, poster_url FROM movies;"
-        self.cursor_dog.execute(query)
-        movie_sql = self.cursor_dog.fetchall()
+        cursor_dog.execute(query)
+        movie_sql = cursor_dog.fetchall()
         id_book = pd.DataFrame(movie_sql, columns=[
                                'movie_id', 'title', 'year', 'genres', 'poster_url'])
-        self.cursor_dog.close()
+        cursor_dog.close()
         return id_book
 
     def __load_model(self):
@@ -233,19 +233,19 @@ class MovieUtility(object):
                     params: tuple = None,
                     commit: bool = False,
                     fetch: str = "one"):
-        self.cursor_dog = self.__get_cursor()
+        cursor_dog = self.__get_cursor()
         if params is None:
-            self.cursor_dog.execute(query)
+            cursor_dog.execute(query)
         else:
-            self.cursor_dog.execute(query, params)
+            cursor_dog.execute(query, params)
         result = None
         if fetch == "one":
-            result = self.cursor_dog.fetchone()[0]
+            result = cursor_dog.fetchone()[0]
         elif fetch == "all":
-            result = self.cursor_dog.fetchall()
+            result = cursor_dog.fetchall()
         if commit:
             self.connection.commit()
-        self.cursor_dog.close()
+        cursor_dog.close()
         return result
     # ------- End Private Methods -------
 
@@ -361,7 +361,7 @@ class MovieUtility(object):
 
     def get_service_providers(self, movie_id: str):
         """ Get the service providers of a given movie_id """
-        self.cursor_dog = self.__get_cursor()
+        cursor_dog = self.__get_cursor()
         query = """
         SELECT m.provider_id, p.name, p.logo_url, m.provider_movie_url, 
         m.presentation_type, m.monetization_type
@@ -369,8 +369,8 @@ class MovieUtility(object):
         LEFT JOIN providers AS p ON m .provider_id = p.provider_id
         WHERE m.movie_id = %s; 
         """
-        self.cursor_dog.execute(query, (movie_id,))
-        prov_sql = self.cursor_dog.fetchall()
+        cursor_dog.execute(query, (movie_id,))
+        prov_sql = cursor_dog.fetchall()
         prov_json = {
             "data": []
         }
@@ -383,6 +383,7 @@ class MovieUtility(object):
                 "presentation_type": provider[4],
                 "monetization_type": provider[5]
             })
+        cursor_dog.close()
         return prov_json
 
     def get_similar_movies(self, payload: SimInput):
@@ -411,32 +412,32 @@ class MovieUtility(object):
         harshness = payload.harshness
 
         # create cursor
-        self.cursor_dog = self.__get_cursor()
+        cursor_dog = self.__get_cursor()
 
         # Check if user has ratings data
         query = "SELECT date, movie_id, rating FROM user_ratings WHERE user_id=%s;"
-        self.cursor_dog.execute(query, (user_id,))
-        ratings_sql = self.cursor_dog.fetchall()
+        cursor_dog.execute(query, (user_id,))
+        ratings_sql = cursor_dog.fetchall()
         ratings = pd.DataFrame(ratings_sql, columns=[
                                'date', 'movie_id', 'rating'])
         if ratings.shape[0] == 0:
-            self.cursor_dog.close()
+            cursor_dog.close()
             return "User does not have ratings"
 
         # Get user watchlist, willnotwatchlist, watched
         query = "SELECT date, movie_id FROM user_watchlist WHERE user_id=%s;"
-        self.cursor_dog.execute(query, (user_id,))
-        watchlist_sql = self.cursor_dog.fetchall()
+        cursor_dog.execute(query, (user_id,))
+        watchlist_sql = cursor_dog.fetchall()
         watchlist = pd.DataFrame(watchlist_sql, columns=['date', 'movie_id'])
 
         query = "SELECT date, movie_id FROM user_watched WHERE user_id=%s;"
-        self.cursor_dog.execute(query, (user_id,))
-        watched_sql = self.cursor_dog.fetchall()
+        cursor_dog.execute(query, (user_id,))
+        watched_sql = cursor_dog.fetchall()
         watched = pd.DataFrame(watched_sql, columns=['date', 'movie_id'])
 
         query = "SELECT date, movie_id FROM user_willnotwatchlist WHERE user_id=%s;"
-        self.cursor_dog.execute(query, (user_id,))
-        willnotwatch_sql = self.cursor_dog.fetchall()
+        cursor_dog.execute(query, (user_id,))
+        willnotwatch_sql = cursor_dog.fetchall()
         willnotwatchlist_df = pd.DataFrame(
             willnotwatch_sql, columns=['date', 'movie_id'])
 
@@ -454,7 +455,7 @@ class MovieUtility(object):
         rec_data = self.__get_info(df_w2v)
         rec_data = rec_data.fillna("None")
 
-        def _commit_to_database(model_recs, user_id, num_recs, good, bad, harsh):
+        def _commit_to_database(model_recs, user_id, num_recs, good, bad, harsh, cursor_dog):
             """ Commit recommendations to the database """
             date = datetime.now()
             model_type = "ratings"
@@ -464,8 +465,8 @@ class MovieUtility(object):
             (user_id, date, model_type) 
             VALUES (%s, %s, %s) RETURNING recommendation_id;
             """
-            self.cursor_dog.execute(create_rec, (user_id, date, model_type))
-            rec_id = self.cursor_dog.fetchone()[0]
+            cursor_dog.execute(create_rec, (user_id, date, model_type))
+            rec_id = cursor_dog.fetchone()[0]
 
             create_movie_rec = """
             INSERT INTO recommendations_movies
@@ -474,19 +475,19 @@ class MovieUtility(object):
             """
 
             for num, movie in enumerate(model_recs):
-                self.cursor_dog.execute(
+                cursor_dog.execute(
                     create_movie_rec,
                     (rec_id, num+1, movie['movie_id'], num_recs, good, bad, harsh))
 
             self.connection.commit()
-            self.cursor_dog.close()
+            cursor_dog.close()
 
         rec_json = self.__get_JSON(rec_data)
 
         # add background task to commit recs to DB
         background_tasker.add_task(
             _commit_to_database,
-            rec_json, user_id, n, good_threshold, bad_threshold, harshness)
+            rec_json, user_id, n, good_threshold, bad_threshold, harshness, cursor_dog)
 
         return {
             "data": rec_json
