@@ -6,36 +6,37 @@ FastAPI to monitor/enforce the data types of the
 JSON requests and responses.
 """
 
+
 class MovieRec(BaseModel):
-    movie_id: str 
-    score: float 
-    title: str 
-    year: int 
+    movie_id: str
+    score: float
+    title: str
+    year: int
     genres: List[str]
     poster_url: str
 
 
 class Movie(BaseModel):
-    movie_id: str 
-    title: str 
-    year: int 
+    movie_id: str
+    title: str
+    year: int
     genres: List[str]
     poster_url: str
 
 
 class MovieList(BaseModel):
-    list_id: int 
-    name: str 
-    private: bool 
+    list_id: int
+    name: str
+    private: bool
 
 
 class Provider(BaseModel):
-    provider_id: int 
-    name: str 
-    logo: str 
-    link: str 
-    presentation_type: str 
-    monetization_type: str 
+    provider_id: int
+    name: str
+    logo: str
+    link: str
+    presentation_type: str
+    monetization_type: str
 
 
 class RecInput(BaseModel):
@@ -64,8 +65,8 @@ class ProviderOutput(BaseModel):
 
 
 class CreateListInput(BaseModel):
-    user_id: int 
-    name: str 
+    user_id: int
+    name: str
     private: bool = False
 
 

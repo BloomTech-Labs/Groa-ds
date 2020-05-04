@@ -3,7 +3,7 @@ from groa_ds_api.utils import MovieUtility
 from groa_ds_api.models import *
 import os
 from pathlib import Path
-import redis 
+import redis
 import pickle
 from typing import List
 
@@ -23,7 +23,7 @@ cache = redis.StrictRedis(host=os.getenv('REDIS_HOST'))
 
 
 def create_app():
-    
+
     @app.get("/", response_model=str)
     async def index():
         """
@@ -55,7 +55,7 @@ def create_app():
         """
         result = predictor.get_recommendations(payload, background_tasks)
         return result
-    
+
     @app.post("/similar-movies", response_model=SimOutput)
     async def get_similar_movies(payload: SimInput):
         """
@@ -81,7 +81,7 @@ def create_app():
         result = predictor.get_similar_movies(payload)
         cache.set("sim"+payload.movie_id, pickle.dumps(result))
         return result
-    
+
     @app.get("/service-providers/{movie_id}", response_model=ProviderOutput)
     async def service_providers(movie_id: str):
         """
@@ -108,7 +108,7 @@ def create_app():
         result = predictor.get_service_providers(movie_id)
         cache.set("prov"+movie_id, pickle.dumps(result))
         return result
-    
+
     """ Start of Movie List routes """
     @app.post("/movie-list", response_model=MovieList)
     async def create_movie_list(payload: CreateListInput):
@@ -128,7 +128,7 @@ def create_app():
         if not payload.private:
             cache.delete("alllists")
         return list_id
-    
+
     @app.get("/movie-list/all", response_model=List[MovieList])
     async def get_all_lists():
         result = cache.get("alllists")
@@ -138,7 +138,7 @@ def create_app():
         result = predictor.get_all_lists()
         cache.set("alllists", pickle.dumps(result))
         return result
-    
+
     @app.get("/movie-list/all/{user_id}", response_model=List[MovieList])
     async def get_user_lists(user_id: int):
         """
@@ -162,7 +162,7 @@ def create_app():
         result = predictor.get_user_lists(user_id)
         cache.set("lists"+str(user_id), pickle.dumps(result))
         return result
-    
+
     @app.get("/movie-list/{list_id}", response_model=GetListOutput)
     async def get_movie_list(list_id: int):
         """
@@ -185,7 +185,7 @@ def create_app():
         result = predictor.get_movie_list(list_id)
         cache.set("movielist"+str(list_id), pickle.dumps(result))
         return result
-    
+
     @app.put("/movie-list/{list_id}/add/{movie_id}", response_model=str)
     async def add_to_movie_list(list_id: int, movie_id: str):
         """
@@ -202,7 +202,7 @@ def create_app():
         result = predictor.add_to_movie_list(list_id, movie_id)
         cache.delete("movielist"+str(list_id))
         return result
-    
+
     @app.put("/movie-list/{list_id}/remove/{movie_id}", response_model=str)
     async def remove_from_list(list_id: int, movie_id: str):
         """
@@ -219,7 +219,7 @@ def create_app():
         result = predictor.remove_from_movie_list(list_id, movie_id)
         cache.delete("movielist"+str(list_id))
         return result
-    
+
     @app.delete("/movie-list/{list_id}", response_model=str)
     async def delete_list(list_id: int):
         """
