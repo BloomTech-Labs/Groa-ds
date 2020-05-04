@@ -72,18 +72,19 @@ class MovieUtility(object):
             - get_similar_movies
             - get_movie_list
         """
-        names = rec_df.columns
         rec_json = []
 
         for i in range(rec_df.shape[0]):
             rec = dict(rec_df.iloc[i].to_dict())
             rec['score'] = float(rec['score']) if not isinstance(
                 rec['score'], str) else 0.0
+            rec['year'] = int(rec['year']) if not isinstance(
+                rec['year'], str) else 0
             rec_json.append({
                 'movie_id': rec['movie_id'],
                 'score': rec['score'],
                 'title': rec['title'],
-                'year': int(rec['year']),
+                'year': rec['year'],
                 'genres': rec['genres'].split(','),
                 'poster_url': rec['poster_url']
             })
@@ -93,6 +94,7 @@ class MovieUtility(object):
     def __prep_data(self, ratings_df: pd.DataFrame,
                     watched_df: pd.DataFrame = None,
                     watchlist_df: pd.DataFrame = None,
+                    not_watchlist_df: pd.DataFrame = None,
                     good_threshold: int = 4,
                     bad_threshold: int = 3):
         """
@@ -106,7 +108,8 @@ class MovieUtility(object):
             bad_df = ratings_df[ratings_df['rating'] <= bad_threshold]
             neutral_df = ratings_df[(ratings_df['rating'] > bad_threshold) & (
                 ratings_df['rating'] < good_threshold)]
-
+            # add not_watchlist to bad_df
+            bad_df = pd.concat([bad_df, not_watchlist_df])
             # convert dataframes to lists
             good_list = good_df['movie_id'].to_list()
             bad_list = bad_df['movie_id'].to_list()
@@ -438,12 +441,12 @@ class MovieUtility(object):
         query = "SELECT date, movie_id FROM user_willnotwatchlist WHERE user_id=%s;"
         cursor_dog.execute(query, (user_id,))
         willnotwatch_sql = cursor_dog.fetchall()
-        willnotwatchlist_df = pd.DataFrame(
+        notwatchlist = pd.DataFrame(
             willnotwatch_sql, columns=['date', 'movie_id'])
 
         # Prepare data
         good_list, bad_list, hist_list, val_list, ratings_dict = self.__prep_data(
-            ratings, watched, watchlist, good_threshold=good_threshold, bad_threshold=bad_threshold
+            ratings, watched, watchlist, notwatchlist, good_threshold=good_threshold, bad_threshold=bad_threshold
         )
 
         # Run prediction with parameters then wrangle output
