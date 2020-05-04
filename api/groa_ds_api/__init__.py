@@ -124,7 +124,6 @@ def create_app():
         - **list_id:** int
         """
         list_id = predictor.create_movie_list(payload)
-        # do before?
         cache.delete("lists"+str(payload.user_id))
         if not payload.private:
             cache.delete("alllists")
@@ -179,8 +178,6 @@ def create_app():
         - movie_list: List[Movie]
         - recs: List[Movie]
         """
-        # could cache and then remove from cache when movies
-        # are added or removed
         result = cache.get("movielist"+str(list_id))
         if result is not None:
             result = pickle.loads(result)
@@ -236,10 +233,10 @@ def create_app():
         """
         result = predictor.delete_movie_list(list_id)
         cache.delete("movielist"+str(list_id))
-        # could delete alllists but only need to 
-        # if list is public
-        cache.delete("alllists")
-        return result
+        cache.delete("lists"+str(result[0]))
+        if result[1]:
+            cache.delete("alllists")
+        return "Success"
     """ End of Movie List routes """
 
     return app
