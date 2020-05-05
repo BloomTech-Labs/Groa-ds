@@ -35,12 +35,6 @@ def run_scrapers(start, end):
     imdb = ImdbScraper(0, num_max_ids, 100)
     imdb.scrape_by_users()
 
-    for ix in range(start, start+num_max_ids, step):
-        #letterbox = LetterboxScraper(ix, ix+step, step, ids=ids)
-        #letterbox.scrape()
-        imdb = ImdbScraper(ix, ix+step, step, ids=ids)
-        imdb.scrape_by_users()
-
 def run_scrapers_update(start, end):
 
     ids = get_ids_from_tarball()
