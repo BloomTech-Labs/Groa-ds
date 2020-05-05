@@ -189,10 +189,11 @@ code {response.status_code}!")
 
         movie_ids = set(self.get_ids())
 
-
         null_counter = 0
         # TODO get list of users
         for user_id in range(11_227_647, 22_500_000):
+
+            time.sleep(1.5)
 
             try:
                 user_url = f'https://www.imdb.com/user/ur{str(user_id).zfill(8)}'
@@ -205,7 +206,6 @@ code {response.status_code}!")
                         print(f"User ids {user_id-100} to {user_id} failed")
                         print(f"Latest url: {user_url}")
 
-                    time.sleep(1.5)
                     continue
 
                 else:
@@ -306,7 +306,6 @@ code {response.status_code}!")
                 conn.close()
 
                 print()
-                time.sleep(1)
 
             except Exception as e:
                 print("UNHANDLED EXCEPTION")
