@@ -187,11 +187,16 @@ code {response.status_code}!")
             Scrapes IMDb user pages for movie ratings.
         """
 
+        curs, conn = self.connect_to_database()
+
         movie_ids = set(self.get_ids())
 
         null_counter = 0
-        # TODO get list of users
-        for user_id in range(11_227_647, 22_500_000):
+
+        user_df = pd.read_csv("web_scraping/users.csv")
+        user_ids = list(user_df["user_ids"])
+
+        for user_id in user_ids:
 
             time.sleep(1.5)
 
@@ -224,7 +229,6 @@ code {response.status_code}!")
                 query = """
                 SELECT movie_id FROM movie_reviews WHERE user_name = %s;
                 """
-                curs, conn = self.connect_to_database()
                 curs.execute(query, [username])
                 existing_reviews = curs.fetchall()
                 existing_reviews = set(row[0] for row in existing_reviews)
@@ -297,17 +301,14 @@ code {response.status_code}!")
                 VALUES (%s, %s, %s, %s, %s);
                 """
 
-                curs, conn = self.connect_to_database()
-
                 # execute query
                 execute_batch(curs, query, results_list)
                 conn.commit()
-                curs.close()
-                conn.close()
 
                 print()
 
             except Exception as e:
+                curs, conn = self.connect_to_database()
                 print("UNHANDLED EXCEPTION")
                 print(e)
                 continue
