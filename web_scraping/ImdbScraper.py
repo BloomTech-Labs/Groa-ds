@@ -8,6 +8,7 @@ import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 from psycopg2.extras import execute_batch
+import numpy as np
 
 from BaseScraper import BaseScraper
 
@@ -179,6 +180,139 @@ code {response.status_code}!")
         print('All done!\n')
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
+
+
+    def scrape_by_users(self):
+        """
+            Scrapes IMDb user pages for movie ratings.
+        """
+
+        movie_ids = set(self.get_ids())
+
+
+        null_counter = 0
+        # TODO get list of users
+        for user_id in range(11_227_647, 22_500_000):
+
+            try:
+                user_url = f'https://www.imdb.com/user/ur{str(user_id).zfill(8)}'
+                res = requests.get(user_url)
+                if res.status_code != 200:
+
+                    # null counter is only for logging purposes
+                    null_counter += 1
+                    if null_counter % 100 == 0:
+                        print(f"User ids {user_id-100} to {user_id} failed")
+                        print(f"Latest url: {user_url}")
+
+                    time.sleep(1.5)
+                    continue
+
+                else:
+                    null_counter = 0
+
+                soup = BeautifulSoup(res.text)
+                profile = soup.find(class_="user-profile")
+                username = profile.find("h1").text
+
+                print(f"Scraping reviews for user {username}")
+
+                results_list = []
+                url = f'https://www.imdb.com/user/ur{str(user_id).zfill(8)}/ratings'
+
+                # we get existing reviews for the user so that we don't enter duplicate reviews
+                query = """
+                SELECT movie_id FROM movie_reviews WHERE user_name = %s;
+                """
+                curs, conn = self.connect_to_database()
+                curs.execute(query, [username])
+                existing_reviews = curs.fetchall()
+                existing_reviews = set(row[0] for row in existing_reviews)
+                print(f"Got {len(existing_reviews)} existing reviews for user {username}")
+
+                # iterate over ratings pages
+                while True:
+
+                    time.sleep(1.5)
+
+                    if url.endswith("#"):
+                        print(f"Found last page of user {username}")
+                        break
+
+                    res = requests.get(url)
+                    if res.status_code != 200:
+                        break
+
+                    soup = BeautifulSoup(res.text, "html.parser")
+                    items = soup.find_all(class_="lister-item")
+                    
+                    # iterate over review items
+                    for item in items:
+
+                        head = item.find(class_="lister-item-header")
+                        movie_id = head.find("a").get("href").strip("/").strip("title/tt")
+                        if movie_id not in movie_ids:
+                            continue
+                        if movie_id in existing_reviews:
+                            continue
+
+                        ratings = item.find(class_="ipl-rating-widget")
+                        user_ratings = ratings.find(class_="ipl-rating-star--other-user")
+                        stars = user_ratings.find(class_="ipl-rating-star__rating")
+                        rating = int(stars.text)//2
+
+                        text_muteds = item.find_all(class_="text-muted")
+                        date_text = None
+                        for text in text_muteds:
+                            if text.text.startswith("Rated on"):
+                                date_text = text.text
+                                break
+                        if date_text:
+                            date_text = date_text.strip("Rated on")
+                            date = datetime.strptime(date_text, "%d %b %Y")
+                        else:
+                            date = None
+
+                        results_list.append((movie_id, date, rating, username, url))
+                        print("Got results:", results_list[-1])
+
+                    # end for loop
+
+                    next_button = soup.find(class_="next-page")
+                    url = "https://www.imdb.com" + next_button.get("href")
+
+
+                # end while loop
+
+                print(f"Got {len(results_list)} reviews")
+
+                query = """
+                INSERT INTO movie_reviews (
+                    movie_id,
+                    review_date,
+                    user_rating,
+                    user_name,
+                    source
+                )
+                VALUES (%s, %s, %s, %s, %s);
+                """
+
+                curs, conn = self.connect_to_database()
+
+                # execute query
+                execute_batch(curs, query, results_list)
+                conn.commit()
+                curs.close()
+                conn.close()
+
+                print()
+                time.sleep(1)
+
+            except Exception as e:
+                print("UNHANDLED EXCEPTION")
+                print(e)
+                continue
+
 
 
     def update(self):
