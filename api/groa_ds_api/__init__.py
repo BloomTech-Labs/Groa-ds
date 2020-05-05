@@ -108,6 +108,16 @@ def create_app():
         result = predictor.get_service_providers(movie_id)
         cache.set("prov"+movie_id, pickle.dumps(result))
         return result
+    
+    @app.get("/explore")
+    async def explore():
+        result = cache.get("explore")
+        if result is not None:
+            result = pickle.loads(result)
+            return result
+        result = predictor.get_recent_recommendations()
+        cache.set("explore", pickle.dumps(result))
+        return result
 
     """ Start of Movie List routes """
     @app.post("/movie-list", response_model=MovieList)

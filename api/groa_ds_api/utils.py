@@ -404,6 +404,17 @@ class MovieUtility(object):
         return {
             "data": self.__get_JSON(result_df)
         }
+    
+    def get_recent_recommendations(self):
+        query = "SELECT movie_id FROM recommendations_movies LIMIT 30;"
+        recs = self.__run_query(
+            query,
+            fetch="all")
+        recs_df = pd.DataFrame(recs, columns=["movie_id"])
+        rec_data = self.__get_info(recs_df)
+        rec_data = rec_data.fillna("None")
+        rec_json = self.__get_JSON(rec_data)
+        return rec_json
 
     def get_recommendations(self, payload: RecInput, background_tasker):
         """ Uses user's ratings to generate recommendations """
