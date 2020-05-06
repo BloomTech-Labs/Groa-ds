@@ -283,7 +283,10 @@ code {response.status_code}!")
                     # end for loop
 
                     next_button = soup.find(class_="next-page")
-                    url = "https://www.imdb.com" + next_button.get("href")
+                    if not next_button:
+                        url = "#"
+                    else:
+                        url = "https://www.imdb.com" + next_button.get("href")
 
 
                 # end while loop
@@ -301,9 +304,15 @@ code {response.status_code}!")
                 VALUES (%s, %s, %s, %s, %s);
                 """
 
-                # execute query
-                execute_batch(curs, query, results_list)
-                conn.commit()
+                try:
+                    # execute query
+                    execute_batch(curs, query, results_list)
+                    conn.commit()
+                except:
+                    curs, conn = self.connect_to_database()
+                    execute_batch(curs, query, results_list)
+                    conn.commit()
+
 
                 print()
 
