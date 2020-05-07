@@ -76,18 +76,13 @@ class MovieUtility(object):
 
         for i in range(rec_df.shape[0]):
             rec = dict(rec_df.iloc[i].to_dict())
-            rec['score'] = float(rec['score']) if not isinstance(
-                rec['score'], str) else 0.0
+            if 'score' in rec:
+                rec['score'] = float(rec['score']) if not isinstance(
+                    rec['score'], str) else 0.0
             rec['year'] = int(rec['year']) if not isinstance(
                 rec['year'], str) else 0
-            rec_json.append({
-                'movie_id': rec['movie_id'],
-                'score': rec['score'],
-                'title': rec['title'],
-                'year': rec['year'],
-                'genres': rec['genres'].split(','),
-                'poster_url': rec['poster_url']
-            })
+            rec['genres'] = rec['genres'].split(',')
+            rec_json.append(rec)
 
         return rec_json
 
@@ -405,8 +400,15 @@ class MovieUtility(object):
             "data": self.__get_JSON(result_df)
         }
     
-    def get_recent_recommendations(self):
-        query = "SELECT movie_id FROM recommendations_movies LIMIT 30;"
+    def get_recent_recommendations(self, user_id: int = None):
+        """ Grabs the movies of recent recommendations from our API """
+        query = """
+        SELECT m.movie_id
+        FROM recommendations_movies AS m LEFT JOIN recommendations AS r
+        ON m.recommendation_id = r.recommendation_id
+        ORDER BY r.date DESC
+        LIMIT 50;
+        """
         recs = self.__run_query(
             query,
             fetch="all")
@@ -414,7 +416,29 @@ class MovieUtility(object):
         rec_data = self.__get_info(recs_df)
         rec_data = rec_data.fillna("None")
         rec_json = self.__get_JSON(rec_data)
-        return rec_json
+        explore_lists = []
+        if user_id is not None:
+            query = """
+            SELECT movie_id FROM user_ratings
+            WHERE user_id=%s AND rating > 3
+            ORDER BY date DESC
+            LIMIT 3;
+            """
+            movie_ids = self.__run_query(
+                query,
+                params=(user_id,),
+                fetch="all"
+            )
+            if len(movie_ids) > 0:
+                explore_lists = [self.get_similar_movies(SimInput(movie_id=elem[0], num_movies=10))
+                    for elem in movie_ids]
+            return {
+                "data": rec_json,
+                "lists": explore_lists
+            }
+        return {
+            "data": rec_json
+        }
 
     def get_recommendations(self, payload: RecInput, background_tasker):
         """ Uses user's ratings to generate recommendations """
