@@ -6,6 +6,7 @@ from pathlib import Path
 import redis
 import pickle
 from typing import List
+from datetime import datetime
 
 
 app = FastAPI(
@@ -54,6 +55,9 @@ def create_app():
         num_recs due to the algorithms filtering process.`
         """
         result = predictor.get_recommendations(payload, background_tasks)
+        # can delete if you don't want new recs updating /explore results
+        today = datetime.today().strftime('%Y-%m-%d')
+        cache.delete("explore"+today)
         return result
 
     @app.post("/similar-movies", response_model=SimOutput)
@@ -107,6 +111,34 @@ def create_app():
             return result
         result = predictor.get_service_providers(movie_id)
         cache.set("prov"+movie_id, pickle.dumps(result))
+        return result
+    
+    @app.get("/explore", response_model=ExploreOutput)
+    async def explore():
+        """
+        Sends a list of recent recommendations made by our API.
+
+        Returns:
+        - **data:** List[Movie]
+        """
+        today = datetime.today().strftime('%Y-%m-%d')
+        result = cache.get("explore"+today)
+        if result is not None:
+            result = pickle.loads(result)
+            return result
+        result = predictor.get_recent_recommendations()
+        cache.set("explore"+today, pickle.dumps(result))
+        return result
+    
+    @app.get("/explore/{user_id}")
+    async def explore_user(user_id: int):
+        # the lists work to a degree but still need a title 
+        result = cache.get("explore"+str(user_id))
+        if result is not None:
+            result = pickle.loads(result)
+            return result
+        result = predictor.get_recent_recommendations(user_id)
+        cache.set("explore"+str(user_id), pickle.dumps(result))
         return result
 
     """ Start of Movie List routes """

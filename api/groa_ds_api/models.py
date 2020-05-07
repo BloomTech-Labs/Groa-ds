@@ -73,3 +73,7 @@ class CreateListInput(BaseModel):
 class GetListOutput(BaseModel):
     data: List[Movie]
     recs: List[MovieRec]
+
+
+class ExploreOutput(BaseModel):
+    data: List[Movie]
