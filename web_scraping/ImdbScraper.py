@@ -37,6 +37,8 @@ class ImdbScraper(BaseScraper):
 
     def scrape(self):
         """
+        This method is DEPRECATED, please use `update()` instead.
+
         Scrapes imbd.com for user review pages.
 
         create_log, make_dataframe, and insert_rows are intended to be
@@ -59,6 +61,7 @@ class ImdbScraper(BaseScraper):
         review_id = []
         iteration_counter = 0
         broken = []
+        user_ids = set()
 
         for count, id in enumerate(id_list):
             try:
@@ -69,7 +72,7 @@ class ImdbScraper(BaseScraper):
 
                 # self.locate(id)
 
-                url_short = f'http://www.imdb.com/title/{id}/'
+                url_short = f'http://www.imdb.com/title/tt{id}/'
                 url_reviews = url_short + 'reviews?ref_=tt_urv'
 
                 time.sleep(randint(3, 6))
@@ -109,7 +112,12 @@ code {response.status_code}!")
                         review_count += 1
                         reviews.append(item.find(class_="text show-more__control").get_text())
                         titles.append(item.find(class_="title").get_text())
+
                         username.append(item.find(class_="display-name-link").get_text())
+                        user_id_href = item.find(class_="display-name-link").find("a").get("href")
+                        user_id = re.search(r"ur(?P<user_id>\d+)", user_id_href).group("user_id")
+                        user_ids.add(user_id)
+
                         date.append(item.find(class_="review-date").get_text())
                         movie_id.append(id.replace("tt", ""))
                         found_useful = item.find(class_="actions text-muted").get_text()
@@ -181,8 +189,10 @@ code {response.status_code}!")
         print("The following IDs were not scraped succcessfully:")
         self.show(broken)
 
+        self.scrape_by_users(user_ids=list(user_ids))
 
-    def scrape_by_users(self):
+
+    def scrape_by_users(self, user_ids=None):
         """
             Scrapes IMDb user pages for movie ratings.
         """
@@ -193,8 +203,9 @@ code {response.status_code}!")
 
         null_counter = 0
 
-        user_df = pd.read_csv("web_scraping/users.csv")
-        user_ids = list(user_df["user_ids"])
+        if not user_ids:
+            user_df = pd.read_csv("web_scraping/users.csv")
+            user_ids = list(user_df["user_ids"])
 
         for user_id in user_ids:
 
@@ -367,6 +378,8 @@ code {response.status_code}!")
         iteration_counter = 0
         broken = []
         self.start_timer()
+        user_ids = set()
+
         # Start the process described
         print("Updating...")
         for id in unique_movie_ids:
@@ -426,7 +439,12 @@ code {response.status_code}!")
                             # populate lists
                             reviews.append(item.find(class_="text show-more__control").get_text())
                             titles.append(item.find(class_="title").get_text())
+
                             username.append(item.find(class_="display-name-link").get_text())
+                            user_id_href = item.find(class_="display-name-link").find("a").get("href")
+                            user_id = re.search(r"ur(?P<user_id>\d+)", user_id_href).group("user_id")
+                            user_ids.add(user_id)
+
                             date.append(item.find(class_="review-date").get_text())
                             movie_id.append(id.replace("tt", ""))
                             found_useful = item.find(class_="actions text-muted").get_text()
@@ -480,6 +498,8 @@ code {response.status_code}!")
         elapsed = self.end_timer()
         elapsed = self.convert_time(elapsed)
         print(f"finished in {elapsed}")
+
+        self.scrape_by_users(user_ids=list(user_ids))
 
     def pull_ids(self, save=True, filename=False):
         '''
