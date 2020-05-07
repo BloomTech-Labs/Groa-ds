@@ -1,3 +1,12 @@
+-- SEQUENCE: public.movie_lists_id_seq
+
+CREATE SEQUENCE public.movie_lists_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+
 -- SEQUENCE: public.movie_provider_id_seq
 
 CREATE SEQUENCE public.movie_provider_id_seq
@@ -126,6 +135,7 @@ CREATE TABLE public.movie_reviews
     user_name character varying COLLATE pg_catalog."default",
     review_text character varying COLLATE pg_catalog."default",
     review_title character varying COLLATE pg_catalog."default",
+    source text COLLATE pg_catalog."default",
     CONSTRAINT movie_reviews_pk PRIMARY KEY (review_id),
     CONSTRAINT mr_movie_id_fk FOREIGN KEY (movie_id)
         REFERENCES public.movies (movie_id) MATCH SIMPLE
@@ -149,6 +159,7 @@ CREATE TABLE public.users
     has_imdb boolean,
     last_login date,
     email character varying COLLATE pg_catalog."default",
+    okta_id character varying COLLATE pg_catalog."default",
     CONSTRAINT users_pkey PRIMARY KEY (user_id),
     CONSTRAINT users_username_unique UNIQUE (user_name)
 )
@@ -370,4 +381,45 @@ WITH (
     OIDS = FALSE
 )
 TABLESPACE pg_default;
-    
+
+
+-- Table: public.list_movies
+
+CREATE TABLE public.list_movies
+(
+    list_id integer NOT NULL,
+    movie_id character varying COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT list_movies_pkey PRIMARY KEY (list_id, movie_id),
+    CONSTRAINT list_movies_list_id_fkey FOREIGN KEY (list_id)
+        REFERENCES public.movie_lists (list_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT list_movies_movie_id_fkey FOREIGN KEY (movie_id)
+        REFERENCES public.movies (movie_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+
+-- Table: public.movie_lists
+
+CREATE TABLE public.movie_lists
+(
+    list_id integer NOT NULL DEFAULT nextval('movie_lists_id_seq'::regclass),
+    user_id integer NOT NULL,
+    name character varying COLLATE pg_catalog."default",
+    private boolean,
+    CONSTRAINT movie_lists_pkey PRIMARY KEY (list_id),
+    CONSTRAINT movie_lists_user_id_fkey FOREIGN KEY (user_id)
+        REFERENCES public.users (user_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
