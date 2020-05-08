@@ -460,7 +460,7 @@ class MovieUtility(object):
                                'date', 'movie_id', 'rating'])
         if ratings.shape[0] == 0:
             cursor_dog.close()
-            return "User does not have ratings"
+            return {"data": []}
 
         # Get user watchlist, willnotwatchlist, watched
         query = "SELECT date, movie_id FROM user_watchlist WHERE user_id=%s;"
