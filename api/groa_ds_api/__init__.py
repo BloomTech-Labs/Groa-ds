@@ -41,7 +41,7 @@ def create_app():
 
         Parameters: 
 
-        - **user_id:** int
+        - **user_id:** str
         - num_recs: int [1, 100]
         - good_threshold: int [3, 5]
         - bad_threshold: int [1, 3]
@@ -131,14 +131,14 @@ def create_app():
         return result
     
     @app.get("/explore/{user_id}")
-    async def explore_user(user_id: int):
+    async def explore_user(user_id: str):
         # the lists work to a degree but still need a title 
-        result = cache.get("explore"+str(user_id))
+        result = cache.get("explore"+user_id)
         if result is not None:
             result = pickle.loads(result)
             return result
         result = predictor.get_recent_recommendations(user_id)
-        cache.set("explore"+str(user_id), pickle.dumps(result))
+        cache.set("explore"+user_id, pickle.dumps(result))
         return result
 
     """ Start of Movie List routes """
@@ -149,14 +149,14 @@ def create_app():
         `list_id`.
 
         Parameters:
-        - **user_id:** int
+        - **user_id:** str
         - **name:** str
 
         Returns:
         - **list_id:** int
         """
         list_id = predictor.create_movie_list(payload)
-        cache.delete("lists"+str(payload.user_id))
+        cache.delete("lists"+payload.user_id)
         if not payload.private:
             cache.delete("alllists")
         return list_id
@@ -172,13 +172,13 @@ def create_app():
         return result
 
     @app.get("/movie-list/all/{user_id}", response_model=List[MovieList])
-    async def get_user_lists(user_id: int):
+    async def get_user_lists(user_id: str):
         """
         Given a `user_id`, we grab a preview of all movie lists 
         the user has made.
 
         Parameters:
-        - **user_id:** int
+        - **user_id:** str
 
         Returns:
         - List[ListPreview]
@@ -187,12 +187,12 @@ def create_app():
         - list_id: int
         - name: str
         """
-        result = cache.get("lists"+str(user_id))
+        result = cache.get("lists"+user_id)
         if result is not None:
             result = pickle.loads(result)
             return result
         result = predictor.get_user_lists(user_id)
-        cache.set("lists"+str(user_id), pickle.dumps(result))
+        cache.set("lists"+user_id, pickle.dumps(result))
         return result
 
     @app.get("/movie-list/{list_id}", response_model=GetListOutput)

@@ -17,7 +17,7 @@ def test_wrong_method():
 
 def test_recommendations():
     payload = {
-        "user_id": 11,
+        "user_id": "11",
         "num_recs": 50,
         "good_threshold": 5,
         "bad_threshold": 4,

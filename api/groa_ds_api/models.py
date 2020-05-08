@@ -40,7 +40,7 @@ class Provider(BaseModel):
 
 
 class RecInput(BaseModel):
-    user_id: int
+    user_id: str
     num_recs: int = 10
     good_threshold: int = 4
     bad_threshold: int = 3
@@ -65,7 +65,7 @@ class ProviderOutput(BaseModel):
 
 
 class CreateListInput(BaseModel):
-    user_id: int
+    user_id: str
     name: str
     private: bool = False
 

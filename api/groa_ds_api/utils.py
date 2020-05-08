@@ -295,7 +295,7 @@ class MovieUtility(object):
             list_json["recs"] = rec_json
         return list_json
 
-    def get_user_lists(self, user_id: int):
+    def get_user_lists(self, user_id: str):
         """ Get user's MovieLists """
         query = "SELECT list_id, name, private FROM movie_lists WHERE user_id = %s;"
         user_lists = self.__run_query(
@@ -400,7 +400,7 @@ class MovieUtility(object):
             "data": self.__get_JSON(result_df)
         }
     
-    def get_recent_recommendations(self, user_id: int = None):
+    def get_recent_recommendations(self, user_id: str = None):
         """ Grabs the movies of recent recommendations from our API """
         query = """
         SELECT m.movie_id
@@ -460,7 +460,7 @@ class MovieUtility(object):
                                'date', 'movie_id', 'rating'])
         if ratings.shape[0] == 0:
             cursor_dog.close()
-            return "User does not have ratings"
+            return {"data": []}
 
         # Get user watchlist, willnotwatchlist, watched
         query = "SELECT date, movie_id FROM user_watchlist WHERE user_id=%s;"
@@ -500,22 +500,24 @@ class MovieUtility(object):
 
             create_rec = """
             INSERT INTO recommendations 
-            (user_id, date, model_type) 
-            VALUES (%s, %s, %s) RETURNING recommendation_id;
+            (user_id, date, model_type, num_recs, good_threshold, bad_threshold, harshness) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING recommendation_id;
             """
-            cursor_dog.execute(create_rec, (user_id, date, model_type))
+            cursor_dog.execute(
+                create_rec, 
+                (user_id, date, model_type, num_recs, good, bad, harsh))
             rec_id = cursor_dog.fetchone()[0]
 
             create_movie_rec = """
             INSERT INTO recommendations_movies
-            (recommendation_id, movie_number, movie_id, num_recs, good_threshold, bad_threshold, harshness)
-            VALUES (%s, %s, %s, %s, %s, %s, %s);
+            (recommendation_id, movie_number, movie_id)
+            VALUES (%s, %s, %s);
             """
 
             for num, movie in enumerate(model_recs):
                 cursor_dog.execute(
                     create_movie_rec,
-                    (rec_id, num+1, movie['movie_id'], num_recs, good, bad, harsh))
+                    (rec_id, num+1, movie['movie_id']))
 
             self.connection.commit()
             cursor_dog.close()
