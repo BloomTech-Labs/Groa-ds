@@ -40,36 +40,48 @@ def get_header(user_id=None):
         # Total ratings
         query = f'SELECT COUNT(*) FROM user_ratings WHERE user_id={user_id}'
         cursor.execute(query)
-        total_ratings = cursor.fetchall()[0][0]
+        total_ratings = cursor.fetchall()
         each_chart['label'] = 'ratings'
-        each_chart['measure'] = total_ratings
+        if not total_ratings:
+            each_chart['measure'] = 0
+        else:
+            each_chart['measure'] = total_ratings[0][0]
         header_chart.append(each_chart)
     
         # Total reviews
         each_chart = {}
         query = f'SELECT COUNT(*) FROM user_reviews WHERE user_id={user_id}'
         cursor.execute(query)
-        total_reviews = cursor.fetchall()[0][0]
+        total_reviews = cursor.fetchall()
         each_chart['label'] = 'reviews'
-        each_chart['measure'] = total_reviews
+        if not total_reviews:
+            each_chart['measure'] = 0
+        else:
+            each_chart['measure'] = total_reviews[0][0]
         header_chart.append(each_chart)
         
         # Total watched
         each_chart = {}
         query = f'SELECT COUNT(*) FROM user_watched WHERE user_id={user_id} GROUP BY user_id'
         cursor.execute(query)
-        total_watched = cursor.fetchall()[0][0]
+        total_watched = cursor.fetchall()
         each_chart['label'] = 'movies watched'
-        each_chart['measure'] = total_watched
+        if not total_watched:
+            each_chart['measure'] = 0
+        else:
+            each_chart['measure'] = total_watched[0][0]
         header_chart.append(each_chart)
         
         # Watchlist
         each_chart = {}
         query = f'SELECT COUNT(*) FROM user_watchlist WHERE user_id={user_id}'
         cursor.execute(query)
-        total_watchlist = cursor.fetchall()[0][0]
+        total_watchlist = cursor.fetchall()
         each_chart['label'] = 'movies added to watchlist'
-        each_chart['measure'] = total_watchlist
+        if not total_watchlist:
+            each_chart['measure'] = 0
+        else:
+            each_chart['measure'] = total_watchlist[0][0]
         header_chart.append(each_chart)
         
         return json.dumps(header_chart)
@@ -177,35 +189,38 @@ def favorite_genres(user_id=None):
         query = f'SELECT genres FROM user_ratings ur INNER JOIN movies m ON ur.movie_id=m.movie_id WHERE user_id={user_id} AND rating>3'
         cursor.execute(query)
         genres = cursor.fetchall()
-        genres_list = []
+        if not genres:
+            genres_data = [{'message':'No data found'}]
+        else:
+            genres_list = []
 
-        for row in genres:
-            genres_list.append(row[0])
+            for row in genres:
+                genres_list.append(row[0])
 
-        df = pd.DataFrame({
-            'genres':genres_list
-        })
+            df = pd.DataFrame({
+                'genres':genres_list
+            })
 
-        genre_counts = {}
-        for genre_string in df['genres'].values:
-                genres = genre_string.split(',')
-                for genre in genres:
-                    each_data = {}
-                    if genre in genre_counts:
-                        genre_counts[genre] += 1
-                    else:
-                        genre_counts[genre] = 1
-        genre_counts = dict(sorted(genre_counts.items(), key= lambda kv:(kv[1], kv[0]), reverse=True))
-        
-        genres_list = list(genre_counts.keys())
-        values_list = list(genre_counts.values())
+            genre_counts = {}
+            for genre_string in df['genres'].values:
+                    genres = genre_string.split(',')
+                    for genre in genres:
+                        each_data = {}
+                        if genre in genre_counts:
+                            genre_counts[genre] += 1
+                        else:
+                            genre_counts[genre] = 1
+            genre_counts = dict(sorted(genre_counts.items(), key= lambda kv:(kv[1], kv[0]), reverse=True))
+            
+            genres_list = list(genre_counts.keys())
+            values_list = list(genre_counts.values())
 
-        genres_data = []
-        for i in range(len(genres_list)):
-            each_data = {}
-            each_data['genre'] = genres_list[i]
-            each_data['measure'] = values_list[i]
-            genres_data.append(each_data)
+            genres_data = []
+            for i in range(len(genres_list)):
+                each_data = {}
+                each_data['genre'] = genres_list[i]
+                each_data['measure'] = values_list[i]
+                genres_data.append(each_data)
 
         return json.dumps(genres_data)
     
@@ -219,40 +234,42 @@ def common_words(user_id=None):
         query = f'SELECT review_text FROM user_reviews WHERE user_id={user_id};'
         cursor.execute(query)
         result = cursor.fetchall()
+        if not result:
+            data = [{'message':'No data found'}]
+        else:
+            reviews_lst = []
+            for row in result:
+                reviews_lst.append(row[0])
+            reviews = pd.DataFrame({
+                'review_text':reviews_lst
+            })
 
-        reviews_lst = []
-        for row in result:
-            reviews_lst.append(row[0])
-        reviews = pd.DataFrame({
-            'review_text':reviews_lst
-        })
-
-        # Plot the wordcloud
-        comment_words = ''
-        
-        # iterate through the df
-        for val in reviews.review_text: 
+            # Plot the wordcloud
+            comment_words = ''
             
-            filtered_sentence = remove_stopwords(val)
+            # iterate through the df
+            for val in reviews.review_text: 
+                
+                filtered_sentence = remove_stopwords(val)
+                
+                comment_words += "".join(filtered_sentence)+" "
             
-            comment_words += "".join(filtered_sentence)+" "
-        
-        comment_words_list = comment_words.split()
-        words_list = []
-        # loop till string values present in list comment_words_list 
-        for i in comment_words_list:              
-            # checking for the duplicacy 
-            if i not in words_list: 
-                # insert value in str2 
-                words_list.append(i)  
+            comment_words_list = comment_words.split()
+            words_list = []
+            # loop till string values present in list comment_words_list 
+            for i in comment_words_list:              
+                # checking for the duplicacy 
+                if i not in words_list: 
+                    # insert value in str2 
+                    words_list.append(i)  
 
-        data = []
-        for i in range(0, len(words_list)): 
-            each_data = {}
-            # count the frequency of each word(present in words_list) in comment_words_list
-            each_data['word'] = words_list[i]
-            each_data['count'] = comment_words_list.count(words_list[i])
-            data.append(each_data)
+            data = []
+            for i in range(0, len(words_list)): 
+                each_data = {}
+                # count the frequency of each word(present in words_list) in comment_words_list
+                each_data['word'] = words_list[i]
+                each_data['count'] = comment_words_list.count(words_list[i])
+                data.append(each_data)
         return json.dumps(data)
         
 
@@ -266,33 +283,35 @@ def favorite_years(user_id=None):
         query = f'SELECT start_year FROM user_ratings ur INNER JOIN movies m ON ur.movie_id=m.movie_id WHERE user_id={user_id} AND rating>3'
         cursor.execute(query)
         years = cursor.fetchall()
+        if not years:
+            years_data = [{'message':'No data found'}]
+        else:
+            years_list = []
 
-        years_list = []
+            for row in years:
+                years_list.append(str(row[0]))
 
-        for row in years:
-            years_list.append(str(row[0]))
+            df = pd.DataFrame({
+                'years':years_list
+            })
 
-        df = pd.DataFrame({
-            'years':years_list
-        })
+            year_counts = {}
+            for year in df['years'].values:
+                if year in year_counts:
+                    year_counts[year] += 1
+                else:
+                    year_counts[year] = 1
+            year_counts = dict(sorted(year_counts.items(), key=lambda x: x[0]))
 
-        year_counts = {}
-        for year in df['years'].values:
-            if year in year_counts:
-                year_counts[year] += 1
-            else:
-                year_counts[year] = 1
-        year_counts = dict(sorted(year_counts.items(), key=lambda x: x[0]))
+            years_list = list(year_counts.keys())
+            values_list = list(year_counts.values())
 
-        years_list = list(year_counts.keys())
-        values_list = list(year_counts.values())
-
-        years_data = []
-        for i in range(len(years_list)):
-            each_data = {}
-            each_data['year'] = years_list[i]
-            each_data['measure'] = values_list[i]
-            years_data.append(each_data)
+            years_data = []
+            for i in range(len(years_list)):
+                each_data = {}
+                each_data['year'] = years_list[i]
+                each_data['measure'] = values_list[i]
+                years_data.append(each_data)
 
         return json.dumps(years_data)
 
@@ -310,35 +329,37 @@ def recommended_genres(user_id=None):
             WHERE user_id="""+f'{user_id}'
         cursor.execute(query)
         rec_genres = cursor.fetchall()
+        if not rec_genres:
+            genres_data = [{'message':'No data found'}]
+        else:
+            rec_genres_list = []
 
-        rec_genres_list = []
+            for row in rec_genres:
+                rec_genres_list.append(row[0])
 
-        for row in rec_genres:
-            rec_genres_list.append(row[0])
+            df = pd.DataFrame({
+                'genres':rec_genres_list
+            })
 
-        df = pd.DataFrame({
-            'genres':rec_genres_list
-        })
+            rec_genre_counts = {}
+            for rec_genre_string in df['genres'].values:
+                    rec_genres = rec_genre_string.split(',')
+                    for rec_genre in rec_genres:
+                        if rec_genre in rec_genre_counts:
+                            rec_genre_counts[rec_genre] += 1
+                        else:
+                            rec_genre_counts[rec_genre] = 1
+            rec_genre_counts = dict(sorted(rec_genre_counts.items(), key= lambda kv:(kv[1], kv[0]), reverse=True))
+            
+            genres_list = list(rec_genre_counts.keys())
+            values_list = list(rec_genre_counts.values())
 
-        rec_genre_counts = {}
-        for rec_genre_string in df['genres'].values:
-                rec_genres = rec_genre_string.split(',')
-                for rec_genre in rec_genres:
-                    if rec_genre in rec_genre_counts:
-                        rec_genre_counts[rec_genre] += 1
-                    else:
-                        rec_genre_counts[rec_genre] = 1
-        rec_genre_counts = dict(sorted(rec_genre_counts.items(), key= lambda kv:(kv[1], kv[0]), reverse=True))
-        
-        genres_list = list(rec_genre_counts.keys())
-        values_list = list(rec_genre_counts.values())
-
-        genres_data = []
-        for i in range(len(genres_list)):
-            each_data = {}
-            each_data['genre'] = genres_list[i]
-            each_data['measure'] = values_list[i]
-            genres_data.append(each_data)
+            genres_data = []
+            for i in range(len(genres_list)):
+                each_data = {}
+                each_data['genre'] = genres_list[i]
+                each_data['measure'] = values_list[i]
+                genres_data.append(each_data)
 
         return json.dumps(genres_data)
     
@@ -356,33 +377,35 @@ def recommended_years(user_id=None):
             WHERE user_id="""+f'{user_id}'
         cursor.execute(query)
         rec_years = cursor.fetchall()
+        if not rec_years:
+            years_data = [{'message':'No data found'}]
+        else:
+            rec_years_list = []
 
-        rec_years_list = []
+            for row in rec_years:
+                rec_years_list.append(str(row[0]))
 
-        for row in rec_years:
-            rec_years_list.append(str(row[0]))
+            df = pd.DataFrame({
+                'years':rec_years_list
+            })
 
-        df = pd.DataFrame({
-            'years':rec_years_list
-        })
+            rec_year_counts = {}
+            for rec_year in df['years'].values:
+                if rec_year in rec_year_counts:
+                    rec_year_counts[rec_year] += 1
+                else:
+                    rec_year_counts[rec_year] = 1
+            rec_year_counts = dict(sorted(rec_year_counts.items(), key=lambda x: x[0]))
 
-        rec_year_counts = {}
-        for rec_year in df['years'].values:
-            if rec_year in rec_year_counts:
-                rec_year_counts[rec_year] += 1
-            else:
-                rec_year_counts[rec_year] = 1
-        rec_year_counts = dict(sorted(rec_year_counts.items(), key=lambda x: x[0]))
+            years_list = list(rec_year_counts.keys())
+            values_list = list(rec_year_counts.values())
 
-        years_list = list(rec_year_counts.keys())
-        values_list = list(rec_year_counts.values())
-
-        years_data = []
-        for i in range(len(years_list)):
-            each_data = {}
-            each_data['year'] = years_list[i]
-            each_data['measure'] = values_list[i]
-            years_data.append(each_data)
+            years_data = []
+            for i in range(len(years_list)):
+                each_data = {}
+                each_data['year'] = years_list[i]
+                each_data['measure'] = values_list[i]
+                years_data.append(each_data)
 
         return json.dumps(years_data)
 
@@ -434,6 +457,23 @@ def rec_years(user_id=None):
     return render_template('line_chart.html', title='Most recommended release years', 
                            max=max(line_values), labels=line_labels, values=line_values)
 
+@app.route('/get_all_graphs/<user_id>')
+def get_all_graphs(user_id=None):
+    try:
+        all_data = []
+        all_data.append({'header':json.loads(get_header(user_id=user_id))})
+        all_data.append({'best_rated_movies':json.loads(get_best_rated())})
+        all_data.append({'latest_reviews':json.loads(last_reviews())})
+        all_data.append({'favorite_genres':json.loads(favorite_genres(user_id=user_id))})
+        all_data.append({'common_words':json.loads(common_words(user_id=user_id))})
+        all_data.append({'favorite_years':json.loads(favorite_years(user_id=user_id))})
+        all_data.append({'recommended_genres':json.loads(recommended_genres(user_id=user_id))})
+        all_data.append({'recommended_years':json.loads(recommended_years(user_id=user_id))})
+        return json.dumps(all_data)
+    
+    except Exception as e:
+        print(e)
+        return json.dumps({"message": "OOPS Something went wrong", "details": str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True)
