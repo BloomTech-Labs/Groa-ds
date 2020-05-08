@@ -304,6 +304,10 @@ CREATE TABLE public.recommendations
     user_id integer,
     date timestamp with time zone,
     model_type character varying COLLATE pg_catalog."default",
+    num_recs integer,
+    good_threshold integer,
+    bad_threshold integer,
+    harshness integer,
     CONSTRAINT recommendations_pkey PRIMARY KEY (recommendation_id),
     CONSTRAINT rec_user_id_fk FOREIGN KEY (user_id)
         REFERENCES public.users (user_id) MATCH SIMPLE
@@ -323,10 +327,7 @@ CREATE TABLE public.recommendations_movies
     recommendation_id integer NOT NULL,
     movie_number integer NOT NULL,
     movie_id character varying COLLATE pg_catalog."default" NOT NULL,
-    num_recs integer,
-    good_threshold integer,
-    bad_threshold integer,
-    harshness integer,
+    interaction boolean,
     CONSTRAINT recommendations_movies_pkey PRIMARY KEY (recommendation_id, movie_number),
     CONSTRAINT movie_recommendation_fk FOREIGN KEY (movie_id)
         REFERENCES public.movies (movie_id) MATCH SIMPLE
