@@ -511,7 +511,7 @@ code {response.status_code}!")
         self.start_timer()
         print("Connecting to database...")
         try:
-            # connect to the database and query it for the review/movie ids
+            # connec//t to the database and query it for the review/movie ids
             cursor, connection = self.connect_to_database()
             print("Connected.")
             query = "SELECT review_id, movie_id FROM movie_reviews"

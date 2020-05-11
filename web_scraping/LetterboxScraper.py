@@ -245,50 +245,79 @@ code {response.status_code}!")
 
         while high_priority or low_priority:
 
-            curs, conn = self.connect_to_database()
+            if counter >= self.max_iter_count:
+                print("Reached max iterations")
+                break
 
-            if high_priority:
-                ix = randint(0, len(high_priority)-1)
-                username = high_priority.pop(ix)
+            try:
+                curs, conn = self.connect_to_database()
 
-                existing_reviews = set()
+                if high_priority:
+                    print(f"Getting user from high_priority out of {len(high_priority)} total users")
+                    ix = randint(0, len(high_priority)-1)
+                    username = high_priority.pop(ix)
 
 
-            elif low_priority:
-                ix = randint(0, len(low_priority)-1)
-                username = low_priority.pop(ix)
+                elif low_priority:
+                    print(f"Getting user from low_priority out of {len(low_priority)} total users")
+                    ix = randint(0, len(low_priority)-1)
+                    username = low_priority.pop(ix)
 
-                query = """
-                    SELECT movie_id
-                    FROM movie_reviews
-                    WHERE user_name=%s;
-                """
-                curs.execute(query, [username])
-                existing_reviews = set(row[0] for row in curs.fetchall())
-                print(f"Got {len(existing_reviews)} existing reviews for user {username}")
+                if username in visited:
+                    continue
 
-            if username in visited:
+                if username in existing_users:
+
+                    query = """
+                        SELECT movie_id
+                        FROM movie_reviews
+                        WHERE user_name=%s;
+                    """
+                    curs.execute(query, [username])
+                    existing_reviews = set(row[0] for row in curs.fetchall())
+                    print(f"Got {len(existing_reviews)} existing reviews for user {username}")
+
+                else:
+                    existing_reviews = set()
+
+                visited.add(username)
+                counter += 1
+
+                if counter % 50 == 0:
+                    high_priority = list(set(high_priority))
+                    low_priority = list(set(low_priority))
+
+                print(f"scraping user: {username}")
+
+                url = base_url + "/" + username + "/films/reviews/"
+                reviews = []
+
+            except Exception as e:
+                print(f"Exception initializing scraping for this page")
+                print(e)
                 continue
-
-            visited.add(username)
-            counter += 1
-            print(f"scraping user: {username}")
-
-            url = base_url + "/" + username + "/films/reviews/"
-            reviews = []
 
             while url is not None:
 
-                res = requests.get(url)
-                if res.status_code != 200:
-                    print(f"Failed to scrape user: {url}")
+                try:
+                    res = requests.get(url)
+                    if res.status_code != 200:
+                        print(f"Failed to scrape user: {url}")
+                        continue
+
+                    print(f"Scraping {url}")
+
+                    soup = BeautifulSoup(res.text, "html.parser")
+
+                    films = soup.find_all(class_="film-detail")
+
+                except Exception as e:
+                    print("Error in requests or beautifulsoup")
+                    print(e)
+
+                    url = None
                     continue
 
-                print(f"Scraping {url}")
-
-                soup = BeautifulSoup(res.text, "html.parser")
-
-                films = soup.find_all(class_="film-detail")
                 for film in films:
 
                     try:
@@ -300,34 +329,60 @@ code {response.status_code}!")
                         if movie_id in existing_reviews:
                             continue
 
-                        rating = len(film.find(class_="rating").text)
-                        text = film.find(class_="body-text").text
+                        rating_el = film.find(class_="rating")
+                        if not rating_el:
+                            print("No rating")
+                            rating = None
+                        else:
+                            rating = len(rating_el.text)
 
-                        date_text = film.find(class_="date").text
-                        date = date_text.strip("Watched ").strip("Rewatched ")
-                        date = datetime.strptime(date, "%d %b, %Y")
-
-                        reviews.append((
-                            movie_id,
-                            date,
-                            rating,
-                            text,
-                            username,
-                            "letterboxd",
-                        ))
-
-                        time.sleep(1)
+                        text_el = film.find(class_="body-text")
+                        if not rating_el:
+                            print("No review text")
+                            text = None
+                        else:
+                            text = text_el.text
 
                     except Exception as e:
-                        print("Unhandled exception in scrape_by_user")
+                        print(f"scrape_by_users(): unhandled exception getting rating or text")
                         print(e)
+                        continue
+
+                    try:
+                        date_text = film.find(class_="date").text
+                        date = date_text.strip("Watched ").strip("Rewatched ").strip("Added ")
+                        if date: 
+                            dt = datetime.strptime(date, "%d %b, %Y")
+                        else:
+                            dt = pd.to_datetime(film.find(class_="date").find("time").get("datetime"))
+                    except Exception as e:
+                        print(f"scrape_by_users(): unhandled exception getting date: {date_text}")
+                        print(e)
+                        dt = None
+                    
+                    reviews.append((
+                        movie_id,
+                        dt,
+                        rating,
+                        text,
+                        username,
+                        "letterboxd",
+                    ))
 
                 # end for
 
-                next_button = soup.find("a", class_="next")
-                if next_button is not None:
-                    url = base_url + next_button.get("href")
-                else:
+                try:
+                    next_button = soup.find("a", class_="next")
+                    if next_button is not None:
+                        url = base_url + next_button.get("href")
+                    else:
+                        url = None
+
+                    time.sleep(1.5)
+
+                except Exception as e:
+                    print(f"scrape_by_users(): unhandled exception getting next button")
+                    print(e)
                     url = None
 
             # end while
@@ -348,6 +403,7 @@ code {response.status_code}!")
                     """
                     execute_batch(curs, query, reviews)
                     conn.commit()
+                    existing_users.add(username)
                     print(f"Inserted {len(reviews)} reviews in db\n")
                     break
 
@@ -363,7 +419,7 @@ code {response.status_code}!")
 
 
             try:
-                # networking
+                # networking: add users that the current user is following
                 url = base_url + "/" + username + "/following"
                 while url is not None:
                     print(f"Getting network on page {url}")
@@ -387,6 +443,7 @@ code {response.status_code}!")
 
                     next_button = soup.find(class_="next")
                     if not next_button or not next_button.get("href"):
+                        print("Finish networking")
                         break
                     url = base_url + next_button.get("href")
 

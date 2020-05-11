@@ -28,12 +28,21 @@ def get_ids_from_tarball():
 
 step = 100
 def run_scrapers(start, end):
+    """
+    Run the scrapers in blocks of {step}.
+    """
 
     ids = get_ids_from_tarball()
     num_max_ids = len(ids[start:end])
 
-    letterbox = LetterboxScraper(0, 1000, 100)
-    letterbox.scrape_by_users()
+    for ix in range(start, start+num_max_ids, step):
+
+        imdb = ImdbScraper(ix, ix+step, step, ids=ids)
+        imdb.update()
+
+        letterbox = LetterboxScraper(0, 1000, 100)
+        letterbox.scrape_by_users()
+
 
 def run_scrapers_update(start, end):
 
