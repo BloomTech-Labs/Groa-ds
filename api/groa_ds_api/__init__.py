@@ -60,6 +60,28 @@ def create_app():
         cache.delete("explore"+today)
         return result
 
+    @app.get("/recommendations/interaction/{rec_id}/{movie_id}")
+    async def interact_with_rec(rec_id: int, movie_id: str):
+        # could try to cleverly do this when
+        # the similar-movies route is hit once
+        # web team incorperates because if they are requesting that
+        # it means they could be interacting with it from the recs page
+        # it would mean though that the web team would need to pass
+        # an additional param of whether the referer was the recs page or
+        # not (defaulted to not)
+        # here only changing one thing:
+        # 1. change interaction column in recommendations_movies to true
+        return "need to implement"
+
+    @app.post("/rating")
+    async def rate_recommendations(payload: RatingInput):
+        # here we need to save two things to the DB
+        # 1. rating of movie in recommendations_movies column: need to make
+        # 2. new row in user_ratings with the rating of the movie
+        result = predictor.add_rating(payload)
+        # remove recommendation cache for user_id
+        return result
+
     @app.post("/similar-movies", response_model=SimOutput)
     async def get_similar_movies(payload: SimInput):
         """

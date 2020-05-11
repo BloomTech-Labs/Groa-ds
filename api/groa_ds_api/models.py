@@ -77,3 +77,9 @@ class GetListOutput(BaseModel):
 
 class ExploreOutput(BaseModel):
     data: List[Movie]
+
+
+class RatingInput(BaseModel):
+    movie_id: str
+    user_id: int
+    rating: float
