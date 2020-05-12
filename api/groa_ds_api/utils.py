@@ -266,6 +266,22 @@ class MovieUtility(object):
             fetch="none"
         )
         return "Success"
+    
+    def add_interaction(self, user_id: str, movie_id: str):
+        query = """
+        UPDATE recommendations_movies
+        SET interaction = TRUE
+        FROM recommendations
+        WHERE recommendations.user_id = %s 
+        AND recommendations_movies.movie_id = %s;
+        """
+        self.__run_query(
+            query,
+            params=(user_id, movie_id),
+            commit=True,
+            fetch="none"
+        )
+        return "Success"
 
     def create_movie_list(self, payload: CreateListInput):
         """ Creates a MovieList """

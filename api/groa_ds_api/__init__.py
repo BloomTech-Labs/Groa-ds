@@ -54,32 +54,42 @@ def create_app():
         `Will not always return as many recommendations as 
         num_recs due to the algorithms filtering process.`
         """
+        result = cache.get("recs"+payload.user_id)
+        if result is not None:
+            result = pickle.loads(result)
+            return result
         result = predictor.get_recommendations(payload, background_tasks)
-        # can delete if you don't want new recs updating /explore results
-        today = datetime.today().strftime('%Y-%m-%d')
-        cache.delete("explore"+today)
+        cache.set("recs"+payload.user_id, pickle.dumps(result))
         return result
 
-    @app.get("/recommendations/interaction/{rec_id}/{movie_id}")
-    async def interact_with_rec(rec_id: int, movie_id: str):
-        # could try to cleverly do this when
-        # the similar-movies route is hit once
-        # web team incorperates because if they are requesting that
-        # it means they could be interacting with it from the recs page
-        # it would mean though that the web team would need to pass
-        # an additional param of whether the referer was the recs page or
-        # not (defaulted to not)
-        # here only changing one thing:
-        # 1. change interaction column in recommendations_movies to true
-        return "need to implement"
+    @app.get("/recommendations/interaction/{user_id}/{movie_id}", response_model=str)
+    async def interact_with_rec(user_id: str, movie_id: str):
+        """
+        Given a `user_id` and `movie_id`, we update the movie recommendation to have
+        an interaction value of `TRUE`.
 
-    @app.post("/rating")
-    async def rate_recommendations(payload: RatingInput):
-        # here we need to save two things to the DB
-        # 1. rating of movie in recommendations_movies column: need to make
-        # 2. new row in user_ratings with the rating of the movie
+        Parameters:
+
+        - **rec_id:** str
+        - **movie_id:** str
+        """
+        result = predictor.add_interaction(user_id, movie_id)
+        return result
+
+    @app.post("/rating", response_model=str)
+    async def add_rating(payload: RatingInput):
+        """
+        Given the `RatingInput`, we add the rating to the DB and 
+        remove cached recs to account for new info collected.
+
+        Parameters:
+
+        - **user_id:** int
+        - **movie_id:** str
+        - **rating:** float
+        """
         result = predictor.add_rating(payload)
-        # remove recommendation cache for user_id
+        cache.delete("recs"+payload.user_id)
         return result
 
     @app.post("/similar-movies", response_model=SimOutput)
