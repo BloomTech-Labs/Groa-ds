@@ -14,6 +14,9 @@ class MovieRec(BaseModel):
     year: int
     genres: List[str]
     poster_url: str
+    trailer_url: str 
+    avg_rating: float 
+    description: str
 
 
 class Movie(BaseModel):
@@ -22,6 +25,9 @@ class Movie(BaseModel):
     year: int
     genres: List[str]
     poster_url: str
+    trailer_url: str 
+    avg_rating: float 
+    description: str
 
 
 class MovieList(BaseModel):
