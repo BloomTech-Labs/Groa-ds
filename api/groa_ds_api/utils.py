@@ -43,11 +43,15 @@ class MovieUtility(object):
     def __get_id_book(self):
         """ Gets movie data from database to merge with recommendations """
         cursor_dog = self.__get_cursor()
-        query = "SELECT movie_id, primary_title, start_year, genres, poster_url FROM movies;"
+        query = """
+        SELECT movie_id, primary_title, start_year, genres, 
+        poster_url, trailer_url, description, average_rating 
+        FROM movies;"""
         cursor_dog.execute(query)
         movie_sql = cursor_dog.fetchall()
         id_book = pd.DataFrame(movie_sql, columns=[
-                               'movie_id', 'title', 'year', 'genres', 'poster_url'])
+                               'movie_id', 'title', 'year', 'genres', 'poster_url', 
+                               'trailer_url', 'description', 'avg_rating'])
         cursor_dog.close()
         return id_book
 
