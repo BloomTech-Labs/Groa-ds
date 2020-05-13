@@ -54,10 +54,42 @@ def create_app():
         `Will not always return as many recommendations as 
         num_recs due to the algorithms filtering process.`
         """
+        result = cache.get("recs"+payload.user_id)
+        if result is not None:
+            result = pickle.loads(result)
+            return result
         result = predictor.get_recommendations(payload, background_tasks)
-        # can delete if you don't want new recs updating /explore results
-        today = datetime.today().strftime('%Y-%m-%d')
-        cache.delete("explore"+today)
+        cache.set("recs"+payload.user_id, pickle.dumps(result))
+        return result
+
+    @app.get("/recommendations/interaction/{user_id}/{movie_id}", response_model=str)
+    async def interact_with_rec(user_id: str, movie_id: str):
+        """
+        Given a `user_id` and `movie_id`, we update the movie recommendation to have
+        an interaction value of `TRUE`.
+
+        Parameters:
+
+        - **rec_id:** str
+        - **movie_id:** str
+        """
+        result = predictor.add_interaction(user_id, movie_id)
+        return result
+
+    @app.post("/rating", response_model=str)
+    async def add_rating(payload: RatingInput):
+        """
+        Given the `RatingInput`, we add the rating to the DB and 
+        remove cached recs to account for new info collected.
+
+        Parameters:
+
+        - **user_id:** int
+        - **movie_id:** str
+        - **rating:** float
+        """
+        result = predictor.add_rating(payload)
+        cache.delete("recs"+payload.user_id)
         return result
 
     @app.post("/similar-movies", response_model=SimOutput)
