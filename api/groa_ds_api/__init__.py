@@ -91,6 +91,18 @@ def create_app():
         result = predictor.add_rating(payload)
         cache.delete("recs"+payload.user_id)
         return result
+    
+    @app.post("/watchlist", response_model=str)
+    async def add_to_watchlist(payload: UserAndMovieInput):
+        result = predictor.add_to_watchlist(payload)
+        return result
+    
+    @app.post("/notwatchlist", response_model=str)
+    async def add_to_notwatchlist(payload: UserAndMovieInput):
+        result = predictor.add_to_notwatchlist(payload)
+        # should I remove recs cache for user?
+        cache.delete("recs"+payload.user_id)
+        return result
 
     @app.post("/similar-movies", response_model=SimOutput)
     async def get_similar_movies(payload: SimInput):
@@ -145,6 +157,11 @@ def create_app():
         cache.set("prov"+movie_id, pickle.dumps(result))
         return result
     
+    @app.post("/search")
+    async def search_movies(payload: SearchInput):
+        result = predictor.search_movies(payload.query)
+        return result
+
     @app.get("/explore", response_model=ExploreOutput)
     async def explore():
         """
