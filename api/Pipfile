@@ -17,6 +17,8 @@ fastapi = "*"
 uvicorn = "*"
 pydantic = "*"
 redis = "*"
+elasticsearch = "*"
+requests-aws4auth = "*"
 
 [requires]
 python_version = "3.7"
