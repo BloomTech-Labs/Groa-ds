@@ -474,7 +474,7 @@ class MovieUtility(object):
         SELECT m.provider_id, p.name, p.logo_url, m.provider_movie_url, 
         m.presentation_type, m.monetization_type
         FROM movie_providers AS m
-        LEFT JOIN providers AS p ON m .provider_id = p.provider_id
+        LEFT JOIN providers AS p ON m.provider_id = p.provider_id
         WHERE m.movie_id = %s; 
         """
         cursor_dog.execute(query, (movie_id,))
