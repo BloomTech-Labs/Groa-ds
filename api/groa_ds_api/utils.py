@@ -282,6 +282,18 @@ class MovieUtility(object):
             fetch="none"
         )
         return "Success"
+
+    def remove_rating(self, user_id, movie_id):
+        """
+        Removes a single rating from the user_ratings table.
+        """
+        query = "DELETE FROM user_ratings WHERE user_id = %s AND movie_id = %s;"
+        self.__run_query(
+            query,
+            params=(user_id, movie_id),
+            commit=True,
+            fetch="none")
+        return "Success"
     
     def add_to_watchlist(self, payload: UserAndMovieInput):
         query = """
