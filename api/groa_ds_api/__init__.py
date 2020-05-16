@@ -92,6 +92,19 @@ def create_app():
         cache.delete("recs"+payload.user_id)
         return result
     
+    @app.post("/remove-rating", response_model=str)
+    async def remove_rating(payload: UserAndMovieInput):
+        """
+        Given the 'UserAndMovieInput', we remove a user's rating
+        from the users_rating table in the DB.
+
+        Parameters:
+        - **user_id** str
+        - **movie_id** str
+        """
+        result = predictor.delete_rating(payload)
+        return result
+    
     @app.post("/watchlist", response_model=str)
     async def add_to_watchlist(payload: UserAndMovieInput):
         result = predictor.add_to_watchlist(payload)
