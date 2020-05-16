@@ -46,7 +46,7 @@ class MovieUtility(object):
     def __get_cursor(self):
         """ Grabs cursor from self.connection """
         try:
-            cursor = self.conneciton.cursor()
+            cursor = self.connection.cursor()
             return cursor
         except:
             self.connection = self.__get_connection()
