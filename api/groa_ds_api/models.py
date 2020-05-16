@@ -89,3 +89,16 @@ class RatingInput(BaseModel):
     movie_id: str
     user_id: str
     rating: float
+
+
+class UserAndMovieInput(BaseModel):
+    movie_id: str 
+    user_id: str
+
+
+class SearchInput(BaseModel):
+    query: str
+
+
+class SearchOutput(BaseModel):
+    data: List[Movie]

@@ -8,6 +8,8 @@ import json
 import hashlib
 from datetime import datetime
 from groa_ds_api.models import *
+from elasticsearch import Elasticsearch, RequestsHttpConnection
+from requests_aws4auth import AWS4Auth
 
 
 class MovieUtility(object):
@@ -20,6 +22,7 @@ class MovieUtility(object):
         self.model = self.__load_model()
         self.connection = self.__get_connection()
         self.id_book = self.__get_id_book()
+        self.es = self.__get_es()
 
     # ------- Start Private Methods -------
     def __get_connection(self):
@@ -29,6 +32,15 @@ class MovieUtility(object):
             password=os.getenv('DB_PASSWORD'),
             host=os.getenv('HOST'),
             port=os.getenv('PORT')
+        )
+    
+    def __get_es(self):
+        return Elasticsearch(
+            hosts=[{'host': os.getenv('ELASTIC'), 'port': 443}],
+            http_auth=AWS4Auth(os.getenv('ACCESS_ID'), os.getenv('ACCESS_SECRET'), 'us-east-1', 'es'),
+            use_ssl=True,
+            verify_certs=True,
+            connection_class=RequestsHttpConnection
         )
 
     def __get_cursor(self):
@@ -271,6 +283,53 @@ class MovieUtility(object):
         )
         return "Success"
     
+    def add_to_watchlist(self, payload: UserAndMovieInput):
+        query = """
+        INSERT INTO user_watchlist
+        (user_id, movie_id, date, source)
+        VALUES (%s, %s, %s, %s);
+        """
+        self.__run_query(
+            query,
+            params=(payload.user_id, payload.movie_id, datetime.now(), "groa"),
+            commit=True,
+            fetch="none"
+        )
+        return "Success"
+    
+    def add_to_notwatchlist(self, payload: UserAndMovieInput):
+        query = """
+        INSERT INTO user_willnotwatchlist
+        (user_id, movie_id, date)
+        VALUES (%s, %s, %s);
+        """
+        self.__run_query(
+            query,
+            params=(payload.user_id, payload.movie_id, datetime.now()),
+            commit=True,
+            fetch="none"
+        )
+        return "Success"
+    
+    def search_movies(self, query: str):
+        result = self.es.search(index="groa", size=20, expand_wildcards="all", body={
+            "query": {
+                "multi_match" : { 
+                    "query": query,
+                    "fields": ["description", "primary_title", "original_title", "genres"]
+                }
+            }
+        })
+        movie_ids = []
+        for elem in result['hits']['hits']:
+            movie_ids.append(elem['_id'])
+        search_df = self.__get_info(pd.DataFrame({"movie_id": movie_ids}))
+        search_df = search_df.fillna("None")
+        search_json = self.__get_JSON(search_df)
+        return {
+            "data": search_json
+        }
+
     def add_interaction(self, user_id: str, movie_id: str):
         query = """
         UPDATE recommendations_movies
@@ -430,14 +489,19 @@ class MovieUtility(object):
         n = payload.num_movies
         # get model
         clf = self.model
-        # could check if id is in vocab
-        m_vec = clf[movie_id]
-        movies_df = pd.DataFrame(clf.similar_by_vector(
-            m_vec, topn=n+1)[1:], columns=['movie_id', 'score'])
-        result_df = self.__get_info(movies_df)
-        return {
-            "data": self.__get_JSON(result_df)
-        }
+        try:
+            m_vec = clf[movie_id]
+            movies_df = pd.DataFrame(clf.similar_by_vector(
+                m_vec, topn=n+1)[1:], columns=['movie_id', 'score'])
+            result_df = self.__get_info(movies_df)
+            result_df = result_df.fillna("None")
+            return {
+                "data": self.__get_JSON(result_df)
+            }
+        except:
+            return {
+                "data": []
+            }
     
     def get_recent_recommendations(self, user_id: str = None):
         """ Grabs the movies of recent recommendations from our API """

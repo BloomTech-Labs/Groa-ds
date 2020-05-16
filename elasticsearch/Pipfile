@@ -4,19 +4,10 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pytest = "*"
-requests = "*"
 
 [packages]
-pandas = "*"
-numpy = "*"
-psycopg2-binary = "*"
-gensim = "*"
+psycopg2 = "*"
 python-dotenv = "*"
-fastapi = "*"
-uvicorn = "*"
-pydantic = "*"
-redis = "*"
 elasticsearch = "*"
 requests-aws4auth = "*"
 
