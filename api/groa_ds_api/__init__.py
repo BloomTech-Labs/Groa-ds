@@ -102,7 +102,7 @@ def create_app():
         - **user_id** str
         - **movie_id** str
         """
-        result = predictor.delete_rating(user_id, movie_id)
+        result = predictor.remove_rating(user_id, movie_id)
         cache.delete("recs"+payload.user_id)
         return result
     
