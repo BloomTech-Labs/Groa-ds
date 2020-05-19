@@ -349,16 +349,7 @@ class MovieUtility(object):
             "recs": []
         }
         if len(list_sql) > 0:
-            movie_ids = []
-            for movie in list_sql:
-                movie_ids.append(movie[0])
-                # list_json["data"].append({
-                #     "movie_id": movie[0],
-                #     "title": movie[1],
-                #     "year": movie[2],
-                #     "genres": movie[3].split(","),
-                #     "poster_url": movie[4]
-                # })
+            movie_ids = [movie[0] for movie in list_sql]
             data_df = self.__get_info(pd.DataFrame({"movie_id": movie_ids}))
             data_df = data_df.fillna("None")
             list_json["data"] = self.__get_JSON(data_df)
