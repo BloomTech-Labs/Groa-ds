@@ -94,11 +94,19 @@ def create_app():
     
     @app.post("/watchlist", response_model=str)
     async def add_to_watchlist(payload: UserAndMovieInput):
+        """
+        Given the `UserAndMovieInput`, the movie is added to the
+        user's watchlist.
+        """
         result = predictor.add_to_watchlist(payload)
         return result
     
     @app.post("/notwatchlist", response_model=str)
     async def add_to_notwatchlist(payload: UserAndMovieInput):
+        """
+        Given the `UserAndMovieInput`, the movie is added to the
+        user's willnotwatchlist.
+        """
         result = predictor.add_to_notwatchlist(payload)
         # should I remove recs cache for user?
         cache.delete("recs"+payload.user_id)
@@ -159,6 +167,10 @@ def create_app():
     
     @app.post("/search")
     async def search_movies(payload: SearchInput):
+        """
+        Given the `SearchInput`, a request is made to our
+        AWS Elast Search Service instance to get search results.
+        """
         result = predictor.search_movies(payload.query)
         return result
 
@@ -181,6 +193,12 @@ def create_app():
     
     @app.get("/explore/{user_id}")
     async def explore_user(user_id: str):
+        """
+        Given a `user_id`, explore data is returned.
+
+        Parameters:
+        - **user_id:** str
+        """
         # the lists work to a degree but still need a title 
         result = cache.get("explore"+user_id)
         if result is not None:
@@ -212,6 +230,9 @@ def create_app():
 
     @app.get("/movie-list/all", response_model=List[MovieList])
     async def get_all_lists():
+        """
+        Gets all public movie lists.
+        """
         result = cache.get("alllists")
         if result is not None:
             result = pickle.loads(result)

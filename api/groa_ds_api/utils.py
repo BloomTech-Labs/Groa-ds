@@ -270,17 +270,8 @@ class MovieUtility(object):
         (user_id, movie_id, rating, date, source)
         VALUES (%s, %s, %s, %s, %s);
         """
-        self.__run_query(
-            query,
-            params=(
-                payload.user_id,
-                payload.movie_id,
-                payload.rating,
-                datetime.now(),
-                "groa"),
-            commit=True,
-            fetch="none"
-        )
+        params = (payload.user_id, payload.movie_id, payload.rating, datetime.now(), "groa")
+        self.__run_query(query, params=params, commit=True, fetch="none")
         return "Success"
     
     def add_to_watchlist(self, payload: UserAndMovieInput):
@@ -289,12 +280,8 @@ class MovieUtility(object):
         (user_id, movie_id, date, source)
         VALUES (%s, %s, %s, %s);
         """
-        self.__run_query(
-            query,
-            params=(payload.user_id, payload.movie_id, datetime.now(), "groa"),
-            commit=True,
-            fetch="none"
-        )
+        params = (payload.user_id, payload.movie_id, datetime.now(), "groa")
+        self.__run_query(query, params=params, commit=True, fetch="none")
         return "Success"
     
     def add_to_notwatchlist(self, payload: UserAndMovieInput):
@@ -303,12 +290,8 @@ class MovieUtility(object):
         (user_id, movie_id, date)
         VALUES (%s, %s, %s);
         """
-        self.__run_query(
-            query,
-            params=(payload.user_id, payload.movie_id, datetime.now()),
-            commit=True,
-            fetch="none"
-        )
+        params = (payload.user_id, payload.movie_id, datetime.now())
+        self.__run_query(query, params=params, commit=True, fetch="none")
         return "Success"
     
     def search_movies(self, query: str):
@@ -338,22 +321,16 @@ class MovieUtility(object):
         WHERE recommendations.user_id = %s 
         AND recommendations_movies.movie_id = %s;
         """
-        self.__run_query(
-            query,
-            params=(user_id, movie_id),
-            commit=True,
-            fetch="none"
-        )
+        params = (user_id, movie_id)
+        self.__run_query(query, params=params, commit=True, fetch="none")
         return "Success"
 
     def create_movie_list(self, payload: CreateListInput):
         """ Creates a MovieList """
         query = """INSERT INTO movie_lists
         (user_id, name, private) VALUES (%s, %s, %s) RETURNING list_id;"""
-        list_id = self.__run_query(
-            query,
-            (payload.user_id, payload.name, payload.private),
-            commit=True)
+        params = (payload.user_id, payload.name, payload.private)
+        list_id = self.__run_query(query, params=params, commit=True)
         return {
             "list_id": list_id,
             "name": payload.name,
@@ -365,10 +342,7 @@ class MovieUtility(object):
         query = """SELECT l.movie_id, m.primary_title, m.start_year, m.genres, m.poster_url 
         FROM list_movies AS l LEFT JOIN movies AS m ON l.movie_id = m.movie_id
         WHERE l.list_id = %s;"""
-        list_sql = self.__run_query(
-            query,
-            params=(list_id,),
-            fetch="all")
+        list_sql = self.__run_query(query, params=(list_id,), fetch="all")
         list_json = {
             "data": [],
             "recs": []
@@ -396,10 +370,7 @@ class MovieUtility(object):
     def get_user_lists(self, user_id: str):
         """ Get user's MovieLists """
         query = "SELECT list_id, name, private FROM movie_lists WHERE user_id = %s;"
-        user_lists = self.__run_query(
-            query,
-            params=(user_id,),
-            fetch="all")
+        user_lists = self.__run_query(query, params=(user_id,), fetch="all")
         user_lists_json = [self.__get_list_preview(
             elem) for elem in user_lists]
         return user_lists_json
@@ -407,9 +378,7 @@ class MovieUtility(object):
     def get_all_lists(self):
         """ Get all MovieLists """
         query = "SELECT list_id, name, private FROM movie_lists WHERE private=FALSE;"
-        lists = self.__run_query(
-            query,
-            fetch="all")
+        lists = self.__run_query(query, fetch="all")
         lists_json = [self.__get_list_preview(elem) for elem in lists]
         return lists_json
 
@@ -417,31 +386,21 @@ class MovieUtility(object):
         """ Add movie to a MovieList """
         query = """INSERT INTO list_movies
         (list_id, movie_id) VALUES (%s, %s);"""
-        self.__run_query(
-            query,
-            params=(list_id, movie_id),
-            commit=True,
-            fetch="none")
+        params = (list_id, movie_id)
+        self.__run_query(query, params=params, commit=True, fetch="none")
         return "Success"
 
     def remove_from_movie_list(self, list_id: int, movie_id: str):
         """ Remove movie from a MovieList """
         query = "DELETE FROM list_movies WHERE list_id = %s AND movie_id = %s;"
-        self.__run_query(
-            query,
-            params=(list_id, movie_id),
-            commit=True,
-            fetch="none")
+        params = (list_id, movie_id)
+        self.__run_query(query, params=params, commit=True, fetch="none")
         return "Success"
 
     def delete_movie_list(self, list_id: int):
         """ Delete a MovieList """
         query = "DELETE FROM movie_lists WHERE list_id = %s RETURNING user_id, private;"
-        result = self.__run_query(
-            query,
-            params=(list_id,),
-            commit=True,
-            fetch="all")[0]
+        result = self.__run_query(query, params=(list_id,), commit=True, fetch="all")[0]
         return result
 
     def get_most_similar_title(self, movie_id: str, id_list: list):
@@ -512,9 +471,7 @@ class MovieUtility(object):
         ORDER BY r.date DESC
         LIMIT 50;
         """
-        recs = self.__run_query(
-            query,
-            fetch="all")
+        recs = self.__run_query(query, fetch="all")
         recs_df = pd.DataFrame(recs, columns=["movie_id"])
         rec_data = self.__get_info(recs_df)
         rec_data = rec_data.fillna("None")
