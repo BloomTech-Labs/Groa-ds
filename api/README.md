@@ -11,6 +11,16 @@ Recommender system for the Groa project.
 - run `docker-compose up`
 - API will be running on `http://localhost:5000`
 
+## local setup (with pipenv)
+
+- navigate to `api/` directory
+- run `pipenv install`
+- set REDIS_HOST in `.env` to "localhost"
+- run redis server locally with `redis-server` (will have to install with homebrew prior)
+- then: 
+    - run app with `pipenv run python main.py`
+    - test app with `pipenv run pytest`
+
 ## enviroment variables needed
 
 - DB_USER

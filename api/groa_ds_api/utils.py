@@ -98,6 +98,8 @@ class MovieUtility(object):
             rec['year'] = int(rec['year']) if not isinstance(
                 rec['year'], str) else 0
             rec['genres'] = rec['genres'].split(',')
+            rec['avg_rating'] = float(rec['avg_rating']) if not isinstance(
+                rec['avg_rating'], str) else 0.0
             rec_json.append(rec)
 
         return rec_json
@@ -126,9 +128,8 @@ class MovieUtility(object):
             bad_list = bad_df['movie_id'].to_list()
             neutral_list = neutral_df['movie_id'].to_list()
 
-        except Exception as e:
-            print("Error making good, bad and neutral list")
-            raise Exception(e)
+        except Exception:
+            raise Exception("Error making good, bad and neutral list")
 
         ratings_dict = pd.Series(
             ratings_df['rating'].values, index=ratings_df['movie_id']).to_dict()
@@ -188,7 +189,7 @@ class MovieUtility(object):
                             w = ((r**3)*-0.00143) + ((r**2)*0.0533) + \
                                 (r*-0.4695) + 2.1867
                             m_vec = m_vec * w
-                        except KeyError:
+                        except:
                             continue
                     movie_vec.append(m_vec)
                 except KeyError:
@@ -199,7 +200,7 @@ class MovieUtility(object):
                         f_vec = clf[i]
                         # weight feedback by changing multiplier here
                         movie_vec.append(f_vec*1.8)
-                    except KeyError:
+                    except:
                         continue
             return np.mean(movie_vec, axis=0)
 
@@ -207,7 +208,7 @@ class MovieUtility(object):
             """ Aggregates movies and finds n vectors with highest cosine similarity """
             if bad_movies:
                 v = _remove_dislikes(bad_movies, v, harshness=harshness)
-            return clf.similar_by_vector(v, topn=n+1)[1:]
+            return clf.wv.similar_by_vector(v, topn=n+1)[1:]
 
         def _remove_dupes(recs, input, bad_movies, hist_list=[], feedback_list=[]):
             """ Remove any recommended IDs that were in the input list """
@@ -351,20 +352,21 @@ class MovieUtility(object):
             movie_ids = []
             for movie in list_sql:
                 movie_ids.append(movie[0])
-                list_json["data"].append({
-                    "movie_id": movie[0],
-                    "title": movie[1],
-                    "year": movie[2],
-                    "genres": movie[3].split(","),
-                    "poster_url": movie[4]
-                })
+                # list_json["data"].append({
+                #     "movie_id": movie[0],
+                #     "title": movie[1],
+                #     "year": movie[2],
+                #     "genres": movie[3].split(","),
+                #     "poster_url": movie[4]
+                # })
+            data_df = self.__get_info(pd.DataFrame({"movie_id": movie_ids}))
+            data_df = data_df.fillna("None")
+            list_json["data"] = self.__get_JSON(data_df)
             w2v_preds = self.__predict(movie_ids)
             df_w2v = pd.DataFrame(w2v_preds, columns=['movie_id', 'score'])
-            # get movie info using movie_id
             rec_data = self.__get_info(df_w2v)
             rec_data = rec_data.fillna("None")
-            rec_json = self.__get_JSON(rec_data)
-            list_json["recs"] = rec_json
+            list_json["recs"] = self.__get_JSON(rec_data)
         return list_json
 
     def get_user_lists(self, user_id: str):
@@ -450,7 +452,7 @@ class MovieUtility(object):
         clf = self.model
         try:
             m_vec = clf[movie_id]
-            movies_df = pd.DataFrame(clf.similar_by_vector(
+            movies_df = pd.DataFrame(clf.wv.similar_by_vector(
                 m_vec, topn=n+1)[1:], columns=['movie_id', 'score'])
             result_df = self.__get_info(movies_df)
             result_df = result_df.fillna("None")
