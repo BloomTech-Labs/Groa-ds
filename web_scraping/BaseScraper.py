@@ -50,8 +50,8 @@ class BaseScraper:
         connection object.
         """
 
-        # set 60 second timeout
-        os.environ['PGOPTIONS'] = '-c statement_timeout=120000'
+        # set 180 second timeout
+        os.environ['PGOPTIONS'] = '-c statement_timeout=180000'
 
         connection = psycopg2.connect(
             database = self.database,

@@ -235,10 +235,16 @@ code {response.status_code}!")
             for row in fetched
         })
 
-        curs.execute("SELECT DISTINCT user_name FROM movie_reviews;")
-        fetched = curs.fetchall()
-        existing_users = set(row[0] for row in fetched)
-        print(f"Got {len(existing_users)} existing users")
+        curs.execute("SELECT COUNT(DISTINCT user_name) FROM movie_reviews;")
+        num_users = curs.fetchone()[0]
+        print(f"Found {num_users} distinct users")
+        step = 100_000
+        existing_users = set()
+        for ix in range(0, num_users+1, step):
+            curs.execute("SELECT DISTINCT user_name FROM movie_reviews LIMIT %s OFFSET %s;", (ix, step))
+            fetched = curs.fetchall()
+            existing_users.update(set(row[0] for row in fetched))
+            print(f"retrieved {len(existing_users)} existing users")
 
         counter = 0
         visited = set()

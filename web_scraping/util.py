@@ -37,9 +37,6 @@ def run_scrapers(start, end):
 
     for ix in range(start, start+num_max_ids, step):
 
-        letterbox = LetterboxScraper(0, 1000, 100)
-        letterbox.scrape_by_users()
-
         imdb = ImdbScraper(ix, ix+step, step, ids=ids)
         imdb.update()
 
