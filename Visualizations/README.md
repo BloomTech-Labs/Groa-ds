@@ -18,6 +18,7 @@
 
 | Graph data | Route |
 | - | - |
+| All graphs data | /get_all_graphs/user_id |
 | Header | /get_header/user_id |
 | Best rated movies | /get_best_rated |
 | Latest reviews | /get_last_reviews |

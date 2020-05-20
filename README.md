@@ -1,6 +1,7 @@
-# Gróa
-
-You can check out the [live demo of Gróa here](http://www.groa.us/).
+ <img src="https://i.imgur.com/NUs8EQX.jpg">
+ 
+ 
+[You can check out the live demo of Gróa here](http://www.groa.us/).
 
 ## Contributors
 

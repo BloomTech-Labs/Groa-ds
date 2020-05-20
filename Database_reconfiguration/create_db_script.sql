@@ -76,15 +76,6 @@ CREATE SEQUENCE public.user_review_id_seq
     CACHE 1;
 
 
--- SEQUENCE: public.users_id_seq
-
-CREATE SEQUENCE public.users_id_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    CACHE 1;
-
 -- SEQUENCE: public.user_watchlist_id_seq
 
 CREATE SEQUENCE public.user_watchlist_id_seq
@@ -152,16 +143,11 @@ TABLESPACE pg_default;
 
 CREATE TABLE public.users
 (
-    user_id integer NOT NULL DEFAULT nextval('users_id_seq'::regclass),
-    user_name character varying(128) COLLATE pg_catalog."default" NOT NULL,
-    password character varying(128) COLLATE pg_catalog."default",
+    user_id character varying COLLATE pg_catalog."default" NOT NULL,
+	email character varying COLLATE pg_catalog."default",
     has_letterboxd boolean,
     has_imdb boolean,
-    last_login date,
-    email character varying COLLATE pg_catalog."default",
-    okta_id character varying COLLATE pg_catalog."default",
     CONSTRAINT users_pkey PRIMARY KEY (user_id),
-    CONSTRAINT users_username_unique UNIQUE (user_name)
 )
 WITH (
     OIDS = FALSE
@@ -174,7 +160,7 @@ TABLESPACE pg_default;
 CREATE TABLE public.user_willnotwatchlist
 (
     id integer NOT NULL DEFAULT nextval('willnotwatch_id_seq'::regclass),
-    user_id integer NOT NULL,
+    user_id character varying COLLATE pg_catalog."default" NOT NULL,
     movie_id character varying COLLATE pg_catalog."default" NOT NULL,
     date date NOT NULL,
     CONSTRAINT user_willnotwatchlist_pk PRIMARY KEY (id),
@@ -197,7 +183,7 @@ TABLESPACE pg_default;
 
 CREATE TABLE public.user_watchlist
 (
-    user_id integer NOT NULL,
+    user_id character varying COLLATE pg_catalog."default" NOT NULL,
     movie_id character varying COLLATE pg_catalog."default" NOT NULL,
     date date NOT NULL,
     source character varying COLLATE pg_catalog."default",
@@ -222,7 +208,7 @@ TABLESPACE pg_default;
 
 CREATE TABLE public.user_watched
 (
-    user_id integer NOT NULL,
+    user_id character varying COLLATE pg_catalog."default" NOT NULL,
     movie_id character varying COLLATE pg_catalog."default" NOT NULL,
     date date NOT NULL,
     source character varying COLLATE pg_catalog."default",
@@ -247,7 +233,7 @@ TABLESPACE pg_default;
 CREATE TABLE public.user_reviews
 (
     review_id integer NOT NULL DEFAULT nextval('user_review_id_seq'::regclass),
-    user_id integer NOT NULL,
+    user_id character varying COLLATE pg_catalog."default" NOT NULL,
     movie_id character varying COLLATE pg_catalog."default" NOT NULL,
     date date,
     review_title character varying COLLATE pg_catalog."default",
@@ -275,7 +261,7 @@ TABLESPACE pg_default;
 CREATE TABLE public.user_ratings
 (
     rating_id integer NOT NULL DEFAULT nextval('user_rating_id_seq'::regclass),
-    user_id integer,
+    user_id character varying COLLATE pg_catalog."default" NOT NULL,
     movie_id character varying COLLATE pg_catalog."default",
     date date,
     rating real,
@@ -301,9 +287,13 @@ TABLESPACE pg_default;
 CREATE TABLE public.recommendations
 (
     recommendation_id integer NOT NULL DEFAULT nextval('rec_id_seq'::regclass),
-    user_id integer,
+    user_id character varying COLLATE pg_catalog."default" NOT NULL,
     date timestamp with time zone,
     model_type character varying COLLATE pg_catalog."default",
+    num_recs integer,
+    good_threshold integer,
+    bad_threshold integer,
+    harshness integer,
     CONSTRAINT recommendations_pkey PRIMARY KEY (recommendation_id),
     CONSTRAINT rec_user_id_fk FOREIGN KEY (user_id)
         REFERENCES public.users (user_id) MATCH SIMPLE
@@ -323,10 +313,7 @@ CREATE TABLE public.recommendations_movies
     recommendation_id integer NOT NULL,
     movie_number integer NOT NULL,
     movie_id character varying COLLATE pg_catalog."default" NOT NULL,
-    num_recs integer,
-    good_threshold integer,
-    bad_threshold integer,
-    harshness integer,
+    interaction boolean,
     CONSTRAINT recommendations_movies_pkey PRIMARY KEY (recommendation_id, movie_number),
     CONSTRAINT movie_recommendation_fk FOREIGN KEY (movie_id)
         REFERENCES public.movies (movie_id) MATCH SIMPLE
@@ -383,6 +370,26 @@ WITH (
 TABLESPACE pg_default;
 
 
+-- Table: public.movie_lists
+
+CREATE TABLE public.movie_lists
+(
+    list_id integer NOT NULL DEFAULT nextval('movie_lists_id_seq'::regclass),
+    user_id character varying COLLATE pg_catalog."default" NOT NULL,
+    name character varying COLLATE pg_catalog."default",
+    private boolean,
+    CONSTRAINT movie_lists_pkey PRIMARY KEY (list_id),
+    CONSTRAINT movie_lists_user_id_fkey FOREIGN KEY (user_id)
+        REFERENCES public.users (user_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+
 -- Table: public.list_movies
 
 CREATE TABLE public.list_movies
@@ -396,26 +403,6 @@ CREATE TABLE public.list_movies
         ON DELETE CASCADE,
     CONSTRAINT list_movies_movie_id_fkey FOREIGN KEY (movie_id)
         REFERENCES public.movies (movie_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-)
-WITH (
-    OIDS = FALSE
-)
-TABLESPACE pg_default;
-
-
--- Table: public.movie_lists
-
-CREATE TABLE public.movie_lists
-(
-    list_id integer NOT NULL DEFAULT nextval('movie_lists_id_seq'::regclass),
-    user_id integer NOT NULL,
-    name character varying COLLATE pg_catalog."default",
-    private boolean,
-    CONSTRAINT movie_lists_pkey PRIMARY KEY (list_id),
-    CONSTRAINT movie_lists_user_id_fkey FOREIGN KEY (user_id)
-        REFERENCES public.users (user_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 )

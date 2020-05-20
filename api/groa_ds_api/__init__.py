@@ -41,7 +41,7 @@ def create_app():
 
         Parameters: 
 
-        - **user_id:** int
+        - **user_id:** str
         - num_recs: int [1, 100]
         - good_threshold: int [3, 5]
         - bad_threshold: int [1, 3]
@@ -54,10 +54,76 @@ def create_app():
         `Will not always return as many recommendations as 
         num_recs due to the algorithms filtering process.`
         """
+        result = cache.get("recs"+payload.user_id)
+        if result is not None:
+            result = pickle.loads(result)
+            return result
         result = predictor.get_recommendations(payload, background_tasks)
-        # can delete if you don't want new recs updating /explore results
-        today = datetime.today().strftime('%Y-%m-%d')
-        cache.delete("explore"+today)
+        cache.set("recs"+payload.user_id, pickle.dumps(result))
+        return result
+
+    @app.get("/recommendations/interaction/{user_id}/{movie_id}", response_model=str)
+    async def interact_with_rec(user_id: str, movie_id: str):
+        """
+        Given a `user_id` and `movie_id`, we update the movie recommendation to have
+        an interaction value of `TRUE`.
+
+        Parameters:
+
+        - **rec_id:** str
+        - **movie_id:** str
+        """
+        result = predictor.add_interaction(user_id, movie_id)
+        return result
+
+    @app.post("/rating", response_model=str)
+    async def add_rating(payload: RatingInput):
+        """
+        Given the `RatingInput`, we add the rating to the DB and 
+        remove cached recs to account for new info collected.
+
+        Parameters:
+
+        - **user_id:** str
+        - **movie_id:** str
+        - **rating:** float
+        """
+        result = predictor.add_rating(payload)
+        cache.delete("recs"+payload.user_id)
+        return result
+    
+    @app.post("/rating/{user_id}/remove/{movie_id}", response_model=str)
+    async def remove_rating(user_id: str, movie_id: str):
+        """
+        Given the user_id and movie_id, we remove a user's rating
+        from the users_rating table in the DB.
+
+        Parameters:
+        - **user_id** str
+        - **movie_id** str
+        """
+        result = predictor.remove_rating(user_id, movie_id)
+        cache.delete("recs"+user_id)
+        return result
+    
+    @app.post("/watchlist", response_model=str)
+    async def add_to_watchlist(payload: UserAndMovieInput):
+        """
+        Given the `UserAndMovieInput`, the movie is added to the
+        user's watchlist.
+        """
+        result = predictor.add_to_watchlist(payload)
+        return result
+    
+    @app.post("/notwatchlist", response_model=str)
+    async def add_to_notwatchlist(payload: UserAndMovieInput):
+        """
+        Given the `UserAndMovieInput`, the movie is added to the
+        user's willnotwatchlist.
+        """
+        result = predictor.add_to_notwatchlist(payload)
+        # should I remove recs cache for user?
+        cache.delete("recs"+payload.user_id)
         return result
 
     @app.post("/similar-movies", response_model=SimOutput)
@@ -113,6 +179,15 @@ def create_app():
         cache.set("prov"+movie_id, pickle.dumps(result))
         return result
     
+    @app.post("/search")
+    async def search_movies(payload: SearchInput):
+        """
+        Given the `SearchInput`, a request is made to our
+        AWS Elast Search Service instance to get search results.
+        """
+        result = predictor.search_movies(payload.query)
+        return result
+
     @app.get("/explore", response_model=ExploreOutput)
     async def explore():
         """
@@ -131,14 +206,20 @@ def create_app():
         return result
     
     @app.get("/explore/{user_id}")
-    async def explore_user(user_id: int):
+    async def explore_user(user_id: str):
+        """
+        Given a `user_id`, explore data is returned.
+
+        Parameters:
+        - **user_id:** str
+        """
         # the lists work to a degree but still need a title 
-        result = cache.get("explore"+str(user_id))
+        result = cache.get("explore"+user_id)
         if result is not None:
             result = pickle.loads(result)
             return result
         result = predictor.get_recent_recommendations(user_id)
-        cache.set("explore"+str(user_id), pickle.dumps(result))
+        cache.set("explore"+user_id, pickle.dumps(result))
         return result
 
     """ Start of Movie List routes """
@@ -149,20 +230,23 @@ def create_app():
         `list_id`.
 
         Parameters:
-        - **user_id:** int
+        - **user_id:** str
         - **name:** str
 
         Returns:
         - **list_id:** int
         """
         list_id = predictor.create_movie_list(payload)
-        cache.delete("lists"+str(payload.user_id))
+        cache.delete("lists"+payload.user_id)
         if not payload.private:
             cache.delete("alllists")
         return list_id
 
     @app.get("/movie-list/all", response_model=List[MovieList])
     async def get_all_lists():
+        """
+        Gets all public movie lists.
+        """
         result = cache.get("alllists")
         if result is not None:
             result = pickle.loads(result)
@@ -172,13 +256,13 @@ def create_app():
         return result
 
     @app.get("/movie-list/all/{user_id}", response_model=List[MovieList])
-    async def get_user_lists(user_id: int):
+    async def get_user_lists(user_id: str):
         """
         Given a `user_id`, we grab a preview of all movie lists 
         the user has made.
 
         Parameters:
-        - **user_id:** int
+        - **user_id:** str
 
         Returns:
         - List[ListPreview]
@@ -187,12 +271,12 @@ def create_app():
         - list_id: int
         - name: str
         """
-        result = cache.get("lists"+str(user_id))
+        result = cache.get("lists"+user_id)
         if result is not None:
             result = pickle.loads(result)
             return result
         result = predictor.get_user_lists(user_id)
-        cache.set("lists"+str(user_id), pickle.dumps(result))
+        cache.set("lists"+user_id, pickle.dumps(result))
         return result
 
     @app.get("/movie-list/{list_id}", response_model=GetListOutput)
@@ -266,7 +350,7 @@ def create_app():
         result = predictor.delete_movie_list(list_id)
         cache.delete("movielist"+str(list_id))
         cache.delete("lists"+str(result[0]))
-        if result[1]:
+        if not result[1]:
             cache.delete("alllists")
         return "Success"
     """ End of Movie List routes """

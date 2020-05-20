@@ -14,6 +14,9 @@ class MovieRec(BaseModel):
     year: int
     genres: List[str]
     poster_url: str
+    trailer_url: str 
+    avg_rating: float 
+    description: str
 
 
 class Movie(BaseModel):
@@ -22,6 +25,9 @@ class Movie(BaseModel):
     year: int
     genres: List[str]
     poster_url: str
+    trailer_url: str 
+    avg_rating: float 
+    description: str
 
 
 class MovieList(BaseModel):
@@ -40,7 +46,7 @@ class Provider(BaseModel):
 
 
 class RecInput(BaseModel):
-    user_id: int
+    user_id: str
     num_recs: int = 10
     good_threshold: int = 4
     bad_threshold: int = 3
@@ -65,7 +71,7 @@ class ProviderOutput(BaseModel):
 
 
 class CreateListInput(BaseModel):
-    user_id: int
+    user_id: str
     name: str
     private: bool = False
 
@@ -76,4 +82,23 @@ class GetListOutput(BaseModel):
 
 
 class ExploreOutput(BaseModel):
+    data: List[Movie]
+
+
+class RatingInput(BaseModel):
+    movie_id: str
+    user_id: str
+    rating: float
+
+
+class UserAndMovieInput(BaseModel):
+    movie_id: str 
+    user_id: str
+
+
+class SearchInput(BaseModel):
+    query: str
+
+
+class SearchOutput(BaseModel):
     data: List[Movie]
