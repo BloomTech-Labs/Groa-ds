@@ -336,7 +336,7 @@ def create_app():
         result = predictor.delete_movie_list(list_id)
         cache.delete("movielist"+str(list_id))
         cache.delete("lists"+str(result[0]))
-        if result[1]:
+        if not result[1]:
             cache.delete("alllists")
         return "Success"
     """ End of Movie List routes """
