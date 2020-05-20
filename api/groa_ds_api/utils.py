@@ -46,7 +46,7 @@ class MovieUtility(object):
     def __get_cursor(self):
         """ Grabs cursor from self.connection """
         try:
-            cursor = self.conneciton.cursor()
+            cursor = self.connection.cursor()
             return cursor
         except:
             self.connection = self.__get_connection()
@@ -282,6 +282,18 @@ class MovieUtility(object):
             fetch="none"
         )
         return "Success"
+
+    def remove_rating(self, user_id, movie_id):
+        """
+        Removes a single rating from the user_ratings table.
+        """
+        query = "DELETE FROM user_ratings WHERE user_id = %s AND movie_id = %s;"
+        self.__run_query(
+            query,
+            params=(user_id, movie_id),
+            commit=True,
+            fetch="none")
+        return "Success"
     
     def add_to_watchlist(self, payload: UserAndMovieInput):
         query = """
@@ -462,7 +474,7 @@ class MovieUtility(object):
         SELECT m.provider_id, p.name, p.logo_url, m.provider_movie_url, 
         m.presentation_type, m.monetization_type
         FROM movie_providers AS m
-        LEFT JOIN providers AS p ON m .provider_id = p.provider_id
+        LEFT JOIN providers AS p ON m.provider_id = p.provider_id
         WHERE m.movie_id = %s; 
         """
         cursor_dog.execute(query, (movie_id,))
