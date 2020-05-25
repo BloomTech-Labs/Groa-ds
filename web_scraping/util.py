@@ -28,12 +28,18 @@ def get_ids_from_tarball():
 
 step = 100
 def run_scrapers(start, end):
+    """
+    Run the scrapers in blocks of {step}.
+    """
 
     ids = get_ids_from_tarball()
     num_max_ids = len(ids[start:end])
 
-    imdb = ImdbScraper(0, num_max_ids, 100)
-    imdb.scrape_by_users()
+    for ix in range(start, start+num_max_ids, step):
+
+        imdb = ImdbScraper(ix, ix+step, step, ids=ids)
+        imdb.update()
+
 
 def run_scrapers_update(start, end):
 

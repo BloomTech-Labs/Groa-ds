@@ -49,6 +49,10 @@ class BaseScraper:
         arguments other than self. Returns a cursor object and a
         connection object.
         """
+
+        # set 180 second timeout
+        os.environ['PGOPTIONS'] = '-c statement_timeout=180000'
+
         connection = psycopg2.connect(
             database = self.database,
             user     = self.user,

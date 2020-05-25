@@ -7,6 +7,8 @@ import requests
 import pandas as pd
 from psycopg2.extras import execute_batch
 import traceback
+import queue
+from datetime import datetime
 
 
 from BaseScraper import BaseScraper
@@ -202,6 +204,269 @@ code {response.status_code}!")
         self.show(broken)
         if len(broken) == 0:
             print("none")
+
+    def scrape_by_users(self, first_user="flyingindie"):
+        """
+            Scrapes all movies rated or reviewed by `first_user`,
+            then moves to users connected to `first_user` and scrapes
+            movies rated by them, and so on.
+        """
+
+        print("scrape_by_users()")
+        base_url = "https://letterboxd.com"
+
+        # high priority is a list of users with no reviews currently in the db
+        high_priority = []
+        # low priority is a list of users with existing reviews in the db
+        low_priority = [first_user]
+
+        curs, conn = self.connect_to_database()
+        curs.execute("SELECT movie_id, primary_title, original_title, start_year FROM movies;")
+        fetched = curs.fetchall()
+
+        print("Got movie ids")
+
+        title_to_id = {
+            (row[1], row[3]): row[0]
+            for row in fetched
+        }
+        title_to_id.update({
+            (row[2], row[3]): row[0]
+            for row in fetched
+        })
+
+        curs.execute("SELECT COUNT(DISTINCT user_name) FROM movie_reviews;")
+        num_users = curs.fetchone()[0]
+        print(f"Found {num_users} distinct users")
+        step = 100_000
+        existing_users = set()
+        for ix in range(0, num_users+1, step):
+            curs.execute("SELECT DISTINCT user_name FROM movie_reviews LIMIT %s OFFSET %s;", (ix, step))
+            fetched = curs.fetchall()
+            existing_users.update(set(row[0] for row in fetched))
+            print(f"retrieved {len(existing_users)} existing users")
+
+        counter = 0
+        visited = set()
+
+        while high_priority or low_priority:
+
+            if counter >= self.max_iter_count:
+                print("Reached max iterations")
+                break
+
+            try:
+                curs, conn = self.connect_to_database()
+
+                if high_priority:
+                    print(f"Getting user from high_priority out of {len(high_priority)} total users")
+                    ix = randint(0, len(high_priority)-1)
+                    username = high_priority.pop(ix)
+
+
+                elif low_priority:
+                    print(f"Getting user from low_priority out of {len(low_priority)} total users")
+                    ix = randint(0, len(low_priority)-1)
+                    username = low_priority.pop(ix)
+
+                if username in visited:
+                    continue
+
+                if username in existing_users:
+
+                    query = """
+                        SELECT movie_id
+                        FROM movie_reviews
+                        WHERE user_name=%s;
+                    """
+                    curs.execute(query, [username])
+                    existing_reviews = set(row[0] for row in curs.fetchall())
+                    print(f"Got {len(existing_reviews)} existing reviews for user {username}")
+
+                else:
+                    existing_reviews = set()
+
+                visited.add(username)
+                counter += 1
+
+                if counter % 50 == 0:
+                    high_priority = list(set(high_priority))
+                    low_priority = list(set(low_priority))
+
+                print(f"scraping user: {username}")
+
+                url = base_url + "/" + username + "/films/reviews/"
+                reviews = []
+
+            except Exception as e:
+                print(f"Exception initializing scraping for this page")
+                print(e)
+                continue
+
+            while url is not None:
+
+                try:
+                    res = requests.get(url)
+                    if res.status_code != 200:
+                        print(f"Failed to scrape user: {url}")
+                        continue
+
+                    print(f"Scraping {url}")
+
+                    soup = BeautifulSoup(res.text, "html.parser")
+
+                    films = soup.find_all(class_="film-detail")
+
+                except Exception as e:
+                    print("Error in requests or beautifulsoup")
+                    print(e)
+
+                    url = None
+                    continue
+
+                for film in films:
+
+                    try:
+                        headline = film.find("h2")
+                        title, year = headline.find_all("a")
+                        movie_id = title_to_id.get((title.text, int(year.text)))
+                        if not movie_id:
+                            continue
+                        if movie_id in existing_reviews:
+                            continue
+
+                        rating_el = film.find(class_="rating")
+                        if not rating_el:
+                            print("No rating")
+                            rating = None
+                        else:
+                            rating = len(rating_el.text)
+
+                        text_el = film.find(class_="body-text")
+                        if not rating_el:
+                            print("No review text")
+                            text = None
+                        else:
+                            text = text_el.text
+
+                    except Exception as e:
+                        print(f"scrape_by_users(): unhandled exception getting rating or text")
+                        print(e)
+                        continue
+
+                    try:
+                        date_text = film.find(class_="date").text
+                        date = date_text.strip("Watched ").strip("Rewatched ").strip("Added ")
+                        if date: 
+                            dt = datetime.strptime(date, "%d %b, %Y")
+                        else:
+                            dt = pd.to_datetime(film.find(class_="date").find("time").get("datetime"))
+                    except Exception as e:
+                        print(f"scrape_by_users(): unhandled exception getting date: {date_text}")
+                        print(e)
+                        dt = None
+                    
+                    reviews.append((
+                        movie_id,
+                        dt,
+                        rating,
+                        text,
+                        username,
+                        "letterboxd",
+                    ))
+
+                # end for
+
+                try:
+                    next_button = soup.find("a", class_="next")
+                    if next_button is not None:
+                        url = base_url + next_button.get("href")
+                    else:
+                        url = None
+
+                    time.sleep(1.5)
+
+                except Exception as e:
+                    print(f"scrape_by_users(): unhandled exception getting next button")
+                    print(e)
+                    url = None
+
+            # end while
+            
+            inner_counter = 0
+            while True:
+                try:
+                    query = """
+                    INSERT INTO movie_reviews (
+                        movie_id,
+                        review_date,
+                        user_rating,
+                        review_text,
+                        user_name,
+                        source
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s);
+                    """
+                    execute_batch(curs, query, reviews)
+                    conn.commit()
+                    existing_users.add(username)
+                    print(f"Inserted {len(reviews)} reviews in db\n")
+                    break
+
+                except Exception as e:
+                    if inner_counter < 3:
+                        print("Error inserting rows, trying again")
+                        curs, conn = self.connect_to_database()
+                        inner_counter += 1
+                        continue
+                    else:
+                        print("Giving up")
+                        break
+
+
+            try:
+                # networking: add users that the current user is following
+                url = base_url + "/" + username + "/following"
+                while url is not None:
+                    print(f"Getting network on page {url}")
+                    res = requests.get(url)
+                    if res.status_code != 200:
+                        break
+
+                    soup = BeautifulSoup(res.text, "html.parser")
+
+                    for person in soup.find_all(class_="table-person"):
+                        title = person.find(class_="title-3")
+                        href = title.find("a").get("href")
+                        username = href.strip("/")
+                        if username in visited:
+                            continue
+
+                        if username in existing_users:
+                            low_priority.append(username)
+                        else:
+                            high_priority.append(username)
+
+                    next_button = soup.find(class_="next")
+                    if not next_button or not next_button.get("href"):
+                        print("Finish networking")
+                        break
+                    url = base_url + next_button.get("href")
+
+                    time.sleep(1)
+
+            except Exception as e:
+                print("Failed networking")
+                print(e)
+
+            print("\n\n")
+
+        # end while
+
+
+
+                    
+
 
 
     def letterboxd_dataframe(self, movie_id, review_id,
