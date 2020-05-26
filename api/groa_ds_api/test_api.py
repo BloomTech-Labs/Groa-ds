@@ -44,8 +44,11 @@ def test_rating():
     payload = {
         "user_id": "00ubmnwy5j5shXUQY4x6",
         "movie_id": "0181865",
-        "rating": 5
+        "rating": 5.0
     }
+    response = client.post("/rating", json=payload)
+    assert response.status_code == 200
+    payload["rating"] = 4.5
     response = client.post("/rating", json=payload)
     assert response.status_code == 200
 
@@ -57,6 +60,8 @@ def test_watchlist():
     }
     response = client.post("/watchlist", json=payload)
     assert response.status_code == 200
+    response = client.post("/watchlist/"+payload["user_id"]+"/remove/"+payload["movie_id"])
+    assert response.status_code == 200
 
 
 def test_notwatchlist():
@@ -65,6 +70,8 @@ def test_notwatchlist():
         "movie_id": "0200720"
     }
     response = client.post("/notwatchlist", json=payload)
+    assert response.status_code == 200
+    response = client.post("/notwatchlist/"+payload["user_id"]+"/remove/"+payload["movie_id"])
     assert response.status_code == 200
 
 
