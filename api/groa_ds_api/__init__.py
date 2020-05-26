@@ -113,6 +113,21 @@ def create_app():
         user's watchlist.
         """
         result = predictor.add_to_watchlist(payload)
+        cache.delete("recs"+payload.user_id)
+        return result
+    
+    @app.post("/watchlist/{user_id}/remove/{movie_id}", response_model=str)
+    async def remove_watchlist(user_id: str, movie_id: str):
+        """
+        Given the user_id and movie_id, we remove a user's watchlist
+        from the users_watchlist table in the DB.
+
+        Parameters:
+        - **user_id** str
+        - **movie_id** str
+        """
+        result = predictor.remove_watchlist(user_id, movie_id)
+        cache.delete("recs"+user_id)
         return result
     
     @app.post("/notwatchlist", response_model=str)
@@ -124,6 +139,20 @@ def create_app():
         result = predictor.add_to_notwatchlist(payload)
         # should I remove recs cache for user?
         cache.delete("recs"+payload.user_id)
+        return result
+    
+    @app.post("/notwatchlist/{user_id}/remove/{movie_id}", response_model=str)
+    async def remove_notwatchlist(user_id: str, movie_id: str):
+        """
+        Given the user_id and movie_id, we remove a user's notwatchlist
+        from the users_notwatchlist table in the DB.
+
+        Parameters:
+        - **user_id** str
+        - **movie_id** str
+        """
+        result = predictor.remove_notwatchlist(user_id, movie_id)
+        cache.delete("recs"+user_id)
         return result
 
     @app.post("/similar-movies", response_model=SimOutput)

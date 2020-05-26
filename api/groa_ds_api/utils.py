@@ -177,7 +177,8 @@ class MovieUtility(object):
             movie_vec = []
             for i in movies:
                 try:
-                    m_vec = clf[i]  # get the vector for each movie
+                    # get the vector for each movie
+                    m_vec = clf.wv.__getitem__(i)
                     if ratings_dict:
                         try:
                             # get user_rating for each movie
@@ -197,7 +198,7 @@ class MovieUtility(object):
             if feedback_list:
                 for i in feedback_list:
                     try:
-                        f_vec = clf[i]
+                        f_vec = clf.wv.__getitem__(i)
                         # weight feedback by changing multiplier here
                         movie_vec.append(f_vec*1.8)
                     except:
@@ -266,14 +267,32 @@ class MovieUtility(object):
 
     # ------- Start Public Methods -------
     def add_rating(self, payload: RatingInput):
-        query = """
-        INSERT INTO user_ratings
-        (user_id, movie_id, rating, date, source)
-        VALUES (%s, %s, %s, %s, %s);
-        """
-        params = (payload.user_id, payload.movie_id, payload.rating, datetime.now(), "groa")
+        query = "SELECT COUNT(*) FROM user_ratings WHERE user_id = %s AND movie_id = %s;"
+        params = (payload.user_id, payload.movie_id)
+        rating = self.__run_query(query, params=params, fetch="one")
+        if rating > 0:
+            query = """UPDATE user_ratings SET rating = %s, date = %s
+            WHERE user_id = %s AND movie_id = %s"""
+            params = (payload.rating, datetime.now(), payload.user_id, payload.movie_id)
+        else:
+            query = """
+            INSERT INTO user_ratings
+            (user_id, movie_id, rating, date, source)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            params = (payload.user_id, payload.movie_id, payload.rating, datetime.now(), "groa")
         self.__run_query(query, params=params, commit=True, fetch="none")
         return "Success"
+    
+    def get_all_ratings(self, user_id, movie_id):
+        query = """
+        SELECT rating, date 
+        FROM user_ratings WHERE user_id = %s AND movie_id = %s;
+        """
+        params = (user_id, movie_id)
+        rows = self.__run_query(query, params=params, fetch="all")
+        rows = [{"rating": elem[0], "date": elem[1]} for elem in rows]
+        return rows
 
     def remove_rating(self, user_id, movie_id):
         """
@@ -288,23 +307,49 @@ class MovieUtility(object):
         return "Success"
     
     def add_to_watchlist(self, payload: UserAndMovieInput):
-        query = """
-        INSERT INTO user_watchlist
-        (user_id, movie_id, date, source)
-        VALUES (%s, %s, %s, %s);
-        """
-        params = (payload.user_id, payload.movie_id, datetime.now(), "groa")
-        self.__run_query(query, params=params, commit=True, fetch="none")
+        query = "SELECT COUNT(*) FROM user_watchlist WHERE user_id = %s AND movie_id = %s;"
+        params = (payload.user_id, payload.movie_id)
+        watchlist = self.__run_query(query, params=params, fetch="one")
+        if watchlist == 0:
+            query = """
+            INSERT INTO user_watchlist
+            (user_id, movie_id, date, source)
+            VALUES (%s, %s, %s, %s);
+            """
+            params = (payload.user_id, payload.movie_id, datetime.now(), "groa")
+            self.__run_query(query, params=params, commit=True, fetch="none")
+        return "Success"
+    
+    def remove_watchlist(self, user_id, movie_id):
+        query = "DELETE FROM user_watchlist WHERE user_id = %s AND movie_id = %s;"
+        self.__run_query(
+            query,
+            params=(user_id, movie_id),
+            commit=True,
+            fetch="none")
         return "Success"
     
     def add_to_notwatchlist(self, payload: UserAndMovieInput):
-        query = """
-        INSERT INTO user_willnotwatchlist
-        (user_id, movie_id, date)
-        VALUES (%s, %s, %s);
-        """
-        params = (payload.user_id, payload.movie_id, datetime.now())
-        self.__run_query(query, params=params, commit=True, fetch="none")
+        query = "SELECT COUNT(*) FROM user_willnotwatchlist WHERE user_id = %s AND movie_id = %s;"
+        params = (payload.user_id, payload.movie_id)
+        notwatchlist = self.__run_query(query, params=params, fetch="one")
+        if notwatchlist == 0:
+            query = """
+            INSERT INTO user_willnotwatchlist
+            (user_id, movie_id, date)
+            VALUES (%s, %s, %s);
+            """
+            params = (payload.user_id, payload.movie_id, datetime.now())
+            self.__run_query(query, params=params, commit=True, fetch="none")
+        return "Success"
+    
+    def remove_notwatchlist(self, user_id, movie_id):
+        query = "DELETE FROM user_willnotwatchlist WHERE user_id = %s AND movie_id = %s;"
+        self.__run_query(
+            query,
+            params=(user_id, movie_id),
+            commit=True,
+            fetch="none")
         return "Success"
     
     def search_movies(self, query: str):
@@ -454,7 +499,7 @@ class MovieUtility(object):
         # get model
         clf = self.model
         try:
-            m_vec = clf[movie_id]
+            m_vec = clf.wv.__getitem__(movie_id)
             movies_df = pd.DataFrame(clf.wv.similar_by_vector(
                 m_vec, topn=n+1)[1:], columns=['movie_id', 'score'])
             result_df = self.__get_info(movies_df)
