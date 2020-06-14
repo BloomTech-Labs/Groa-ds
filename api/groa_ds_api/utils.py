@@ -33,11 +33,12 @@ class MovieUtility(object):
             host=os.getenv('HOST'),
             port=os.getenv('PORT')
         )
-    
+
     def __get_es(self):
         return Elasticsearch(
             hosts=[{'host': os.getenv('ELASTIC'), 'port': 443}],
-            http_auth=AWS4Auth(os.getenv('ACCESS_ID'), os.getenv('ACCESS_SECRET'), 'us-east-1', 'es'),
+            http_auth=AWS4Auth(os.getenv('ACCESS_ID'), os.getenv(
+                'ACCESS_SECRET'), 'us-east-1', 'es'),
             use_ssl=True,
             verify_certs=True,
             connection_class=RequestsHttpConnection
@@ -62,7 +63,7 @@ class MovieUtility(object):
         cursor_dog.execute(query)
         movie_sql = cursor_dog.fetchall()
         id_book = pd.DataFrame(movie_sql, columns=[
-                               'movie_id', 'title', 'year', 'genres', 'poster_url', 
+                               'movie_id', 'title', 'year', 'genres', 'poster_url',
                                'trailer_url', 'description', 'avg_rating'])
         cursor_dog.close()
         return id_book
@@ -249,90 +250,102 @@ class MovieUtility(object):
                     params: tuple = None,
                     commit: bool = False,
                     fetch: str = "one"):
-        cursor_dog = self.__get_cursor()
-        if params is None:
-            cursor_dog.execute(query)
-        else:
-            cursor_dog.execute(query, params)
-        result = None
-        if fetch == "one":
-            result = cursor_dog.fetchone()[0]
-        elif fetch == "all":
-            result = cursor_dog.fetchall()
-        if commit:
-            self.connection.commit()
-        cursor_dog.close()
-        return result
+        try:
+            cursor_dog = self.__get_cursor()
+            if params is None:
+                cursor_dog.execute(query)
+            else:
+                cursor_dog.execute(query, params)
+            result = None
+            if fetch == "one":
+                result = cursor_dog.fetchone()[0]
+            elif fetch == "all":
+                result = cursor_dog.fetchall()
+            if commit:
+                self.connection.commit()
+            cursor_dog.close()
+            return True, result
+        except:
+            # refresh connection to avoid FailedTransaction
+            self.connection = self.__get_connection()
+            return False, None
     # ------- End Private Methods -------
 
     # ------- Start Public Methods -------
     def add_rating(self, payload: RatingInput):
         query = "SELECT COUNT(*) FROM user_ratings WHERE user_id = %s AND movie_id = %s;"
         params = (payload.user_id, payload.movie_id)
-        rating = self.__run_query(query, params=params, fetch="one")
+        success, rating = self.__run_query(query, params=params, fetch="one")
+        if not success:
+            return "Failure"
         if rating > 0:
             query = """UPDATE user_ratings SET rating = %s, date = %s
             WHERE user_id = %s AND movie_id = %s"""
-            params = (payload.rating, datetime.now(), payload.user_id, payload.movie_id)
+            params = (payload.rating, datetime.now(),
+                      payload.user_id, payload.movie_id)
         else:
             query = """
             INSERT INTO user_ratings
             (user_id, movie_id, rating, date, source)
             VALUES (%s, %s, %s, %s, %s)
             """
-            params = (payload.user_id, payload.movie_id, payload.rating, datetime.now(), "groa")
-        self.__run_query(query, params=params, commit=True, fetch="none")
+            params = (payload.user_id, payload.movie_id,
+                      payload.rating, datetime.now(), "groa")
+        success, _ = self.__run_query(
+            query, params=params, commit=True, fetch="none")
+        if not success:
+            return "Failure"
         return "Success"
-    
-    def get_all_ratings(self, user_id, movie_id):
-        query = """
-        SELECT rating, date 
-        FROM user_ratings WHERE user_id = %s AND movie_id = %s;
-        """
-        params = (user_id, movie_id)
-        rows = self.__run_query(query, params=params, fetch="all")
-        rows = [{"rating": elem[0], "date": elem[1]} for elem in rows]
-        return rows
 
     def remove_rating(self, user_id, movie_id):
         """
         Removes a single rating from the user_ratings table.
         """
         query = "DELETE FROM user_ratings WHERE user_id = %s AND movie_id = %s;"
-        self.__run_query(
-            query,
-            params=(user_id, movie_id),
-            commit=True,
-            fetch="none")
+        params = (user_id, movie_id)
+        success, _ = self.__run_query(
+            query, params=params, commit=True, fetch="none")
+        if not success:
+            return "Failure"
         return "Success"
-    
+
     def add_to_watchlist(self, payload: UserAndMovieInput):
         query = "SELECT COUNT(*) FROM user_watchlist WHERE user_id = %s AND movie_id = %s;"
         params = (payload.user_id, payload.movie_id)
-        watchlist = self.__run_query(query, params=params, fetch="one")
+        success, watchlist = self.__run_query(
+            query, params=params, fetch="one")
+        if not success:
+            return "Failure"
         if watchlist == 0:
             query = """
             INSERT INTO user_watchlist
             (user_id, movie_id, date, source)
             VALUES (%s, %s, %s, %s);
             """
-            params = (payload.user_id, payload.movie_id, datetime.now(), "groa")
-            self.__run_query(query, params=params, commit=True, fetch="none")
+            params = (payload.user_id, payload.movie_id,
+                      datetime.now(), "groa")
+            success, _ = self.__run_query(
+                query, params=params, commit=True, fetch="none")
+            if not success:
+                return "Failure"
         return "Success"
-    
+
     def remove_watchlist(self, user_id, movie_id):
         query = "DELETE FROM user_watchlist WHERE user_id = %s AND movie_id = %s;"
-        self.__run_query(
-            query,
-            params=(user_id, movie_id),
-            commit=True,
-            fetch="none")
+        params = (user_id, movie_id)
+        success, _ = self.__run_query(
+            query, params=params, commit=True, fetch="none")
+        if not success:
+            return "Failure"
         return "Success"
-    
+
     def add_to_notwatchlist(self, payload: UserAndMovieInput):
         query = "SELECT COUNT(*) FROM user_willnotwatchlist WHERE user_id = %s AND movie_id = %s;"
         params = (payload.user_id, payload.movie_id)
-        notwatchlist = self.__run_query(query, params=params, fetch="one")
+        success, notwatchlist = self.__run_query(
+            query, params=params, fetch="one")
+        if not success:
+            return "Failure"
         if notwatchlist == 0:
             query = """
             INSERT INTO user_willnotwatchlist
@@ -340,22 +353,27 @@ class MovieUtility(object):
             VALUES (%s, %s, %s);
             """
             params = (payload.user_id, payload.movie_id, datetime.now())
-            self.__run_query(query, params=params, commit=True, fetch="none")
+            success, _ = self.__run_query(
+                query, params=params, commit=True, fetch="none")
+            if not success:
+                return "Failure"
         return "Success"
-    
+
     def remove_notwatchlist(self, user_id, movie_id):
         query = "DELETE FROM user_willnotwatchlist WHERE user_id = %s AND movie_id = %s;"
-        self.__run_query(
+        success, _ = self.__run_query(
             query,
             params=(user_id, movie_id),
             commit=True,
             fetch="none")
+        if not success:
+            return "Failure"
         return "Success"
-    
+
     def search_movies(self, query: str):
         result = self.es.search(index="groa", size=20, expand_wildcards="all", body={
             "query": {
-                "multi_match" : { 
+                "multi_match": {
                     "query": query,
                     "fields": ["description", "primary_title", "original_title", "genres"]
                 }
@@ -380,7 +398,10 @@ class MovieUtility(object):
         AND recommendations_movies.movie_id = %s;
         """
         params = (user_id, movie_id)
-        self.__run_query(query, params=params, commit=True, fetch="none")
+        success, _ = self.__run_query(
+            query, params=params, commit=True, fetch="none")
+        if not success:
+            return "Failure"
         return "Success"
 
     def create_movie_list(self, payload: CreateListInput):
@@ -388,7 +409,9 @@ class MovieUtility(object):
         query = """INSERT INTO movie_lists
         (user_id, name, private) VALUES (%s, %s, %s) RETURNING list_id;"""
         params = (payload.user_id, payload.name, payload.private)
-        list_id = self.__run_query(query, params=params, commit=True)
+        success, list_id = self.__run_query(query, params=params, commit=True)
+        if not success:
+            return "Failure"
         return {
             "list_id": list_id,
             "name": payload.name,
@@ -400,7 +423,10 @@ class MovieUtility(object):
         query = """SELECT l.movie_id, m.primary_title, m.start_year, m.genres, m.poster_url 
         FROM list_movies AS l LEFT JOIN movies AS m ON l.movie_id = m.movie_id
         WHERE l.list_id = %s;"""
-        list_sql = self.__run_query(query, params=(list_id,), fetch="all")
+        success, list_sql = self.__run_query(
+            query, params=(list_id,), fetch="all")
+        if not success:
+            return "Failure"
         list_json = {
             "data": [],
             "recs": []
@@ -420,7 +446,10 @@ class MovieUtility(object):
     def get_user_lists(self, user_id: str):
         """ Get user's MovieLists """
         query = "SELECT list_id, name, private FROM movie_lists WHERE user_id = %s;"
-        user_lists = self.__run_query(query, params=(user_id,), fetch="all")
+        success, user_lists = self.__run_query(
+            query, params=(user_id,), fetch="all")
+        if not success:
+            return "Failure"
         user_lists_json = [self.__get_list_preview(
             elem) for elem in user_lists]
         return user_lists_json
@@ -428,7 +457,9 @@ class MovieUtility(object):
     def get_all_lists(self):
         """ Get all MovieLists """
         query = "SELECT list_id, name, private FROM movie_lists WHERE private=FALSE;"
-        lists = self.__run_query(query, fetch="all")
+        success, lists = self.__run_query(query, fetch="all")
+        if not success:
+            return "Failure"
         lists_json = [self.__get_list_preview(elem) for elem in lists]
         return lists_json
 
@@ -437,21 +468,30 @@ class MovieUtility(object):
         query = """INSERT INTO list_movies
         (list_id, movie_id) VALUES (%s, %s);"""
         params = (list_id, movie_id)
-        self.__run_query(query, params=params, commit=True, fetch="none")
+        success, _ = self.__run_query(
+            query, params=params, commit=True, fetch="none")
+        if not success:
+            return "Failure"
         return "Success"
 
     def remove_from_movie_list(self, list_id: int, movie_id: str):
         """ Remove movie from a MovieList """
         query = "DELETE FROM list_movies WHERE list_id = %s AND movie_id = %s;"
         params = (list_id, movie_id)
-        self.__run_query(query, params=params, commit=True, fetch="none")
+        success, _ = self.__run_query(
+            query, params=params, commit=True, fetch="none")
+        if not success:
+            return "Failure"
         return "Success"
 
     def delete_movie_list(self, list_id: int):
         """ Delete a MovieList """
         query = "DELETE FROM movie_lists WHERE list_id = %s RETURNING user_id, private;"
-        result = self.__run_query(query, params=(list_id,), commit=True, fetch="all")[0]
-        return result
+        success, result = self.__run_query(
+            query, params=(list_id,), commit=True, fetch="all")
+        if not success:
+            return "Failure"
+        return result[0]
 
     def get_most_similar_title(self, movie_id: str, id_list: list):
         """ Get the title of the most similar movie to movie_id from id_list """
@@ -511,7 +551,7 @@ class MovieUtility(object):
             return {
                 "data": []
             }
-    
+
     def get_recent_recommendations(self, user_id: str = None):
         """ Grabs the movies of recent recommendations from our API """
         query = """
@@ -521,7 +561,9 @@ class MovieUtility(object):
         ORDER BY r.date DESC
         LIMIT 50;
         """
-        recs = self.__run_query(query, fetch="all")
+        success, recs = self.__run_query(query, fetch="all")
+        if not success:
+            return "Failure"
         recs_df = pd.DataFrame(recs, columns=["movie_id"])
         rec_data = self.__get_info(recs_df)
         rec_data = rec_data.fillna("None")
@@ -534,14 +576,13 @@ class MovieUtility(object):
             ORDER BY date DESC
             LIMIT 3;
             """
-            movie_ids = self.__run_query(
-                query,
-                params=(user_id,),
-                fetch="all"
-            )
+            success, movie_ids = self.__run_query(
+                query, params=(user_id,), fetch="all")
+            if not success:
+                return "Failure"
             if len(movie_ids) > 0:
                 explore_lists = [self.get_similar_movies(SimInput(movie_id=elem[0], num_movies=10))
-                    for elem in movie_ids]
+                                 for elem in movie_ids]
             return {
                 "data": rec_json,
                 "lists": explore_lists
@@ -614,7 +655,7 @@ class MovieUtility(object):
             VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING recommendation_id;
             """
             cursor_dog.execute(
-                create_rec, 
+                create_rec,
                 (user_id, date, model_type, num_recs, good, bad, harsh))
             rec_id = cursor_dog.fetchone()[0]
 
